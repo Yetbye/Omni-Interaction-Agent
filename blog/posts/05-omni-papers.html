@@ -120,16 +120,34 @@
 <!-- ============ 第 1 章 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 01</span>
-  <h2 class="chapter-title">ALIVE：把「沉默」建成显式动作</h2>
+  <h2 class="chapter-title">ALIVE：把「沉默」建成显式动作 <span class="pill warm">2026-11-21 · 全文精读修订</span></h2>
   <p class="lead">流式视频模型可以一直看着世界，却往往把用户请求当成孤立事件处理。ALIVE（arXiv 2611.21366）给出的答案是：<strong>交互性必须由动作词汇表来承载</strong>——何时响应、如何响应、何时沉默，外加主动追问（feedback-seeking）。</p>
+  <p><span class="pill lav">全文级</span>本章已由摘要级升级为全文级：论文全文 PDF 已获取并按 16 页文本提取读毕（存档 <code>docs/sources/papers/2611.21366-alive.txt</code>，精读笔记 <code>docs/sources/papers/notes/05-alive.md</code>），本章数字与方法细节以论文全文为准；官方代码仓 <code>github.com/lijinzhao30/ALIVE</code> 与项目页 <code>lijinzhao30.github.io/ALIVE</code>（此处仅纯文本记录，全站离线不设外链）。</p>
 
   <h3>为什么「沉默」要被写成一个动作</h3>
-  <p>在多数 agent 设计里，「不回复」是缺席（absence）：没有事件、没有日志、也就没有可优化的对象。ALIVE 的三态决策把它翻转成一个<strong>可被训练、可被打分的显式动作</strong>。摘要原文给出的训练结构正是围绕这一点展开：</p>
+  <p>在多数 agent 设计里，「不回复」是缺席（absence）：没有事件、没有日志、也就没有可优化的对象。ALIVE 把它翻转成一个<strong>可被训练、可被打分的显式动作</strong>。全文的形式化（正文 §3.1）给交互式流式模型的输出是三类语义：</p>
   <ul>
-    <li><strong>两阶段训练</strong>：构造 <code>ALIVE-SFT-288K</code> 与 <code>ALIVE-RL-3K</code> 两个数据集；对比式监督微调（contrastive SFT）教「何时与如何响应」，强化学习负责精修。</li>
-    <li><strong>BACA（Behavior-Aligned Credit Assignment）</strong>：把轨迹级优势与局部优势结合起来，同时优化「决策、响应与沉默」——注意「沉默」与「响应」并列出现在信用分配的目标里。</li>
-    <li><strong>FSI-Bench</strong>：专门评「反馈寻求」以及追问之后的任务完成，即追问不是目的，追问后的收尾才算数。</li>
-    <li>自报在四个公开基准与 FSI-Bench 上取得被比较模型中的最高总分<span class="self-report">自报·未复现</span>。</li>
+    <li><strong>输出词汇表（Eq. 2）</strong>：<code>o_τ ∈ { r_τ（回应或保持沉默）, c_τ（请求澄清或反馈）, a_τ（请求用户执行动作）}</code>——c 与 a 合起来就是「寻求反馈」的两种形态：要信息 vs 要动作。<strong>诚实标注</strong>：本页一直沿用的「三态决策」是摘要级的简化命名，论文原文的<strong>实际控制粒度是二元控制 token（R 回应 / S 沉默）+ 策略文本</strong>，r/c/a 是三类输出语义而非三个控制态。</li>
+    <li><strong>能力分类学（正文 §3.2）</strong>：三族共 <strong>8 个任务类型</strong>——Proactive Monitoring（首次条件满足即通知 / 触发与答案证据齐备才回答 / 跨多次出现各回应一次）、Streaming Task Coordination（任务状态更新 / 并行请求保留其余承诺）、Feedback-Seeking Interaction（Ask-for-Monitor / Ask-for-Information / Ask-for-Execution）。</li>
+    <li><strong>两阶段训练</strong>：<code>ALIVE-SFT-288K</code> 精确为 <strong>288,436 条</strong>、<code>ALIVE-RL-3K</code> 精确为 <strong>3,523 条</strong>（摘要取整），另混入 274K / 800 条精选 reactive QA 保住通用问答；对比式 SFT 教「何时与如何响应」，RL + BACA 负责精修决策、响应与沉默。</li>
+    <li><strong>FSI-Bench（正文 §5.2）</strong>：<strong>1,235 个 episodes、4 个任务</strong>（Ask-for-Monitor 154 / Ask-for-Information 446 / Ask-for-Execution 459 / Direct Answer 176），双协议 EDP（显式决策）与 FDP（自由形式由 LLM judge 推断）；计分 <code>D = d，T = d·1[t_r ∈ W]，A = T·a</code>——追问不是目的，追问后在有效窗口内把事办完才算数。</li>
+    <li>自报在四个公开基准与 FSI-Bench 上取得被比较模型中的最高总分<span class="self-report">自报·未复现</span>（真实数字见下文主结果）。</li>
+  </ul>
+
+  <h3>全文主结果与消融（PDF 提取，表 2/3/4）</h3>
+  <table class="tbl">
+    <tr><th>评测</th><th>设置</th><th>结果（论文自报）</th></tr>
+    <tr><td>四公开基准总分（All，PAUC ω=0.5）</td><td>被比模型含 VideoLLM-Online、Flash-VStream、Dispider、VideoChat3、JoyAI-VL-Interaction、AURA、Qwen3-VL-8B</td><td>OVO-Bench <strong>68.9</strong>、StreamingBench <strong>76.0</strong>、IPIBench <strong>40.3</strong>、ProactiveVideoQA <strong>51.6</strong>，均为被比模型最高；IPIBench 领先最强基线 AURA（21.6）<strong>18.7 分</strong><span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>FSI-Bench（四任务 Accuracy 宏平均）</td><td>EDP 显式决策 / FDP 自由形式</td><td><strong>EDP 52.8、FDP 54.0</strong>；比最强模型基线 GPT-6 Astra（42.2 / 30.1）高 <strong>10.6 / 23.9</strong> 分；人类 FDP 参考 <strong>88.5</strong>——论文自认「仍远低于人类」<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>消融（表 4，FSI-FDP 六项总分）</td><td>SFT w/o contrasts → Contrastive SFT → RL w/o BACA（α=0，纯 GRPO 式轨迹优势）→ 完整 ALIVE</td><td><strong>39.4 → 49.3 → 51.5 → 54.0</strong>：对比式 SFT 增益最大（+9.9），BACA 再 +2.5<span class="self-report">自报·未复现</span></td></tr>
+  </table>
+  <p>除 ALIVE 外，被测开源流式模型在三项「寻求反馈」任务上普遍接近 0；专长模型 Direct Answer 强但 AFI/AFE 弱<span class="self-report">自报·未复现</span>。设置：从 <strong>Qwen3-VL-8B-Instruct</strong> 初始化，两阶段均冻结视觉编码器与 connector，只训语言模型（SFT 1 epoch、bs=512、lr=1e-5、1 FPS；RL 每 episode 采 G=4 条轨迹）。</p>
+
+  <h3>方法细节：两阶段各解决哪类失败</h3>
+  <ul>
+    <li><strong>对比式 SFT 的两族受控对比（正文 §4.1）</strong>：<em>Response-gate contrasts</em> 固定视觉前缀只变交互条件（同一目标出现，活跃监控下要通知、取消后要沉默）→ 监督「该不该说」；<em>Action-strategy contrasts</em> 固定任务只变证据可得性/指代歧义（证据充分→直接回答、歧义→澄清、缺证据→请求用户动作）→ 监督「说什么策略」。训练实例以标注回应为中心采样偏移 δ∈{0..4}、视觉窗长度 N~U[10,30]（1 FPS），窗内只监督最后一条回应与全部沉默 token，沉默按 nR/nS 加权。</li>
+    <li><strong>BACA（正文 §4.2）</strong>：奖励 <code>R_i = D_i · C_i · P_i</code>（策略正确性 × 任务完成度 × 冗余惩罚 <code>exp(−λ·K_i/max(1, N_i^req))</code>）；把轨迹按标注构造<strong>行为单元</strong>——覆盖策略选择、任务回应、关键沉默三方面；轨迹级优势组内归一化 <code>A^E</code>、单元内局部优势 <code>A^B</code>，调用级合并 <code>A = A^E + α·A^B</code>（α=1），不在任何单元内的调用只拿轨迹级优势；目标函数为组内归一化策略梯度 + 指向冻结 SFT 模型的 KL 正则。<strong>「关键沉默」有专门的信用分配</strong>：事件前等待的沉默，只有后续目标也拿到正的完成信用时才获局部信用。</li>
+    <li><strong>数据管线（正文 §3.3）</strong>：24 个公开视频数据集，三步流水线——时序证据锚定与细化（找「视觉条件首次满足」的最早采样时刻）→ 对话合成与时序对齐 → 质量校验（含<strong>因果可回答性</strong>：答案只能依赖时间戳之前的观察，偷看未来帧即过滤）。</li>
   </ul>
 
   <figure class="svg-figure">
@@ -198,7 +216,7 @@
     <span class="tag-insight">洞察</span>
     <h4>主动性 = 动作词汇表，而不是音量</h4>
     <p>ALIVE 最值钱的不是它的分数，而是它把交互拆成了<strong>有限且互斥的动作集</strong>：响应、沉默、追问。有限动作集带来三个工程后果——动作可枚举（策略有界）、动作可打分（每个状态都有学习信号）、动作可回放审计（事后能归因到「为什么当时没说话」）。</p>
-    <p class="cite">依据：papers-abstracts.md §5（2611.21366）；转译讨论见 report.html §5.2。</p>
+    <p class="cite">依据：全文 PDF 提取 <code>docs/sources/papers/2611.21366-alive.txt</code>（16 页读毕）+ 笔记 <code>notes/05-alive.md</code>；转译讨论见 report.html §5.2。</p>
   </div>
 
   <h3>为什么采用「对比式 SFT + RL」两段式</h3>
@@ -207,8 +225,9 @@
   <div class="critique-box">
     <span class="tag-insight">批判与转译</span>
     <h4>哪些迁不走，哪些必须迁</h4>
-    <p><strong>不可迁移</strong>：ALIVE 的载体是流式视频模型，其数据集（ALIVE-SFT-288K / ALIVE-RL-3K）、两阶段训练法与评测分数，对一个运行在 DSH 上的 harness 层策略器毫无直接用处——report.html §5.2 也记录了「其训练法确不可迁移」的判断。</p>
-    <p><strong>可直接迁移</strong>：① <strong>动作词汇表</strong> {respond, silent, seek-feedback}；② <strong>「沉默是显式动作而非缺席」</strong>这一原则；③ <strong>追问后必须回到观察</strong>的回边结构（追问不是终态）；④ 评估思路：把「追问之后有没有把事办完」单独做成指标（FSI-Bench 的思路）。这四点直接进入 OIA 干预策略器的输出定义，并与本系列第 6 篇的 <code>InterventionPolicy</code> 对接。</p>
+    <p><strong>不可迁移</strong>：ALIVE 的载体是流式视频模型，其数据集（288,436 + 3,523 条）、两阶段训练法与评测分数，对一个运行在 DSH 上的 harness 层策略器毫无直接用处——report.html §5.2 也记录了「其训练法确不可迁移」的判断。作者自陈的局限同样指向这一点：ALIVE 仍是视觉-语言模型，<strong>语音交互需外挂 ASR/TTS，原生 omni-modal 模型是后续方向</strong>（正文 §6）——这恰是 OIA 可补的生态位。</p>
+    <p><strong>可直接迁移</strong>：① <strong>动作词汇表</strong> {respond, silent, seek-feedback}（对应全文 Eq. 2 的 r/c/a 语义 + R/S 控制 token）；② <strong>「沉默是显式动作而非缺席」</strong>这一原则——BACA 给「关键沉默」单独做信用分配就是明证；③ <strong>追问后必须回到观察</strong>的回边结构（追问不是终态）；④ 评估思路：把「追问之后有没有把事办完」单独做成指标（FSI-Bench 的 D/T/A 三级计分）；⑤ 对比式 SFT 的<strong>构造法</strong>：同一视觉、不同交互条件 → 不同行为的成对样本，是低成本的行为门控监督来源。这五点直接进入 OIA 干预策略器的输出定义，并与本系列第 6 篇的 <code>InterventionPolicy</code> 对接。</p>
+    <p><strong>取证边界</strong>：本章数字来自 PyMuPDF 文本提取（16 页 / 59,401 字符），表格按单元格线性展开后重建、逐格复核未做；图 1/2/3 的图像内容未看。官方仓 <code>github.com/lijinzhao30/ALIVE</code> 仅确认公开可访问，内部代码与权重未逐一核验。</p>
   </div>
 
   <div class="insight-box">
@@ -221,16 +240,26 @@
 <!-- ============ 第 2 章 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 02</span>
-  <h2 class="chapter-title">Coco：观察—保留—适应的闭环</h2>
+  <h2 class="chapter-title">Coco：观察—保留—适应的闭环 <span class="pill warm">2026-11-21 · 全文精读修订</span></h2>
   <p class="lead">Deep Personalization / Coco（arXiv 2611.13457）要解决的是一个尴尬缺口：用户仍得自己判断「什么时候该找 AI 帮忙」，于是大量本可被帮忙的时刻被错过。主动智能体承诺补上这个缺口，但<strong>有效的主动性要求理解用户实时活动、并把干预时机个性化</strong>——帮在合意的时刻，而不是打扰的时刻。</p>
+  <p><span class="pill lav">全文级</span>本章已由摘要级升级为全文级：arXiv HTML 全文（2,376 行，含附录 A–F）与两个官方仓（<code>NVlabs/deep-personalization</code> 主仓 + <code>collaborative-agents/coco</code> 集成仓，Apache-2.0）均已读毕，代码实测见章末——数字以论文全文/代码为准（笔记 <code>docs/sources/papers/notes/01-deep-personalization.md</code>）。</p>
 
   <h3>闭环的四段：观察 → 选择性保留 → 干预决策 → 隐式反馈</h3>
   <ul>
-    <li><strong>持续观察</strong>：独立的 <strong>Observer Agent</strong> 监控桌面活动，维护<strong>紧凑的长期用户建模上下文</strong>——注意是 compact，不是全量转储。</li>
-    <li><strong>选择性保留</strong>：只留下对「判断干预时机」有用的长期上下文，这是「deep personalization」中 personal 的载体。</li>
-    <li><strong>干预决策</strong>：从隐式信号学习「何时帮助合意」——摘要列出四类信号：<strong>投入（engagement）、忽略（dismissal）、显式请求（explicit requests）、重复工作模式（repeated work patterns）</strong>。</li>
-    <li><strong>适应</strong>：干预结果作为隐式反馈回流，修正下一次的时机判断。</li>
-    <li><strong>隐私 rationale</strong>：高效 on-device 策略让 Observer 跑在本地 AI 算力平台上，<strong>不把原始活动流外发</strong>。</li>
+    <li><strong>持续观察</strong>：独立的 <strong>Observer Agent</strong>（正文 §3.1，式 2/3）单次 prompt 输出结构化四字段 <code>o_t = {observation, user_intent, rationale, need_support}</code>——它同时是「记忆写入格式」与「决策格式」；<code>y_t=1</code> 时唤起下游 Execution Agent，<code>y_t=0</code> 继续被动观察。</li>
+    <li><strong>选择性保留</strong>：长期记忆是<strong>命题-观察二部图</strong>（正文 §3.2）——Observer 输出与高层用户命题两端，命题由同一个模型按 GUM 定期合成，新命题检索 top-k 最相似既有命题判「新建 vs 修订」；上下文 = k 条最近输出 + k 条最相关命题。<strong>诚实标注</strong>：k 的取值未在全文给出（benchmark 代码里 <code>RECENT_OBSERVATION_LIMIT=5</code>）。</li>
+    <li><strong>干预决策与四类隐式信号</strong>：投入（engagement）、忽略（dismissal）、显式请求（explicit requests）、重复工作模式（repeated work patterns）。</li>
+    <li><strong>适应</strong>：两条低资源路线——<strong>Coco-PE</strong>（ACE 式 Generate-Reflect-Curate 的 bullet-point 指令记忆，用户可读可审）与 <strong>Coco-LoRA</strong>（rank 32 / α 64 / 1 epoch）；正文自报 Qwen 系上 PE 更强、Nemotron 上 LoRA 更强。</li>
+    <li><strong>隐私 rationale</strong>：change-aware 选帧 + observation-first 调度让 Observer 跑在本地，<strong>不把原始活动流外发</strong>——但全文的诚实版本见下文批判框（Execution Agent 走云端）。</li>
+  </ul>
+
+  <h3>摘要没有的机制：回溯扫描与标签合成</h3>
+  <p>摘要只列四类信号；正文 §3.3 还有一整套<strong>回溯扫描</strong>，其动机是论文明确论证的<strong>反退化设计</strong>：若只用「干预后用户参与 / 拒绝」两个信号，Observer 会学到<strong>「少干预 → 更少信号」的退化策略</strong>——越沉默越安全，越安全越沉默。补救是用同一个 on-device 模型回溯扫描整条时间线：</p>
+  <ul>
+    <li><strong>三类机会</strong>：<code>repetitive_work | stuck | anticipate_need</code>（代码 <code>retrospective.py:RETROSPECTIVE_CATEGORIES</code> 与附录 B.3 完全对应）；硬规则包括「机会必须在后继行为之前就可推断」「事后手动打开 ChatGPT 是正面证据」「<strong>不得仅凭沉默推断偏好</strong>」、证据至少 3 个互不相同的 observation id。</li>
+    <li><strong>三段式 prompt</strong>：发现机会 → 落到最早可推断的触发点（置信度 ≥0.75 门槛）→ 极性被推翻后改写观察（禁止在输出中提及 label/feedback）。</li>
+    <li><strong>「沉默后主动求助」= FN 代理</strong>：代码 <code>missed_opportunities.py</code> 的 <strong>60s 窗口</strong>（<code>MISSED_OPPORTUNITY_WINDOW_S=60</code>）——决策为 no 但 60 秒内出现用户求助，即给该决策打负反馈（missed intervention opportunity）。论文自陈这是「潜在支持机会」而非「已确认偏好」。</li>
+    <li><strong>标签合成（<code>labeling.py:label_moment()</code>）</strong>：多源信号加权投票 <code>score = Σ signed_score()</code>，<strong>|score| &lt; 0.45 直接丢弃不打标签</strong>；&gt;0 记 yes、&lt;0 记 no，confidence = |score|/Σ|conf×weight|；信号策略表（<code>FEEDBACK_POLICIES</code>）带 <strong>30 分钟 TTL</strong>；未经纠正的 no-support 预测按 confidence 0.25 作弱负例。</li>
   </ul>
 
   <figure class="svg-figure">
@@ -292,49 +321,133 @@
     <figcaption><b>图 2</b> Coco 深度个性化闭环：观察 → 选择性保留 → 干预决策 → 隐式反馈 → 适应，再回流调整观察重点；左侧虚线框为隐私边界——原始活动不出设备，OSWorld-Persona 负责把干预时机变成可测标签。</figcaption>
   </figure>
 
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <!-- 图 3：隐式信号 → 标签合成管线 -->
+      <svg viewBox="0 0 780 420" width="780" height="420" role="img" aria-label="Coco 隐式信号到标签的合成管线">
+        <rect x="0" y="0" width="780" height="420" rx="14" fill="#fbfaff" stroke="#e9d5ff"/>
+        <text x="390" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#23212c">信号 → 加权投票 → 二值标签（label_moment）</text>
+
+        <defs>
+          <marker id="p5-ar8" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#4a4657"/>
+          </marker>
+        </defs>
+
+        <!-- 信号源三路 -->
+        <rect x="34" y="62" width="220" height="74" rx="10" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+        <text x="144" y="90" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#4c1d95">直接反馈事件</text>
+        <text x="144" y="112" text-anchor="middle" font-size="10.5" fill="#4c1d95">engagement / dismissal / 点赞踩</text>
+
+        <rect x="34" y="152" width="220" height="74" rx="10" fill="#eef2f7" stroke="#94a8c4" stroke-width="2"/>
+        <text x="144" y="180" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#223a5e">短窗信号</text>
+        <text x="144" y="202" text-anchor="middle" font-size="10.5" fill="#41556f">reveal · 60s 内沉默后求助</text>
+
+        <rect x="34" y="242" width="220" height="74" rx="10" fill="#ffe4e6" stroke="#f43f5e" stroke-width="2"/>
+        <text x="144" y="270" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#9f1239">回溯扫描（三段式）</text>
+        <text x="144" y="292" text-anchor="middle" font-size="10.5" fill="#9f1239">repetitive_work / stuck / anticipate</text>
+
+        <!-- 策略表 -->
+        <rect x="300" y="132" width="180" height="112" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <text x="390" y="160" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#92400e">FEEDBACK_POLICIES</text>
+        <text x="390" y="184" text-anchor="middle" font-size="10.5" fill="#78350f">极性 × 置信 × 权重</text>
+        <text x="390" y="204" text-anchor="middle" font-size="10.5" fill="#78350f">TTL 30 分钟过期</text>
+        <text x="390" y="226" text-anchor="middle" font-size="10.5" fill="#78350f">score = Σ signed_score</text>
+
+        <!-- 阈值门 -->
+        <path d="M540,188 L600,144 L660,188 L600,232 Z" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+        <text x="600" y="184" text-anchor="middle" font-size="12" font-weight="bold" fill="#92400e">|score| ≥ 0.45 ?</text>
+        <text x="600" y="204" text-anchor="middle" font-size="10.5" fill="#92400e">阈值门（labeling.py）</text>
+
+        <!-- 三出口 -->
+        <rect x="678" y="56" width="86" height="60" rx="8" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+        <text x="721" y="82" text-anchor="middle" font-size="12" font-weight="bold" fill="#065f46">yes</text>
+        <text x="721" y="102" text-anchor="middle" font-size="10" fill="#065f46">score &gt; 0</text>
+
+        <rect x="678" y="300" width="86" height="60" rx="8" fill="#eef2f7" stroke="#94a8c4" stroke-width="2"/>
+        <text x="721" y="326" text-anchor="middle" font-size="12" font-weight="bold" fill="#223a5e">no</text>
+        <text x="721" y="346" text-anchor="middle" font-size="10" fill="#41556f">score &lt; 0</text>
+
+        <rect x="546" y="286" width="120" height="74" rx="8" fill="#ffe4e6" stroke="#f43f5e" stroke-dasharray="6 5"/>
+        <text x="606" y="314" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#9f1239">丢弃不打标签</text>
+        <text x="606" y="336" text-anchor="middle" font-size="10.5" fill="#9f1239">|score| &lt; 0.45</text>
+        <text x="606" y="354" text-anchor="middle" font-size="10" fill="#9f1239">宁留白，不喂噪声</text>
+
+        <!-- 箭头 -->
+        <line x1="254" y1="99" x2="298" y2="150" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <line x1="254" y1="189" x2="298" y2="189" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <line x1="254" y1="279" x2="298" y2="228" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <line x1="480" y1="188" x2="536" y2="188" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <line x1="640" y1="168" x2="676" y2="116" stroke="#10b981" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <line x1="640" y1="208" x2="676" y2="326" stroke="#94a8c4" stroke-width="2" marker-end="url(#p5-ar8)"/>
+        <path d="M578,226 C560,254 556,270 560,284" fill="none" stroke="#f43f5e" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#p5-ar8)"/>
+
+        <!-- 反退化标注 -->
+        <rect x="34" y="344" width="440" height="54" rx="10" fill="#f3e8ff" stroke="#c084fc"/>
+        <text x="254" y="366" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#4c1d95">反退化设计：只用采纳/拒绝会学到「越沉默越安全」</text>
+        <text x="254" y="386" text-anchor="middle" font-size="10.5" fill="#4c1d95">回溯扫描为 y_t=0 补「错过的机会」负反馈，且不得仅凭沉默推断偏好</text>
+      </svg>
+    </div>
+    <figcaption><b>图 3</b> Coco 的信号-标签管线：三路信号（直接反馈 / 短窗 60s 求助 / 三段式回溯扫描）经 FEEDBACK_POLICIES 加权投票求 score，|score|≥0.45 才落二值标签，否则丢弃；反退化标注说明回溯扫描存在的理由。</figcaption>
+  </figure>
+
   <h3>自报数字：为什么干预时机必须「可度量化」</h3>
   <table class="tbl">
     <tr><th>评测</th><th>指标</th><th>结果（论文自报）</th></tr>
-    <tr><td>OSWorld-Persona（三个模型骨干）</td><td>macro F1（干预时机）</td><td>直接提示 0.12–0.19 → 适应后 0.35–0.48，相对提升 2.4–3.0×<span class="self-report">自报·未复现</span></td></tr>
-    <tr><td>一周用户研究</td><td>macro 平均 F1</td><td>0.199 → 0.515<span class="self-report">自报·未复现</span></td></tr>
-    <tr><td>数据合成管线</td><td>基准规模</td><td>把既有 computer-use 轨迹转成带人格干预标签的 OSWorld-Persona<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>OSWorld-Persona 主结果（Table 1，三骨干 × 三随机种子均值）</td><td>macro F1（干预时机）</td><td>Vanilla 0.1175–0.1861 → 最佳适配 <strong>0.4832</strong>（Qwen-3.5-9B，Coco-PE，2.6×）、<strong>0.4334</strong>（35B-A3B，2.4×）、<strong>0.3485</strong>（Nemotron，3.0×），<strong>均超过 Oracle Persona 上界</strong>（0.3932 / 0.2713 / 0.2810）<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>False-Alarm 代价（Table 1）</td><td>无需求时给出干预的比例</td><td>9B：Vanilla <strong>0.0468</strong> → Coco-PE <strong>0.2492</strong>——正文坦承「从近乎沉默转向主动干预」的代价<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>一周用户研究（§6.2，10 人）</td><td>macro F1 <strong>proxy</strong>（thumb-up=TP / thumb-down 或未展开=FP / 沉默时主动求助=FN 代理）</td><td>0.199 → 0.515；<strong>Day 1 有 6/10 用户 proxy 为 0</strong>（冷启动），适配后这 6 人开始收到自评有帮助的建议；脚注承认 FN 可能被低估<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>数据合成管线</td><td>基准规模与质控</td><td>OSWorld 2.0 的 108 个任务 → <strong>6,558 关键帧 / 3,279 标注 / 108 会话</strong>；Kimi-K2.6 两阶段标注、temp 0.4 自洽复跑 2 次全票、人工复核正例、按时间 70/30 切分<span class="self-report">自报·未复现</span></td></tr>
+    <tr><td>消融（Table 2）</td><td>去掉累积上下文</td><td>Coco-PE 下 0.4832→0.3878（9B）；Decision Only（只输出决策不写 observation）掉到 0.3045——<strong>输出 observation 本身既是记忆也是决策</strong><span class="self-report">自报·未复现</span></td></tr>
   </table>
 
   <div class="insight-box">
     <span class="tag-insight">洞察</span>
     <h4>没有标签就没有学习信号</h4>
-    <p>「什么时候该说话」直觉上是个品味问题，无法梯度下降。Coco 的关键一步是<strong>把品味变标签</strong>：通过数据合成管线，把已有 computer-use 轨迹改造成带「人格化干预标签」的基准——于是「干预时机」第一次成为能算 macro F1 的监督任务。闭环里其余所有环节（观察、保留、适应）都以这个标签为前提：<strong>可度量化是闭环成立的入场券，不是加分项</strong>。</p>
-    <p class="cite">依据：papers-abstracts.md §1（2611.13457）；report.html §6.1。</p>
+    <p>「什么时候该说话」直觉上是个品味问题，无法梯度下降。Coco 的关键一步是<strong>把品味变标签</strong>：通过数据合成管线，把已有 computer-use 轨迹改造成带「人格化干预标签」的基准——于是「干预时机」第一次成为能算 macro F1 的监督任务。闭环里其余所有环节（观察、保留、适应）都以这个标签为前提：<strong>可度量化是闭环成立的入场券，不是加分项</strong>。而在线侧的 <code>|score| &lt; 0.45 不打标签</code> 是同一枚硬币的反面：<strong>没有可信标签时宁可留白，也不喂噪声</strong>。</p>
+    <p class="cite">依据：全文笔记 <code>notes/01-deep-personalization.md</code> §4.1–4.6（Table 1/2、§6.2）；report.html §6.1。</p>
   </div>
 
   <h3>为什么必须是独立的 Observer，而不是塞进主对话</h3>
-  <p><strong>代价与替代方案</strong>：把观察塞进主 agent 上下文的替代方案更省架构，但会付出三重代价——上下文被桌面噪声污染、观察与回答互相争抢注意力、原始活动随对话日志扩散。独立 Observer Agent 把三件事一起解决：观察上下文<strong>紧凑且专用</strong>、不占主对话窗口、隐私边界可以物理地画在 Observer 与网络之间。这也正是 report.html §5.2 的转译结论：<em>观察者独立成 subagent（不占主对话上下文）</em>。</p>
+  <p><strong>代价与替代方案</strong>：把观察塞进主 agent 上下文的替代方案更省架构，但会付出三重代价——上下文被桌面噪声污染、观察与回答互相争抢注意力、原始活动随对话日志扩散。独立 Observer Agent 把三件事一起解决：观察上下文<strong>紧凑且专用</strong>、不占主对话窗口、隐私边界可以物理地画在 Observer 与网络之间。这也正是 report.html §5.2 的转译结论：<em>观察者独立成 subagent（不占主对话上下文）</em>。正文 §4 还给出配套的工程三件套：change-aware 选帧（MSE τ=8000，DGX Spark 上 KV 命中 26.7%→45.2%）、observation-first 调度（空闲 60s 才做轻量修订、600s 才全量演化、前台永远抢占）、DFlash 投影解码（draft block=8）<span class="self-report">自报·未复现</span>。</p>
 
   <div class="critique-box">
     <span class="tag-insight">批判</span>
-    <h4>闭环的脆弱点在反馈的稀疏与偏置</h4>
-    <p>四类隐式信号里，「忽略 dismissal」是<strong>缺席证据</strong>：用户没点、没关、也没说——沉默既可能是「打扰到了」，也可能是「在忙、稍后看」。把两者混为一谈会系统性地把策略训得过度保守。可行的补救是给 dismissal 加上下文特征（当时是否处于专注任务、时段、连续忽略次数），这恰好是 report.html §5.3 里「被忽略 N 次 → 降频 + 记负反馈」设计要处理的粒度。</p>
+    <h4>闭环的四个诚实缺口（全文级才看得到）</h4>
+    <p><strong>① 隐私自陈比摘要保守</strong>：摘要说「不外发原始活动流」，附录 A 却明说 <strong>Execution Agent 目前依赖云端大模型，检索出的用户上下文可能离开设备</strong>——原话是「reduces but does not eliminate privacy risks」；README 更直白：屏幕理解会把截图发给你选择的模型提供方，<strong>用本地模型才能全程留在本机</strong>。转译到 OIA：应在 Governance 显式建模「哪些记忆块允许注入云端推理请求」，而不是笼统宣称本地隐私。</p>
+    <p><strong>② 数字口径疑点</strong>：引言写「reaches up to 0.77 F1 on one of the personas」，但 Table 1 单 persona 最高为 <strong>0.8609</strong>（Nemotron / Coco-LoRA / Eager Hands-on），<strong>全文未找到 0.77 对应的单元格</strong>（可能笔误或另一聚合口径）。用户研究的 0.199→0.515 是 <strong>F1 proxy</strong>（三类事件代理），非人工标注真值，且脚注承认 FN 被低估。</p>
+    <p><strong>③ 仓库与论文三处不一致</strong>：persona 池代码 5 个（多一个 <code>minimal_interruptions</code>）vs 论文 4 个；<code>--test-ratio</code> 默认 0.2 vs 附录 C 的 70/30；Observer prompt 三个版本并存（论文 B.1 / benchmark 69 行 / 部署版 10 字段输出）。复现须以论文附录 + 发布数据集为准。</p>
+    <p><strong>④ 反馈稀疏与缺席证据</strong>：「忽略 dismissal」既可能是「打扰到了」也可能是「在忙」；60s 求助窗口与回溯扫描正是为补这个洞，但它们都只是「机会证据」而非确认偏好——这恰是 report.html §5.3「被忽略 N 次 → 降频 + 记负反馈」要处理的粒度。</p>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察 · 代码实测</span>
+    <h4>代码能不能跑？——本地实测记录</h4>
+    <p>两仓全部 Python 文件 <strong>174 个 <code>py_compile</code> 全过（0 失败）</strong>；pytest 实测 <strong>47 项测试 43 通过 / 4 失败</strong>，<strong>4 个失败全部是 Windows 平台假设</strong>（<code>os.killpg</code> POSIX 进程组、<code>WindowsPath('/0.png')</code> 绝对路径、两个选帧测试因临时目录含非 ASCII 用户名导致 <code>cv2.imwrite</code> 写失败），非业务逻辑错误——论文目标环境为 Linux，本会话未在 Linux 验证。benchmark 未跑（需数据集下载 + LLaMA-Factory/Tinker + GPU），论文全部数字未复现。</p>
+    <p class="cite">实测记录见 <code>notes/01-deep-personalization.md</code> §9「诚实边界」。</p>
   </div>
 </section>
 
 <!-- ============ 第 3 章 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 03</span>
-  <h2 class="chapter-title">Pandora：内容与说话方式的分离</h2>
+  <h2 class="chapter-title">Pandora：内容与说话方式的分离 <span class="pill warm">2026-11-21 · 全文精读修订</span></h2>
   <p class="lead">前两章解决「何时出声」，Pandora（arXiv 2611.00617，<em>Words Caught in the Heart</em>）解决「怎么说」。它的场景是心理咨询来访者模拟，而它对 OIA 的启示远超心理场景：<strong>决策与语言实现必须分层</strong>。</p>
+  <p><span class="pill lav">全文级</span>本章已由摘要级升级为全文级：arXiv HTML 全文（约 370KB，含附录 A–I）读毕（笔记 <code>docs/sources/papers/notes/02-pandora.md</code>）。<strong>重要更正</strong>：<strong>官方代码为悬空声明</strong>——Appendix A.1 / I.3 / I.4 三处声称「the repository listed on the first page」，但全文 100+ 条外链逐一核对后<strong>无一指向 Pandora 自身代码</strong>，abs 页亦无 Comments/Code 链接；按「未在全文中找到官方代码」记录，本页据此不提供任何代码链接。</p>
 
   <h3>四段流水线：状态 → 归因 → 内容 → 表达</h3>
   <ul>
-    <li><strong>状态更新</strong>：心理与关系状态随治疗师的干预而更新——说话方式是状态的函数，不是固定的 persona 滤镜。</li>
-    <li><strong>主观归因与披露规划</strong>：构建主观评价（appraisals）与归因，并规划「回应什么、披露到什么程度」。</li>
-    <li><strong>独立表达规划器（separate expression planner）</strong>：把上述决策与<strong>「从该用户话语中蒸馏出的语言模式」</strong>结合起来，指导语言实现（linguistic realization）。</li>
-    <li><strong>评测</strong>：在四个咨询与动机式访谈数据集的 <strong>115 个案例</strong>上与<strong>五个基线</strong>比较；自报在表达相似度与总体披露对齐分数上取得被比系统中的最高<span class="self-report">自报·未复现</span>。</li>
-    <li><strong>四评人研究</strong>：对 <strong>45 个配对披露条目</strong>，Pandora 被判「像 AI」的评分为 <strong>7.2%</strong>，而基线为 <strong>43.3–67.2%</strong>、去掉表达规划后为 <strong>35.6%</strong><span class="self-report">自报·未复现</span>；消融同时降低表达相似度。</li>
+    <li><strong>状态更新（§3.1 + Appendix A.2/A.3）</strong>：<strong>纯规则、不需要单独的 LLM</strong>（原文明示）。状态是 <strong>12 个数值维度</strong>（distress / defensiveness / trust / perceived safety / disclosure readiness / insight …），干预类型缩放系数从 practical exchanges <strong>0.10</strong> 到 invalidation <strong>1.00</strong>；trust 与 perceived safety 额外用<strong>惯性加权：旧值 0.75 + 提议有界值 0.25</strong>，再加 field-specific 步长限制与值域约束——有界 + 惯性，避免状态跳变驱动过激输出。</li>
+    <li><strong>主观归因与披露规划（§3.2）</strong>：构建主观评价（appraisals）与归因，且归因是一条<strong>光谱</strong>（具体情境 → 试探性关系解释 → 底层信念），干预信号调节「解释被表述得多清楚」——<strong>同一份案例材料随交互支撑不同的主观叙述，即使来访者开始看清问题也保留不确定性</strong>。</li>
+    <li><strong>内容与策略（§3.3）</strong>：<code>C_t = (a_t, b_t, d_t, r_t)</code>；<strong>stance</strong>（hesitant / defensive / confused / emotionally overwhelmed / open）与 <strong>purpose</strong>（answer-first / brevity / confirm-or-refine / resist-or-clarify）<strong>分离</strong>——允许「犹豫但直接作答」这类组合。</li>
+    <li><strong>独立表达规划器（§3.4，式 2）</strong>：<code>L_t = F_realize(s_t, C_t, H_{t-1}, ρ)</code>——ρ 是<strong>离线蒸馏、跨轮复用</strong>的个体语言 profile（习惯性话语标记、hedging、情感显式度、句长分布、句数五件套）；在线逐轮指定 6 类槽位（speech style / pronoun focus / certainty / emotional explicitness / hedging / length 与句数目标）。分工纪律一句话：<strong>「Explicit rules organize the intermediate plans, and the LLM supplies their linguistic realization」</strong>——规则组织中间计划，LLM 只负责兑现成自然语言，且<strong>明令数值状态字段与内部 id 不得写进话语</strong>。</li>
+    <li><strong>评测</strong>：<strong>115 个案例</strong>（97 中文 + 18 英文；实为 97 PsyDial-D4 + 11 AnnoMI + 5 Eeyore + 2 ConsistentMI，构造漏斗 5,754→2,084→509→115）与<strong>五个基线</strong>比较；自报取得最高 expression similarity 与 overall disclosure-alignment<span class="self-report">自报·未复现</span>。</li>
+    <li><strong>四评人研究</strong>：对 <strong>45 个配对披露条目</strong>（L1–L3 每层 15 个），Pandora 被判「像 AI」的评分为 <strong>7.2%</strong>（13/180），而基线为 <strong>43.3–67.2%</strong>、去掉表达规划后为 <strong>35.6%</strong><span class="self-report">自报·未复现</span>。</li>
   </ul>
 
   <figure class="svg-figure">
     <div class="svg-card">
-      <!-- 图 3：表达规划分层 -->
+      <!-- 图 4：表达规划分层 -->
       <svg viewBox="0 0 780 430" width="780" height="430" role="img" aria-label="Pandora 表达规划分层">
         <rect x="0" y="0" width="780" height="430" rx="14" fill="#fbfaff" stroke="#e9d5ff"/>
         <text x="390" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#23212c">表达规划分层：说什么 · 对谁说 · 怎么说</text>
@@ -393,18 +506,26 @@
         <line x1="530" y1="132" x2="480" y2="160" stroke="#f43f5e" stroke-width="1.6" stroke-dasharray="5 4"/>
       </svg>
     </div>
-    <figcaption><b>图 3</b> Pandora 表达规划分层：状态更新 → 主观归因与披露规划 → 内容与策略规划 → 独立表达规划器做语言实现；右侧两个输入是「从该用户话语蒸馏的语言模式」与 self-opaque 纪律（不许说得比本人还清楚）。</figcaption>
+    <figcaption><b>图 4</b> Pandora 表达规划分层：状态更新 → 主观归因与披露规划 → 内容与策略规划 → 独立表达规划器做语言实现；右侧两个输入是「从该用户话语蒸馏的语言模式」与 self-opaque 纪律（不许说得比本人还清楚）。</figcaption>
   </figure>
 
   <div class="insight-box">
     <span class="tag-insight">洞察</span>
     <h4>「self-opaque」：不该说得比本人还清楚</h4>
-    <p>Pandora 的原始动机指出：来访者<strong>在能连贯描述之前就已感到痛苦</strong>，而基于临床案例描述的模拟器容易给出「比当事人当前理解更清楚」的解释——这被称为过度自我阐释的风险。翻译成 OIA 的语言：<strong>对用户自身状态的推断要克制、留白</strong>；系统可以组织信息，但不能替用户宣称「你其实是想……」。这是表达层的伦理约束，也是产品层的防抢话约束。</p>
-    <p class="cite">依据：papers-abstracts.md §2（2611.00617）；report.html §6.1 对应条目。</p>
+    <p>Pandora 的原始动机指出：来访者<strong>在能连贯描述之前就已感到痛苦</strong>，而基于临床案例描述的模拟器容易给出「比当事人当前理解更清楚」的解释——这被称为过度自我阐释的风险。诚实记录：<strong>「self-opaque」术语本身只出现在标题</strong>，正文 grep 零次定义，其操作化落点在 Appendix G 的 AI 味判定 rubric：负面线索 = 模板化总结、<strong>excessive completeness（把话说满）</strong>、泛泛的心理解释、亲密披露与权威解释声不匹配——<strong>「过度完整的自我解释」被直接等同于需要抑制的 AI-like 症状</strong>。翻译成 OIA 的语言：<strong>对用户自身状态的推断要克制、留白</strong>；系统可以组织信息，但不能替用户宣称「你其实是想……」。</p>
+    <p class="cite">依据：全文笔记 <code>notes/02-pandora.md</code> §3.5、§5.1；report.html §6.1 对应条目。</p>
   </div>
 
   <h3>为什么要把表达规划器做成「独立」组件</h3>
   <p><strong>为什么</strong>：如果风格与内容在同一个生成步骤里决定，风格就无法被单独评测、单独替换、单独做克制检查；消融实验也证明了这一拆分的必要性——去掉表达规划后「AI 味」评分从 7.2% 升到 35.6%<span class="self-report">自报·未复现</span>，说明贡献确实来自这一层，而不是来自更大的模型。<strong>代价</strong>：多一层就多一次推理调用与一次上下文拼接。<strong>替代方案</strong>：用系统提示词统一注入风格（更便宜），但只能得到全局风格，得不到「从该用户话语蒸馏」的个人风格。</p>
+
+  <table class="tbl">
+    <tr><th>消融读数（Table 2，Core115 均值）</th><th>Pandora w/o EP</th><th>Pandora</th><th>净贡献</th></tr>
+    <tr><td>GDS 披露对齐总分</td><td>0.828（已 &gt; 最强基线 0.664）</td><td><strong>0.871</strong></td><td>+0.043——<strong>披露结构的大幅领先主要来自上游</strong>（状态 + 归因 + 内容策略）</td></tr>
+    <tr><td>S<sub>style</sub> 去主题表达相似度</td><td>0.458（&lt; Consistent MI 的 0.512）</td><td><strong>0.566</strong></td><td><strong>+0.108</strong>——表达规划的净贡献集中在风格侧</td></tr>
+    <tr><td>AIR 人评 AI 味</td><td>35.6%</td><td><strong>7.2%</strong></td><td><strong>−28.3 点</strong>（case-bootstrap 95% CI 20.6–36.1）</td></tr>
+    <tr><td>Reference（真实对照）AIR</td><td colspan="3"><strong>4.4%</strong>（8/180）——但论文自认 reference 含重建/生成材料，「is not a uniformly verified human control」，Pandora 接近它 ≠ 接近已验证人类语音<span class="self-report">自报·未复现</span></td></tr>
+  </table>
 
   <div class="insight-box">
     <span class="tag-insight">洞察 · 跨文连接</span>
@@ -414,30 +535,34 @@
 
   <div class="critique-box">
     <span class="tag-insight">批判</span>
-    <h4>心理场景的结论不能直接外推</h4>
-    <p>Pandora 的 115 案例、45 条配对披露、四评人设计都服务于<strong>来访者模拟</strong>这一特定任务；「AI 味」由评人判定，主观性本身是度量的一部分。把它搬到日常助手场景时，真正可迁移的是<strong>结构</strong>（状态/归因/内容/表达四层 + 蒸馏风格输入），而不是那些百分比——本页所有数字均只在其原评测语境下成立。</p>
+    <h4>心理场景的结论不能直接外推——四条全文级限定</h4>
+    <p><strong>① 人评协议的独立性</strong>：四评者<strong>全部是本文共同作者</strong>（Appendix E.2 明示：2 名 counselor 各 &gt;1,000 小时咨询经验 + 2 名 synthetic-data 研究者）；<strong>source-reveal 使用未被记录、盲法无法完全确认</strong>；研究<strong>未获机构伦理审批或豁免认定</strong>。全部 360 候选的 mean pairwise agreement 62.9%，AI-like 正向一致率 53.7%（95% CI 49.4–58.1%）。</p>
+    <p><strong>② 数据偏科</strong>：115 案例中 <strong>97 个来自 PsyDial-D4 且是 RMRR 重建语料</strong>，仅 18 条英文；content-reduced 度量的 masking 词表偏中文，英文子集证据更粗。摘要的「four datasets」实为 97/11/5/2 的悬殊分布。</p>
+    <p><strong>③ 度量的错位</strong>：文本相似度冠军与人眼 AI 味冠军不是同一个——最强表达基线是 Consistent MI（0.512），感知 AI 味最强基线是 Interactive Agents（43.3%），论文自认二者互补；「最高 expression similarity + 最低 AI 味」的双冠军叙事掩盖了这一错位。</p>
+    <p><strong>④ 成本与工程口径</strong>：全部 LLM 调用用 <strong>gpt-5.4-mini</strong>，估算总 API 成本约 <strong>$600</strong>（Appendix A.6）；状态更新是<strong>纯规则无 LLM</strong>——把高频、廉价的部分从 LLM 里剥出来，正是 OIA 渲染管线可抄的结构。真正可迁移的是<strong>结构</strong>（状态/归因/内容/表达四层 + 蒸馏风格输入 + 规则组织计划），而不是那些百分比。</p>
   </div>
 </section>
 
 <!-- ============ 第 4 章 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 04</span>
-  <h2 class="chapter-title">Omni-IO：能力扩展发生在 harness 层</h2>
+  <h2 class="chapter-title">Omni-IO：能力扩展发生在 harness 层 <span class="pill warm">2026-11-21 · 全文精读修订</span></h2>
   <p class="lead">Omni-IO Skills（arXiv 2609.31847）的出发点是一个成本曲线问题：通用智能体会规划、推理、长程行动，但生产能力仍碎片化在文本、图像、音频、视频、文档、3D 资产与代码之间。<strong>把基础模型扩展到新模态，等于把能力增长绑定到昂贵的模型更新上</strong>；而拼装专家模型与工具，又留下过程、依赖、中间资产与跨轮修订如何协调的未解问题。</p>
+  <p><span class="pill lav">全文级</span>本章已由摘要级升级为全文级：arXiv HTML 全文（331KB，正文 7 节 + 2 附录）与开源仓库镜像 <code>docs/sources/repos/omni-io-skill/</code> 读毕（笔记 <code>docs/sources/papers/notes/03-omni-io.md</code>）；官方仓 <code>github.com/any2any-mllm/Omni-IO-Skill</code>（纯文本记录，全站离线不设外链；仓库内未找到 LICENSE 文件）。</p>
 
   <h3>四个组件与一张执行图</h3>
   <ul>
-    <li><strong>分层 Skills（hierarchical Skills）</strong>：即插即用的 Agent Harness 组件，把既有智能体变成 omni-native。</li>
-    <li><strong>标准化多模态执行接口</strong>：所有模态的读写走同一接口，后端可替换。</li>
-    <li><strong>依赖感知编排 + 持久资产注册表（persistent Asset Registry）</strong>：中间产出被登记，供下游与跨轮复用。</li>
-    <li><strong>Declare Execution Graph</strong>：多资产工作流的表示；<strong>独立操作并发调度，成功产出注册后跨轮复用，执行后端可替换</strong>。</li>
+    <li><strong>分层 Skills（§4.2）</strong>：三级<strong>按任务粒度而非模态划分</strong>——Atomic（19 个，最小可独立调用单元）/ Expert（2 个，面向单一最终交付物的完整生产流程）/ Scenario（6 个，一组关联交付物，<strong>19+2+6=27，可在仓库逐一点数核对</strong>）。声明式表示 <code>s = ⟨c_s, I_s, P_s, O_s, H_s⟩</code>（式 1）：<strong>输入/输出按语义描述、不绑定 provider</strong>，宿主无需加载底层实现即可检查与组合技能；高层技能递归展开直到步骤可执行。</li>
+    <li><strong>标准化多模态执行接口（§4.3/4.4）</strong>：上行 = task type + 自包含 prompt + 依赖已解析的资产输入；下行 = output type + 本地路径 + description + effective parameters，再转交注册表；每个 task type 绑定 tool/provider/model/credential/默认参数/fallback——<strong>换 provider 不改 Skill 描述与图结构</strong>。依赖专业模型的走 MCP，code/markdown 由宿主原生执行，<strong>两条路线遵守同一依赖语义</strong>。</li>
+    <li><strong>持久 Asset Registry（式 2）</strong>：八字段 <code>a = ⟨asset_id, type, subtype, path, description, params, turn_id, source_asset_id⟩</code>——<code>asset_id</code> 全局唯一且与物理路径解耦，<code>source_asset_id</code> 记修订血缘；<strong>append-only JSON、不原地更新、原子写 + 文件锁、只在写盘成功后才注册</strong>。</li>
+    <li><strong>Declare Execution Graph（§5.2/5.3）</strong>：<code>G=(V,E)</code>，节点（式 3）<code>v = ⟨id, type, prompt, params, depends_on⟩</code>；<strong>一条边同时是控制依赖与数据依赖</strong>；历史资产用 <code>asset_source</code> 节点——<strong>引用解析后即视为完成、不发任何生成调用</strong>。</li>
     <li><strong>规模自报</strong>：<strong>27 个 Skills 覆盖 38 个代表性任务，横跨 7 种工件模态与 4 个能力族（理解 / 生成 / 推理 / 检索）</strong><span class="self-report">自报·未复现</span>。</li>
-    <li><strong>UniM-90 自报</strong>：把 GPT-5.6 Sol 与 Claude Sonnet 5 的输入支持率从 <strong>40.00%</strong> 与 <strong>38.89%</strong> 提到 <strong>100%</strong>；相对 Semantic–Quality Coupled Score 从 <strong>26.99 → 74.94</strong>、<strong>27.82 → 77.78</strong>；Strict Structure Score 达到 <strong>100.00</strong> 与 <strong>99.78</strong><span class="self-report">自报·未复现</span>。</li>
+    <li><strong>UniM-90 自报（Table 3）</strong>：把 GPT-5.6 Sol 与 Claude Sonnet 5 的输入支持率 τ 从 <strong>40.00%</strong> 与 <strong>38.89%</strong> 提到 <strong>100%</strong>；相对 SQCS 从 <strong>26.99 → 74.94</strong>（+47.95）、<strong>27.82 → 77.78</strong>（+49.96）；Strict Structure Score 达到 <strong>100.00</strong> 与 <strong>99.78</strong>；τ=100% 时 abs 与 rel 两列相等<span class="self-report">自报·未复现</span>。</li>
   </ul>
 
   <figure class="svg-figure">
     <div class="svg-card">
-      <!-- 图 4：harness 层能力组合 -->
+      <!-- 图 5：harness 层能力组合 -->
       <svg viewBox="0 0 780 420" width="780" height="420" role="img" aria-label="Omni-IO harness 层能力组合">
         <rect x="0" y="0" width="780" height="420" rx="14" fill="#fbfaff" stroke="#e9d5ff"/>
         <text x="390" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#23212c">能力扩展的两条路：改模型 vs 改 harness</text>
@@ -486,42 +611,132 @@
         <text x="390" y="386" text-anchor="middle" font-size="12" font-weight="bold" fill="#7e22ce">核心主张：能力组合在 harness 层完成，推理核心保持不动</text>
       </svg>
     </div>
-    <figcaption><b>图 4</b> 能力扩展的两条路线：左为「扩展模型 / 拼专家模型」，能力增长绑定昂贵更新且协调问题未解；右为 Omni-IO 的 harness 层组合——Skills、执行接口与编排、执行图、资产注册表，中间宿主推理核心标注为「不改」。</figcaption>
+    <figcaption><b>图 5</b> 能力扩展的两条路线：左为「扩展模型 / 拼专家模型」，能力增长绑定昂贵更新且协调问题未解；右为 Omni-IO 的 harness 层组合——Skills、执行接口与编排、执行图、资产注册表，中间宿主推理核心标注为「不改」。</figcaption>
+  </figure>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <!-- 图 6：DEG Wave 调度示意 -->
+      <svg viewBox="0 0 780 400" width="780" height="400" role="img" aria-label="Declare Execution Graph 的 Wave 调度示意">
+        <rect x="0" y="0" width="780" height="400" rx="14" fill="#fbfaff" stroke="#e9d5ff"/>
+        <text x="390" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#23212c">DEG：节点五元组 · 依赖分波 · 失败语义</text>
+
+        <defs>
+          <marker id="p5-ar9" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#4a4657"/>
+          </marker>
+          <marker id="p5-ar10" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto">
+            <path d="M0,0 L9,4.5 L0,9 Z" fill="#f43f5e"/>
+          </marker>
+        </defs>
+
+        <!-- Wave 0 -->
+        <text x="70" y="72" font-size="12" font-weight="bold" fill="#7e22ce">Wave 0</text>
+        <rect x="130" y="50" width="230" height="56" rx="9" fill="#fef3c7" stroke="#f59e0b" stroke-width="2"/>
+        <text x="245" y="74" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#92400e">asset_source：产品参考图</text>
+        <text x="245" y="94" text-anchor="middle" font-size="10" fill="#78350f">引用解析即完成 · 不发生成调用</text>
+
+        <rect x="400" y="50" width="230" height="56" rx="9" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+        <text x="515" y="74" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#4c1d95">分析产品参考图</text>
+        <text x="515" y="94" text-anchor="middle" font-size="10" fill="#4c1d95">v = ⟨id, type, prompt, params, depends_on⟩</text>
+
+        <!-- Wave 1 -->
+        <text x="70" y="172" font-size="12" font-weight="bold" fill="#7e22ce">Wave 1</text>
+        <rect x="130" y="146" width="230" height="56" rx="9" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+        <text x="245" y="170" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#065f46">生成海报素材（并发）</text>
+        <text x="245" y="190" text-anchor="middle" font-size="10" fill="#047857">独立操作 · 同 Wave 并发派发</text>
+
+        <rect x="400" y="146" width="230" height="56" rx="9" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+        <text x="515" y="170" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#065f46">生成视频与音效（并发）</text>
+        <text x="515" y="190" text-anchor="middle" font-size="10" fill="#047857">调度由依赖决定 · 与模态无关</text>
+
+        <!-- Wave 2 -->
+        <text x="70" y="272" font-size="12" font-weight="bold" fill="#7e22ce">Wave 2</text>
+        <rect x="130" y="246" width="230" height="56" rx="9" fill="#eef2f7" stroke="#94a8c4" stroke-width="2"/>
+        <text x="245" y="270" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#223a5e">汇合：宣传视频 + 海报</text>
+        <text x="245" y="290" text-anchor="middle" font-size="10" fill="#41556f">image→video 注入 first_frame_url</text>
+
+        <!-- Wave 3 -->
+        <text x="70" y="352" font-size="12" font-weight="bold" fill="#7e22ce">Wave 3</text>
+        <rect x="130" y="326" width="230" height="52" rx="9" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+        <text x="245" y="348" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#4c1d95">组装落地页（code 节点）</text>
+        <text x="245" y="368" text-anchor="middle" font-size="10" fill="#4c1d95">宿主原生写盘后手动注册</text>
+
+        <!-- 箭头 -->
+        <line x1="360" y1="78" x2="398" y2="78" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+        <line x1="515" y1="106" x2="330" y2="144" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+        <line x1="515" y1="106" x2="515" y2="144" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+        <line x1="360" y1="174" x2="386" y2="244" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+        <line x1="630" y1="174" x2="420" y2="250" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+        <line x1="245" y1="302" x2="245" y2="324" stroke="#4a4657" stroke-width="2" marker-end="url(#p5-ar9)"/>
+
+        <!-- 失败语义 -->
+        <rect x="430" y="246" width="320" height="132" rx="10" fill="#ffe4e6" stroke="#f43f5e" stroke-width="2"/>
+        <text x="590" y="272" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#9f1239">失败语义 + 验证</text>
+        <text x="590" y="296" text-anchor="middle" font-size="10.5" fill="#9f1239">节点失败 → 后代取消 · 独立分支继续</text>
+        <text x="590" y="318" text-anchor="middle" font-size="10.5" fill="#9f1239">不回滚已完成节点的输出</text>
+        <text x="590" y="340" text-anchor="middle" font-size="10.5" fill="#9f1239">引用不可解析或成环 → 整图重建</text>
+        <text x="590" y="362" text-anchor="middle" font-size="10.5" fill="#9f1239">跨轮 asset_ref 物化为已完成源节点</text>
+        <line x1="430" y1="300" x2="362" y2="284" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#p5-ar10)"/>
+      </svg>
+    </div>
+    <figcaption><b>图 6</b> Declare Execution Graph 的 Wave 调度（按论文 Table 2 四 Wave 案例自绘）：节点为五元组，asset_source 解析即完成；同 Wave 并发、跨 Wave 等前驱；右侧红框为失败语义与两条图验证规则（引用可解析 + 无环，失败即整图重建）。</figcaption>
   </figure>
 
   <div class="insight-box">
     <span class="tag-insight">洞察</span>
     <h4>为什么「不改宿主推理核心」是关键主张</h4>
     <p>因为它是<strong>成本曲线的拐点</strong>：改模型的代价随模态数近似线性叠加且每次全量支付；改 harness 的代价是一次性搭建接口与注册表，之后每加一个 Skill 只是目录里多一行。更关键的是可逆性——harness 层的组件可以单独停用、替换后端、按场景裁剪，而一次错误的模型更新是不可分发的回滚。Omni-IO 自报把两家前沿模型的输入支持率拉到 100%<span class="self-report">自报·未复现</span>，正是用「同一宿主、只换 harness」的设置来证明这一点。</p>
-    <p class="cite">依据：papers-abstracts.md §3（2609.31847）；对位表见 report.html §7。</p>
+    <p class="cite">依据：全文笔记 <code>notes/03-omni-io.md</code> §3–§4（Table 3）；对位表见 report.html §7。</p>
   </div>
 
-  <h3>与 DSH 的对位表（report §7）</h3>
+  <h3>DEG 的完整语义：验证、Wave 与失败处理（摘要完全没提的部分）</h3>
+  <ul>
+    <li><strong>图验证两条检查（§5.3）</strong>：① 每个依赖引用都能解析到某节点或已注册资产；② 诱导子图无环。<strong>任一失败视为规划错误、整图重建</strong>而非带病提交。</li>
+    <li><strong>Wave 调度四规则</strong>：pending 且所有前驱已完成的节点构成下一个 Wave → 同 Wave 内节点互相独立、并发派发 → 无未解析前驱的进最早 Wave、其余进「所有直接前驱已完成」的第一个更晚 Wave → <strong>调度由声明的依赖决定、与模态无关</strong>（互不消费的图像与音频可并发，图像条件化的视频必须等参考图）。Table 2 的四 Wave 案例（产品推广）：分析参考图 →（海报素材 ∥ 视频与音效）→ 宣传视频与海报 → 落地页。</li>
+    <li><strong>失败语义（§5.3 p3）</strong>：节点失败 → 其 pending 后代被<strong>取消</strong>（输入不可得）、<strong>独立分支继续执行</strong>、记录每个节点终态、<strong>不回滚已完成节点的输出</strong>。</li>
+    <li><strong>跨轮复用</strong>：历史资产用 <code>asset_ref</code> 指代，其记录被<strong>物化为新 DEG 中已完成的源节点</strong>、立即对后代可用；修订创建新记录并保留 source 引用、<strong>绝不原地更新</strong>——「换落地页风格」时只有落地页任务重跑。</li>
+    <li><strong>注入而非口述</strong>：上游完成后按关系注入具名参数（image→video 注入 <code>first_frame_url</code>、image→3D 注入 <code>reference_image_url</code>），<strong>下游 prompt 不需要写路径</strong>；保守声明原则——缺依赖 = 下游读到空/旧资产 = 高成本错误，多余依赖只损失并行度 = 低成本，<strong>宁多勿漏</strong>。</li>
+  </ul>
+
+  <h3>代码三层的工程约束（仓库 <code>orchestration/*.md</code>）</h3>
+  <ul>
+    <li><strong>单向层级</strong>：Skill Index 写死 <code>Scenario → Expert → Atomic</code> 调用方向，Atomic 不得反调、专家不因覆盖某模态就过度触发。</li>
+    <li><strong>专家审查 ≤2 轮</strong>：交付前必检（海报用原生视觉、视频用 <code>understand_video</code>）→ 问题归到最小责任层 → 增量重做、复用已验证资产 → <strong>默认最多两轮</strong>，两轮后把决定权交回用户。</li>
+    <li><strong>禁原地更新、必换 asset_id</strong>：重生成 image 必得新 id，重组装前必须把 code 任务的 <code>depends_on</code> 与 <code>get_asset()</code> 解析路径改指新 id，<strong>否则会静默复用旧的失败资产</strong>（仓库显式警告）。</li>
+    <li><strong>五类中断、增量改 DAG</strong>：单任务局部改 / 全局风格改 / 加任务（<strong>增量插入现有 DAG、id 顺延</strong>）/ 取消任务（下游标 cancelled、不写注册表）/ 换话题（先确认、清空本轮 DAG、已完成资产保留）——本质是动态重规划而非整体丢弃。</li>
+    <li><strong>plug-and-play 的工程形态</strong>：宿主只需 symlink 技能目录 + 注册一个 stdio MCP（<code>skill.yaml</code>），不动宿主 prompt 与预算——这就是「不改推理核心」的落地动作。</li>
+  </ul>
+
+  <h3>与 DSH 的对位表（report §7 + 全文/代码级补充）</h3>
   <table class="tbl">
-    <tr><th>Omni-IO 概念</th><th>DSH 对应机制</th><th>OIA 动作</th></tr>
-    <tr><td>Hierarchical Skills</td><td><code>ctx.skills</code> 分层提供方注册表（项目 / 用户 / 随包 rank 优先级、调用策略）</td><td>做 <code>@omni/skill-omniio</code> 提供方：文本 / 图 / 音 / 视 / 文档 / 3D / 代码技能目录</td></tr>
+    <tr><th>Omni-IO 概念</th><th>DSH 对应机制</th><th>OIA 动作 / 关键差异</th></tr>
+    <tr><td>Hierarchical Skills（三层 + 单向调用）</td><td><code>ctx.skills</code> 分层提供方注册表（项目 / 用户 / 随包 rank 优先级、调用策略）</td><td>做 <code>@omni/skill-omniio</code> 提供方：文本 / 图 / 音 / 视 / 文档 / 3D / 代码技能目录；引入「三层粒度 + 单向调用 + 场景模板」作为组织约定</td></tr>
     <tr><td>标准化多模态执行接口</td><td><code>ctx.tools</code> 工具流水线 + attachments（二进制持久引用）+ spill（大输出外置）</td><td>统一 Artifact I/O 工具族（read/write/transcode，跨后端可替换）</td></tr>
-    <tr><td>Declare Execution Graph</td><td>workflow 引擎（<code>agent()/pipeline()/parallel()</code>，meta phases）</td><td>把多资产工作流写成 workflow 脚本模板，产出注册 attachments</td></tr>
-    <tr><td>Persistent Asset Registry</td><td><code>ctx.attachments</code> + storage-domain + 会话日志事件</td><td><code>@omni/asset-registry</code>：资产元数据（模态 / 血缘 / 复用状态）挂会话事件</td></tr>
-    <tr><td>可替换执行后端</td><td>能力 seam（Provider 可替换）</td><td>本地 ONNX / 远程 API / 专用模型三档 provider</td></tr>
+    <tr><td>Declare Execution Graph + Wave 调度</td><td>workflow 引擎（<code>agent()/pipeline()/parallel()</code>，meta phases）</td><td><strong>执行主体不同</strong>：DSH workflow 由脚本驱动子代理扇出；DEG 由宿主模型在 prompt 内拓扑分波、依赖同一回合并发工具调用——宜把 DEG 解析成 <code>parallel(thunks)</code> 落差，或保留 prompt 内调度并用 wave 语义校验</td></tr>
+    <tr><td>Persistent Asset Registry（<code>mcp/registry.py</code>，119 行）</td><td><code>ctx.attachments</code> + storage-domain + 会话日志事件</td><td><strong>方向相反、互补</strong>：DSH attachments 管输入侧内容寻址与呈现；Omni-IO registry 管输出侧业务索引（<code>turn_id</code> / description 语义检索 / <code>source_asset_id</code> 血缘 / 可枚举 <code>list_assets</code>）——OIA 需要后者这类「可枚举、可跨轮引用、带血缘」的生成物注册表</td></tr>
+    <tr><td>可替换执行后端 + <code>check_config()</code> 能力自检</td><td>能力 seam（Provider 可替换）</td><td>「一个 task type ↔ provider/model/key/默认参数/fallback」绑定表可直接作 OIA 的 provider 配置 schema；首任务先报 ready / missing（带价格）/ always_free 三栏</td></tr>
+    <tr><td>五类中断处理</td><td>会话 steering / 取消</td><td>「增量改 DAG 而非整体重规划」+ 语义相关性三值判定，可直接写进 OIA 编排 prompt</td></tr>
   </table>
 
   <div class="critique-box">
     <span class="tag-insight">批判</span>
-    <h4>27 个技能全量不适用于个人场景</h4>
-    <p>Omni-IO 的 38 任务 / 7 模态是<strong>通用基准覆盖</strong>导向的；对 Omni-Interaction 的个人场景（语音、屏幕、文档、音视频）而言，全量引入只会增加编排面与维护面。report.html §7 的结论是按场景裁剪首批 8–12 个技能。此外其全部评测数字为论文自报、未复现，且「输入支持率 100%」衡量的是接口层的可接入性，不等于输出质量同样满分（SSC 与严格结构分数才是质量侧的自报指标）。</p>
+    <h4>27 个技能不适用个人场景 + 证据强度三重限定</h4>
+    <p><strong>① 裁剪</strong>：Omni-IO 的 38 任务 / 7 模态是<strong>通用基准覆盖</strong>导向的；对 Omni-Interaction 的个人场景（语音、屏幕、文档、音视频）而言，全量引入只会增加编排面与维护面。report.html §7 的结论是按场景裁剪首批 8–12 个技能（优先免 key/本地能力：understand/image、generate/code+markdown、本地 Office 渲染、search/browse、Edge TTS，再上付费生成与专家/场景）。</p>
+    <p><strong>② 证据强度（全文级才确认）</strong>：全文 <strong>grep「ablat」零命中——没有消融实验</strong>，也无显著性/方差、成本延迟、人评与其它 harness 对照；主结果只证明「加了 harness 后 τ=100% 且分数更高」，<strong>不能区分增益来自技能、MCP 工具、provider 换代还是输出格式约束</strong>——这是论文最明显的证据缺口。此外 <strong>UniM-90 的实例选择协议附录在 HTML 中缺失</strong>（交叉引用为 <code>ltx_missing_label</code>），<strong>Appendix B 表体为空</strong>（38 个代表性任务的清单：未在全文中找到），Figure 2 渲染为 <code>{forest}</code> 错误块。</p>
+    <p><strong>③ 指标口径</strong>：「输入支持率 100%」衡量的是接口层的可接入性，不等于输出质量满分；质量侧自报指标是 <strong>SQCS / ICS / StS / LeS</strong>（论文只有这四个指标，<strong>并无名为 SSC 的指标</strong>——摘要级笔记曾误记，此处更正），且绝对分 <code>X^abs</code> 只在受支持子集上算、相对分 <code>X^rel = τ·X^abs</code> 才反映全测试集；τ=100% 后两列相等。所有数字论文自报、未复现。</p>
   </div>
 </section>
 
 <!-- ============ 第 5 章 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 05</span>
-  <h2 class="chapter-title">合成章：从四篇到一个干预策略器</h2>
-  <p class="lead">四篇论文各持一片拼图：ALIVE 给了<strong>动作</strong>，Coco 给了<strong>反馈闭环</strong>，Pandora 给了<strong>表达分层</strong>，Omni-IO 给了<strong>能力层的位置</strong>。合起来正好是 OIA 干预策略器的设计说明书。</p>
+  <h2 class="chapter-title">合成章：从四篇到一个干预策略器 <span class="pill warm">2026-11-21 · 全文精读修订</span></h2>
+  <p class="lead">四篇论文各持一片拼图：ALIVE 给了<strong>动作</strong>，Coco 给了<strong>反馈闭环</strong>，Pandora 给了<strong>表达分层</strong>，Omni-IO 给了<strong>能力层的位置</strong>。合起来正好是 OIA 干预策略器的设计说明书。全文级精读后，每片拼图的<strong>边界</strong>也更清楚了（见各章批判框）。</p>
 
   <figure class="svg-figure">
     <div class="svg-card">
-      <!-- 图 5：四篇合成干预策略器 -->
+      <!-- 图 7：四篇合成干预策略器 -->
       <svg viewBox="0 0 780 400" width="780" height="400" role="img" aria-label="四篇论文合成 OIA 干预策略器">
         <rect x="0" y="0" width="780" height="400" rx="14" fill="#fbfaff" stroke="#e9d5ff"/>
         <text x="390" y="30" text-anchor="middle" font-size="15" font-weight="bold" fill="#23212c">四篇 → 一个干预策略器</text>
@@ -580,16 +795,16 @@
         <text x="390" y="392" text-anchor="middle" font-size="11.5" fill="#787887">约束：每类触发每日至多 1 次 · 被忽略 N 次降频 · 全部落为可回放会话事件</text>
       </svg>
     </div>
-    <figcaption><b>图 5</b> 四篇合成 OIA 干预策略器：三态动作（ALIVE）+ 隐式反馈闭环（Coco）+ 表达分层与克制（Pandora）+ 能力层对位（Omni-IO），输出三态决策并受每日预算与可拒绝约束。</figcaption>
+    <figcaption><b>图 7</b> 四篇合成 OIA 干预策略器：三态动作（ALIVE）+ 隐式反馈闭环（Coco）+ 表达分层与克制（Pandora）+ 能力层对位（Omni-IO），输出三态决策并受每日预算与可拒绝约束。</figcaption>
   </figure>
 
   <h3>合成规则（逐条可溯源）</h3>
   <table class="tbl">
     <tr><th>设计条目</th><th>来源</th><th>OIA 落点</th></tr>
-    <tr><td>输出词汇表 = {RESPOND, SILENT_MONITOR, SEEK_FEEDBACK}，沉默是显式动作</td><td>ALIVE（2611.21366）三态决策 + report §5.2 转译</td><td><code>InterventionPolicy.state</code></td></tr>
-    <tr><td>隐式反馈四类进学习环；时机是可度量目标；观察者独立成 subagent</td><td>Coco（2611.13457）+ report §5.2 / §6.1</td><td>Observer subagent + 时机标签按周聚合</td></tr>
-    <tr><td>内容决策与语言风格渲染分离，风格从原话语料蒸馏；对用户状态的推断要留白</td><td>Pandora（2611.00617）+ report §6.1 / §6.3</td><td>StyleLexicon + 克制检查</td></tr>
-    <tr><td>能力扩展放 harness 层；执行图并发 + 资产跨轮复用 + 后端可替换</td><td>Omni-IO（2609.31847）+ report §7 对位表</td><td>skills / attachments / workflow 对位</td></tr>
+    <tr><td>输出词汇表 = {RESPOND, SILENT_MONITOR, SEEK_FEEDBACK}，沉默是显式动作</td><td>ALIVE（2611.21366）三态决策（全文级更正：实际控制为 R/S 二元 token + r/c/a 语义）+ report §5.2 转译</td><td><code>InterventionPolicy.state</code></td></tr>
+    <tr><td>隐式反馈四类 + 回溯扫描补负反馈；|score|&lt;0.45 不打标签；时机是可度量目标；观察者独立成 subagent</td><td>Coco（2611.13457）全文 §3.3 + 代码 <code>labeling.py</code> + report §5.2 / §6.1</td><td>Observer subagent + 时机标签按周聚合 + 灰区留白</td></tr>
+    <tr><td>内容决策与语言风格渲染分离，风格从原话语料蒸馏；规则组织中间计划、LLM 只做实现；对用户状态的推断要留白</td><td>Pandora（2611.00617）全文 §3.4/§3.5 + report §6.1 / §6.3</td><td>StyleLexicon + 克制检查</td></tr>
+    <tr><td>能力扩展放 harness 层；执行图验证/Wave/失败语义 + 资产 append-only 血缘 + 后端可替换</td><td>Omni-IO（2609.31847）全文 §4–§5 + <code>orchestration/*.md</code> + report §7 对位表</td><td>skills / attachments / workflow 对位</td></tr>
     <tr><td>反面清单：僵化、抢话、过度承诺</td><td>Pitch 门户三缺陷（report §5.2）</td><td>可跳过 / 换题 / 拒绝；一次一问；未回复不追问；措辞克制不承诺效果</td></tr>
   </table>
 
@@ -603,15 +818,15 @@
   <div class="critique-box">
     <span class="tag-insight">边界声明</span>
     <h4>本页不引用综述《Native Real-Time Interactive Omni Intelligence》</h4>
-    <p>该综述经 arXiv API 多组检索<strong>无结果</strong>（仅本地 PDF 未入库），因此本页<strong>不引用其任何论断</strong>——四篇论文的事实与数字全部且仅来自 <code>docs/sources/papers-abstracts.md</code> 的摘要原文。凡「自报」标记均为论文原报数据，本页未做任何独立复现。</p>
+    <p>该综述经 arXiv API 多组检索<strong>无结果</strong>（仅本地 PDF 未入库），因此本页<strong>不引用其任何论断</strong>。2026-11-21 全文精读修订后，四篇论文的事实与数字来自两条已核验的本地路径：<strong>摘要存档</strong> <code>docs/sources/papers-abstracts.md</code> + <strong>全文/代码精读笔记</strong> <code>docs/sources/papers/notes/*.md</code>（对应 arXiv HTML/PDF 全文存档与官方仓镜像）；两处冲突处（如 Coco 的 0.77 F1 疑点、Omni-IO 的 SSC 误记）以全文为准并在正文标明。凡「自报」标记均为论文原报数据，本页未做任何独立复现（代码实测仅 Coco 两仓的编译/单测，已单独标注）。</p>
   </div>
 </section>
 
 <!-- ============ 第 6 章：代码附录 ============ -->
 <section class="chapter">
   <span class="chapter-no">CHAPTER 06</span>
-  <h2 class="chapter-title">代码附录：策略器与观察者骨架</h2>
-  <p class="lead">以下两段伪代码均为<strong>示意性实现</strong>：基于本页四篇论文的结构综合而成，<strong>非任何论文原码</strong>，仅用于把设计意图写成可讨论的形状。</p>
+  <h2 class="chapter-title">代码附录：策略器、观察者与两段源码摘录</h2>
+  <p class="lead">前两段伪代码为<strong>示意性实现</strong>：基于本页四篇论文的结构综合而成，<strong>非任何论文原码</strong>。后两段为 <strong>[源码原文]</strong> 摘录：直接取自本地仓库镜像，用于对照「论文机制 → 代码落地」。</p>
 
   <div class="code-appendix">
 
@@ -695,6 +910,62 @@
         <span class="kw">return</span> macro_f1(y, yhat)        <span class="cm">// 论文自报 0.199→0.515 的口径参考</span>
 }</pre>
 
+    <div class="code-explain">
+      <h4>③ Coco 标签阈值规则（源码原文摘录）</h4>
+      <p>论文正文只说「从隐式反馈适应」；代码给出了真正的闸门——<strong>加权投票得分的绝对值低于 0.45 就直接返回 None、不产生任何标签</strong>。这是「宁留白、不喂噪声」的工程形态，也是回溯扫描等弱信号必须先过同一道阈值的原因。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">docs/sources/repos/coco/lib/personalization/personalization/labeling.py · label_moment()</span>
+      </div>
+    </div>
+<pre class="code-block"><span class="kw">def</span> <span class="fn">label_moment</span>(
+    moment: CandidateMoment,
+    signals: list[LabelSignal],
+    *,
+    min_abs_score: float = <span class="nu">0.45</span>,
+) -&gt; LabeledMoment | None:
+    <span class="st">"""Resolve a candidate moment into a binary support label."""</span>
+    score = <span class="fn">sum</span>(signal.<span class="fn">signed_score</span>() <span class="kw">for</span> signal <span class="kw">in</span> signals)
+    <span class="kw">if</span> <span class="fn">abs</span>(score) &lt; min_abs_score:
+        <span class="kw">return</span> <span class="kw">None</span>                     <span class="cm"># 阈值以下：丢弃，不打标签</span>
+
+    need_support = <span class="st">"yes"</span> <span class="kw">if</span> score &gt; <span class="nu">0</span> <span class="kw">else</span> <span class="st">"no"</span>
+    max_score = <span class="fn">sum</span>(<span class="fn">abs</span>(signal.confidence * signal.weight) <span class="kw">for</span> signal <span class="kw">in</span> signals)
+    confidence = <span class="fn">min</span>(<span class="nu">1.0</span>, <span class="fn">abs</span>(score) / <span class="fn">max</span>(max_score, <span class="nu">1e-6</span>))
+    sources = [signal.source <span class="kw">for</span> signal <span class="kw">in</span> signals <span class="kw">if</span> signal.polarity != <span class="st">"neutral"</span>]
+    rationale = <span class="fn">_label_rationale</span>(score, signals)   <span class="cm"># 取最强 3 条证据拼 rationale</span>
+    <span class="cm"># … 略：组装 LabeledMoment（need_support / label_confidence / label_sources …）</span></pre>
+
+    <div class="code-explain">
+      <h4>④ Omni-IO 资产注册表（源码原文摘录）</h4>
+      <p>「append-only、原子写、锁内重读」三件事在这 30 行里全部可见：<code>os.replace</code> 全平台原子替换、<code>fcntl</code> 文件锁串行化（Windows 无 fcntl 跳过锁但保留原子写，文档如实承认并发可能丢记录）、<strong>锁内重新 load 再写</strong>防止并发覆盖——这正是论文式 (2) 注册表的运行时形态。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">docs/sources/repos/omni-io-skill/mcp/registry.py · register()/_save()</span>
+      </div>
+    </div>
+<pre class="code-block"><span class="kw">def</span> <span class="fn">_save</span>(self, store: dict[str, dict]) -&gt; <span class="kw">None</span>:
+    <span class="st">"""Write atomically via a temporary file and rename to preserve history on crashes."""</span>
+    tmp_path = self._path.<span class="fn">with_suffix</span>(<span class="st">".json.tmp"</span>)
+    tmp_path.<span class="fn">write_text</span>(
+        <span class="fn">json</span>.<span class="fn">dumps</span>(store, ensure_ascii=<span class="kw">False</span>, indent=<span class="nu">2</span>),
+        encoding=<span class="st">"utf-8"</span>,
+    )
+    <span class="fn">os</span>.<span class="fn">replace</span>(tmp_path, self._path)      <span class="cm"># 全平台原子替换</span>
+
+<span class="cm"># register()：每次调用必得新 asset_id（无原地更新），锁内重读再写</span>
+asset_id = <span class="st">f"{prefix}_{uuid.uuid4().hex[:6]}"</span>
+<span class="kw">with</span> <span class="fn">open</span>(self._lock_path, <span class="st">"w"</span>) <span class="kw">as</span> lock_file:
+    <span class="kw">if</span> fcntl:
+        fcntl.<span class="fn">flock</span>(lock_file, fcntl.LOCK_EX)   <span class="cm"># Windows 跳过锁</span>
+    <span class="kw">try</span>:
+        store = self.<span class="fn">_load</span>()                    <span class="cm"># 锁内重读，防并发覆盖</span>
+        store[asset_id] = record
+        self.<span class="fn">_save</span>(store)
+    <span class="kw">finally</span>:
+        <span class="kw">if</span> fcntl:
+            fcntl.<span class="fn">flock</span>(lock_file, fcntl.LOCK_UN)</pre>
+
   </div>
 </section>
 
@@ -716,6 +987,13 @@
     <p><span class="rq-label">理论分析：</span>Pandora 的 StyleLexicon 与 Coco 的紧凑用户建模上下文其实是同一类对象：<strong>用户语言/行为画像</strong>。画像越精细，表达越「像本人」（Pandora 自报 AI 味 7.2%<span class="self-report">自报·未复现</span>正来自这种精细度），但它也越容易被反推身份——风格模型本质上是一个可查询的说话人指纹：给定足够多的生成样本，攻击者可以做说话人归因、甚至重建训练语料片段。于是存在一条清晰的权衡曲线：保真度 ↑ ⇒ 身份泄露面 ↑。更微妙的是 self-opaque 纪律带来的<strong>双重约束</strong>：既不能说得比本人更清楚（内容侧），也不能说得太像本人（风格侧的极端）——「像」与「不像」之间的可接受带宽本身就是隐私预算的函数。</p>
     <p><span class="rq-label">研究方向：</span>① 定义风格蒸馏的隐私度量（如从生成样本反推原说话人的成功率），与表达相似度一起画成 Pareto 前沿；② 研究分层保留策略——固定画像层不被召回污染、StyleLexicon 只存句式骨架不存内容实体（与第 4 篇「固定画像层」共识对齐）；③ 探索差分隐私式风格抽取（对高频句式计数加噪）在小语料下的可用性下界。</p>
   </div>
+
+  <div class="research-question">
+    <span class="tag-q">延伸问题 Q3</span>
+    <h4>主动性系统的「False-Alarm–Recall 权衡」是否存在与异常检测同构的理论边界？（全文精读新发现）</h4>
+    <p><span class="rq-label">理论分析：</span>Coco 全文 Table 1 给出了摘要级阅读看不到的代价曲线：适配后 macro F1 从 0.1861 升到 0.4832，但 <strong>False-Alarm 同步从 0.0468 涨到 0.2492</strong>——作者坦承这是「从近乎沉默转向主动干预」的必然代价。这与经典异常检测/医学筛查的 ROC 结构同构：主动干预本质上是一个<strong>二元分类器架在稀缺正例上</strong>（Table 4 显示正例占比随 persona 从 81% 到 3.5% 剧烈变化），任何提升 recall 的策略都会推高 FA。理论问题是：在<strong>正例先验 π 因人而异</strong>（Eager Hands-on 81% vs Learning-oriented 3.5%）且标签由同一策略产生（标签-策略耦合）的条件下，Bayes 最优阈值是否仍落在固定 F1 最大点，还是必须把<strong>打扰成本显式入损失</strong>（FA 的单位代价 ≫ FN 的单位代价时，F1 最优点系统性偏保守）才能得到可部署的策略。Coco 的 <code>|score|&lt;0.45 留白</code> 与 OIA 的「每日至多一次」其实都是在没有代价权重时的<strong>手工正则替代品</strong>。</p>
+    <p><span class="rq-label">研究方向：</span>① 把干预时机形式化为代价敏感学习问题，推导 Bayes 阈值随 (π, c<sub>FA</sub>, c<sub>FN</sub>) 的移动方向，并用 Table 1 三 persona 的 (P, R, FA) 三点做经验校验；② 设计「per-persona 代价自适应」：由 InteractionProfile 估计该用户的打扰弹性，动态调整阈值而非用全局 0.45；③ 评测协议上主张报告 <strong>PR 曲线而非单点 F1</strong>——因为正例先验跨 persona 差 23 倍，单点 F1 不可比；④ 复现检查：以论文引言「up to 0.77 F1」与 Table 1 最高 0.8609 的口径疑点为切入点，建立「自报数字 vs 表格单元格」的一致性核对清单（本页 Coco、Omni-IO 两章已发现两处此类不一致）。</p>
+  </div>
 </section>
 
 </div><!-- /.wrap -->
@@ -734,7 +1012,7 @@
       <a href="06-dsh-pi-oia.html"><span class="no">POST 06</span><span class="t">DSH × Pi × OIA</span><span class="d">基座机制与 OIA 总体设计（隔离红线）</span></a>
     </div>
     <p class="fine">
-      诚实声明：本页所有实验数字均为论文自报、未独立复现（页面内以「自报·未复现」标注）。四篇论文的事实与数字全部且仅来自 <code>docs/sources/papers-abstracts.md</code> 摘要原文，未虚构任何实验表格、图表或消融；代码附录两段均为示意性实现，非论文原码。综述《Native Real-Time Interactive Omni Intelligence: A Unified Framework》经 arXiv API 检索无结果（仅本地 PDF 未入库），故本页不引用其任何论断。所引 arXiv 编号：<br>
+      诚实声明：本页所有实验数字均为论文自报、未独立复现（页面内以「自报·未复现」标注）；2026-11-21 起四个论文章节为全文级精读，事实与数字来自本地已核验的摘要存档 <code>docs/sources/papers-abstracts.md</code> 与全文/代码精读笔记 <code>docs/sources/papers/notes/01|02|03|05-*.md</code>（对应 arXiv HTML/PDF 全文存档与官方仓库镜像），未虚构任何实验表格、图表或消融；代码附录前两段为示意性实现（非论文原码），后两段为 [源码原文] 摘录并附文件路径。综述《Native Real-Time Interactive Omni Intelligence: A Unified Framework》经 arXiv API 检索无结果（仅本地 PDF 未入库），故本页不引用其任何论断。所引 arXiv 编号：<br>
       · ALIVE: Making Streaming Video Models Interactive — arXiv:2611.21366<br>
       · Deep Personalization: Continuous Context Observation for Local Proactive Agents（Coco）— arXiv:2611.13457<br>
       · Words Caught in the Heart: Simulating Person-Specific Expression for Self-Opaque Clients in Psychotherapy（Pandora）— arXiv:2611.00617<br>

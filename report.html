@@ -81,7 +81,7 @@
     </p>
     <div class="pill-row">
       <span class="pill">13 份一手资料存档</span>
-      <span class="pill">5 篇论文精读</span>
+      <span class="pill">6 篇论文全文精读（含代码）</span>
       <span class="pill">DSH 内核文档核验</span>
       <span class="pill">隔离红线：不触碰当前 DSH 与五门户</span>
     </div>
@@ -425,6 +425,17 @@ HMR 重载、插件安装事务所影响。隔离同时也是产品要求：Omni
 <!-- ============================================================ -->
 <h2 id="s5">5 · 主题二 · Delegation / Proactivity / Consistency</h2>
 
+<div class="callout ok"><b>✅ 2026-11-21 更新：本主题全部论文已升级为「全文级」精读</b>
+五篇 arXiv 全文（HTML）+ ALIVE（PDF 16 页提取）已入库 <code>docs/sources/papers/</code>，逐篇精读笔记（公式原文 / 完整实验数字 / 代码研读 / 摘要级修正）见 <code>docs/sources/papers/notes/01–06.md</code>；五个论文代码仓已克隆（NVlabs/deep-personalization、collaborative-agents/coco、any2any-mllm/Omni-IO-Skill、ligeng0197/graphmemix、bytedance-seed/m3-agent、lijinzhao30/ALIVE）。要点修正：
+<ul>
+<li><b>ALIVE</b>：全文数字到手——IPIBench +18.7、FSI EDP/FDP 52.8/54.0（vs GPT-6 Astra 10.6/23.9）、消融 39.4→49.3→51.5→54.0；官方仓 <code>github.com/lijinzhao30/ALIVE</code>。</li>
+<li><b>Deep Personalization</b>：隐式信号回溯扫描与 |score|&lt;0.45 不打标签等机制只在附录/代码里；适配后 False-Alarm 0.0468→0.2492；执行走云端「reduces but does not eliminate」隐私边界；代码实测 43/47 pytest 通过（4 失败均为 Windows 假设）。</li>
+<li><b>Pandora</b>：官方代码为「悬空声明」（三处声称有仓、100+ 外链无一指向）；披露结构领先主要来自上游，表达规划净贡献在风格侧；四评者全为共同作者、盲法无法确认。</li>
+<li><b>Omni-IO</b>：全文<b>无消融</b>、UniM-90 抽样协议缺失——40%→100% 等数字可核验性弱一档；DEG 形式化与代码三层工程约束（禁原地更新等）为增量。</li>
+<li><b>M3-Agent</b>：RL 只对 control 成立（memorization 纯 SFT）；<b>三处数字口径不一</b>（v1 全文 6.7% vs README 8.2% vs 实测 annotations）——引用时必须标注。</li>
+</ul>
+</div>
+
 <h3>5.1 DSH 原生机制盘点（已核验内核文档）</h3>
 <table>
 <tr><th>轴</th><th>DSH 机制</th><th>对 OIA 的意义</th></tr>
@@ -643,7 +654,7 @@ OIA 文案与策略必须允许随时跳过/换题/拒绝，一次只问一件�
 <b>风险登记</b>
 <ul>
 <li><b>基准数字均自报</b>：本报告引用的所有提升数字来自各项目 README/论文摘要，M5 必须自测后才可对外引用。</li>
-<li><b>综述 PDF 未获取全文</b>：《Native Real-Time Interactive Omni Intelligence: A Unified Framework》仅用户本地有 PDF，arXiv/公开检索不到；本报告未引用其论断。<b>待办 R1</b>：请把 PDF 放入 <code>omni-interaction-agent/docs/sources/</code>，下一轮精读后回填 §5「统框架」一节。</li>
+<li><b>综述 PDF 未获取全文</b>：《Native Real-Time Interactive Omni Intelligence: A Unified Framework》仅用户本地有 PDF，arXiv/公开检索不到；本报告未引用其论断。<b>待办 R1</b>：请把 PDF 放入 <code>omni-interaction-agent/docs/sources/</code>，下一轮精读后回填 §5「统框架」一节。<b>其余 6 篇论文已于 2026-11-21 全部全文精读完毕</b>（含代码研读，见 <code>docs/sources/papers/notes/</code>），本报告与博客相关章节已按全文修订。</li>
 <li><b>许可边界</b>：rolling-memory 为 PolyForm 非商用（思路可用，代码不并入）；TencentDB-Agent-Memory（MIT）、MemoraX（MIT）、Hy-Memory（Apache-2.0）、M3-Agent（其仓库许可）、续忆（MIT）可再分发，集成前逐一复核 LICENSE。</li>
 <li><b>DSH 版本演进快</b>：当前安装为 0.2.2-rc.3 系；二开线固定 upstream 版本，按 upgrade-guide 迁移，禁止漂移跟踪 unstable。</li>
 <li><b>隐私</b>：Observer 采集桌面活动必须默认本地、选择性保留、可见可关（Coco 边界 + 续忆「嘴严」测试纳入评测）。</li>
@@ -655,7 +666,7 @@ R1 精读综述 PDF 并回填 §5 ｜ R2 M1 开工：独立 DSH_HOME 与 <code>@
 
 <!-- ============================================================ -->
 <h2 id="s11">11 · 参考资料</h2>
-<p class="small">全部一手材料已存档于 <code>omni-interaction-agent/docs/sources/</code>（13 份 README/文档快照，2026-11-21 抓取）。</p>
+<p class="small">全部一手材料已存档于 <code>omni-interaction-agent/docs/sources/</code>（13 份 README/文档快照，2026-11-21 抓取）；<b>六篇论文全文与逐篇精读笔记</b>见 <code>docs/sources/papers/</code>（HTML/PDF 原文）与 <code>docs/sources/papers/notes/01–06.md</code>（公式 / 完整数字 / 代码研读 / 摘要级修正），论文代码仓见 <code>docs/sources/repos/</code>（本地研读用，不入库）。</p>
 <table>
 <tr><th>类别</th><th>条目</th><th>链接</th></tr>
 <tr><td rowspan="5">记忆 · 工程</td><td>TencentDB-Agent-Memory（+DSH 适配文档）</td><td><a href="https://github.com/TencentCloud/TencentDB-Agent-Memory">github.com/TencentCloud/TencentDB-Agent-Memory</a></td></tr>

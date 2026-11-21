@@ -51,3 +51,4 @@
 | v0.2 | 2026-11-21 | 7 仓库源码实读，产出代码级借鉴清单（精确到文件/函数/公式） |
 | v1.0 | 2026-11-21 | **调研博客建成**（blog/ 七页离线站，paper-reading-blog skill v5 规范，全部验收门控通过） |
 | v1.1 | 2026-11-21 | 推送 GitHub 公开仓库 `Yetbye/Omni-Interaction-Agent` 并部署 GitHub Pages（根重定向 → blog/；第三方克隆 `docs/sources/repos/` 不入库） |
+| v1.2 | 2026-11-21 | **六篇论文全文精读 + 代码研读**（5 篇 arXiv HTML + ALIVE PDF 提取；6 个论文代码仓克隆）；逐篇笔记 `docs/sources/papers/notes/01–06.md`；博客 03/05/06 页按全文修订（GraphMemix 目标函数与消融、新增 M3-Agent 章、ALIVE/Coco/Pandora/Omni-IO 全部升级并修正摘要级错误）；报告 §5 增补精读状态 |

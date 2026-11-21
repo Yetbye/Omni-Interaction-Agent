@@ -435,12 +435,13 @@
 <section class="chapter" id="ch4">
   <span class="chapter-no">CHAPTER 04</span>
   <h2 class="chapter-title">GraphMemix：召回是预算化证据选择</h2>
+  <p><span class="pill warm">2026-11-21 · 全文精读修订</span></p>
 
-  <p class="lead">前三章讲记忆怎么被写好、长好；GraphMemix（arXiv 2608.26983v1）讲另一半——<b>被问到时，怎么从记忆里挑出一个「证据包」</b>。以下为本地存档 <code>docs/sources/papers-abstracts.md</code> §4 的摘要原文引用：</p>
+  <p class="lead">前三章讲记忆怎么被写好、长好；GraphMemix（arXiv 2608.26983v1）讲另一半——<b>被问到时，怎么从记忆里挑出一个「证据包」</b>。本章已升级为<b>全文级</b>（本地全文 HTML + 配套代码实读，笔记见 <code>docs/sources/papers/notes/04-graphmemix.md</code>）；先照录摘要骨架，再逐条补上摘要里没有的增量：</p>
 
   <blockquote lang="en">
   "Organizing long-term memory for multimodal agents remains challenging because existing methods either suffer from <b>expensive question-agnostic offline summaries</b> or <b>naive embedding similarity matching</b> that introduces incomplete and redundant context. To address this issue, we propose GraphMemix, a combinatorial-optimization graph memory framework that models memory organization as <b>query-aware evidence-forest construction</b>. Specifically, our method consists of three key components: (1) <b>candidate graph construction</b>, which expands multi-view seed memories through schema and semantic relations to obtain query-aware original context; (2) <b>evidence utility and activation costs</b>, which decouples direct memory support from anchor-conditioned relation verification to suppress redundant or conflicting information; and (3) <b>forest optimization</b>, which jointly selects a forest-format memory context under a maximum evidence budget and its reliable relational structure. By organizing memory into a query-relevant subgraph, the method avoids substantial lifecycle cost and recovers <b>low-similarity complementary evidence</b>. Experimental results across four long-term multimodal memory benchmarks demonstrate significant improvements with different foundation models and establish a new <b>Pareto frontier between accuracy and lifecycle cost</b>."
-  <span style="font-size:.82em;color:#787887">—— papers-abstracts.md §4 摘要原文（本页唯一引用源，未读全文）</span>
+  <span style="font-size:.82em;color:#787887">—— papers-abstracts.md §4 摘要原文（已全文精读，此段仍作骨架照录）</span>
   </blockquote>
 
   <h3>三组件拆解</h3>
@@ -514,44 +515,271 @@
     <tr><td><b>朴素向量 Top-K</b></td><td>相似度 ≠ 证据力：上下文不完整、冗余重复、互相冲突；低相似的互补证据被埋掉</td><td>效用与激活成本解耦 + 森林优化抑制冗余冲突，恢复 low-similarity complementary evidence（摘要原文）</td></tr>
   </table>
 
-  <p><b>低相似互补证据为什么重要：</b>用户用模糊描述找旧事时（「我之前是不是说过那个……」），最相关的那条记忆往往措辞与查询毫不相似——它描述的是同一事件的<b>另一个侧面</b>。纯余弦相似度对此无解；关系边（同锚点、同实体、同时间）提供了相似度之外的第二条通路。这正是「图」在这套方法里存在的理由，而不是装饰。</p>
+  <p><b>低相似互补证据为什么重要：</b>用户用模糊描述找旧事时（「我之前是不是说过那个……」），最相关的那条记忆往往措辞与查询毫不相似——它描述的是同一事件的<b>另一个侧面</b>。纯余弦相似度对此无解；关系边（同锚点、同实体、同时间）提供了相似度之外的第二条通路。这正是「图」在这套方法里存在的理由，而不是装饰。全文的恢复率实验（自报）：在「候选图里确实有 gold」的合格问题上，GraphMemix 恢复了 <b>40.08–68.48%</b>，这些被找回的低排名记忆占全部保留 gold 对的 <b>12.01–19.58%</b><span class="self-report">自报·未复现</span>——注意分母是合格问题，不是端到端 recall。</p>
 
   <div class="insight-box">
     <span class="tag-insight">洞察</span>
     <h4>召回的正确形式是带约束的组合优化</h4>
-    <p>Top-K 的隐含假设是「分数可加、彼此独立」——于是取前 K 个即可。但证据进入同一注入窗口后会<b>互相挤占、互相印证或互相矛盾</b>，独立性假设崩塌。GraphMemix 把它改写成 <b>max 效用 s.t. 预算约束</b> 的组合问题：每条候选带效用与激活成本，选的是一个结构（森林），不是一段列表。这个形式化换来的直接收益，就是能明确回答「为什么这条相似度低却该进」——因为它补了一条没人覆盖的关系边。</p>
-    <p class="cite">出处：papers-abstracts.md §4 摘要原文；本段为形式化转述，非原文公式</p>
+    <p>Top-K 的隐含假设是「分数可加、彼此独立」——于是取前 K 个即可。但证据进入同一注入窗口后会<b>互相挤占、互相印证或互相矛盾</b>，独立性假设崩塌。GraphMemix 把它改写成 <b>max 效用 s.t. 约束</b> 的组合问题：每条候选带效用与激活成本，选的是一个结构（森林），不是一段列表。这个形式化换来的直接收益，就是能明确回答「为什么这条相似度低却该进」——因为它补了一条没人覆盖的关系边。</p>
+    <p class="cite">出处：notes/04-graphmemix.md §3（式 1–13）· 论文 §3.2/§3.5</p>
   </div>
+
+  <h3>优化目标的真实形态：式(11) 与式(12)</h3>
+  <p>摘要只说「under a maximum evidence budget」，全文给出的是三段式目标——<b>节点效用 − 边激活成本 − 开链成本</b>，预算体现为基数硬约束 <code>|S| ≤ K</code>（实验 K=10）：</p>
 
   <div class="math">
-    max<sub>F ⊆ G(q)</sub> <span class="op">Σ</span><sub>e∈F</sub> u(e) <span class="op">−</span> <span class="op">Σ</span><sub>e∈F</sub> λ·c(e)
-    <span class="op">s.t.</span> <span class="op">Σ</span><sub>e∈F</sub> cost(e) <span class="op">≤</span> B<sub>evidence</sub>
+    (S<sub>q</sub><sup>★</sup>, F<sub>q</sub><sup>★</sup>) <span class="op">=</span> argmax<sub>S,F</sub>
+    <span class="op">[</span> <span class="op">Σ</span><sub>i∈S</sub> p<sub>i</sub>(q)
+    <span class="op">−</span> λ <span class="op">Σ</span><sub>e∈F</sub> c<sub>e</sub>(q)
+    <span class="op">−</span> κ·m(S, F) <span class="op">]</span>
+    <span class="op">s.t.</span> S ⊆ C<sub>q</sub>, |S| ≤ K, F ⊆ E<sub>q</sub><sup>trust</sup>[S]
   </div>
-  <div class="math-note">本页为便于对照而写的整理式（效用/成本/预算三要素取自摘要原文措辞，λ 为对偶价格的引入属本页推演）</div>
+  <div class="math-note">式(11)：m(S,F) 为森林连通分量数（每条分量 = 一条需独立解读的证据链）；λ=0.1，proposal 阶段 κ<sub>prop</sub>=0.2、细化阶段 κ=0.12</div>
+
+  <p>关键化简（式 12）：边成本非负、删环不降目标 ⇒ 最优 F 可取为森林 ⇒ <code>m(S,F) = |S| − |F|</code>。定义结构增益 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>e</sub>(q) = κ − λ·c<sub>e</sub>(q)</span>，目标等价于：</p>
+
+  <div class="math">
+    <span class="op">Σ</span><sub>i∈S</sub> <span class="op">(</span> p<sub>i</sub>(q) <span class="op">−</span> κ <span class="op">)</span>
+    <span class="op">+</span> <span class="op">Σ</span><sub>e∈F</sub> B<sub>e</sub>(q)
+  </div>
+  <div class="math-note">式(12)：<b>自适应基数来自 κ，而不是逐节点罚项</b>——孤立记忆必须「自证开得起一条独立链」（贡献 p<sub>i</sub>−κ）才保留；经正增益边并入已有分量则找回一份开链成本</div>
+
+  <p><b>为什么（设计 rationale）：</b>若只做 Top-K，低效用但成对互补的证据会被各自计费地挤掉，而孤零零的高分证据霸占名额。κ 把「证据链的数量」变成显式价格：<b>受保护的是可信的互补证据，被删的是低效用的孤立证据</b>——这是「预算给谁」问题在目标函数层面的回答，而不是事后的多样性重排。</p>
+  <p><b>代价：</b>κ、λ 是两个必须标定的旋钮（论文跨四基准冻结这组值）；κ 过大把成对证据也拆散，过小则分量数爆炸、reader 收到一堆互不相干的短链。</p>
+
+  <h3>两阶段确定性求解：6 次 swap 就饱和</h3>
+  <ol>
+    <li><b>阶段一（固定基数 proposal）</b>：top-K 节点效用初始化，每次评估一个「已选↔未选」的 1-swap，<b>对每个提案节点集用 Kruskal 精确重算最大权森林</b>，终止于确定性的 1-swap 局部最优。</li>
+    <li><b>阶段二（冻结 proposal 内的变基数精确解）</b>：对正增益边跑 Kruskal 得 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">F<sub>S</sub><sup>★</sup></span>，再枚举冻结提案的全部非空子集 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">2<sup>K</sup>−1 = 1023</span>（K=10）取全局最优；平局先偏好更少记忆、再偏好更早的 proposal 排名。</li>
+  </ol>
+  <p>实证（6,592 个评测问题的求解审计）<span class="self-report">自报·未复现</span>：外层 1-swap <b>前几次被接受的交换就贡献了绝大部分均值目标改进，6 次之后变化可忽略</b>——「有界 proposal 只需少量交换即可被修正，而每次交换都用精确 Kruskal 评估其最优诱导森林」。诚实边界：论文<b>只声称「冻结 proposal 内精确」「每个被考虑节点集的森林精确」</b>，没有给运行时间上界、近似比或收敛定理。</p>
+
+  <h3>消融排序是反直觉的：最大的功臣不是图优化</h3>
+  <table class="tbl">
+    <tr><th>增量配置</th><th>宏平均 J.Acc</th><th>本级增量</th></tr>
+    <tr><td>(a) 纯 Embedding Top-K</td><td>49.20</td><td>—</td></tr>
+    <tr><td>(b) + 多视图检索</td><td>53.60</td><td><b>+4.40</b></td></tr>
+    <tr><td>(c) + 节点验证器</td><td>58.80</td><td><b>+5.20（最大单项）</b></td></tr>
+    <tr><td>(d) + ECV 逐点加分</td><td>59.70</td><td>+0.90</td></tr>
+    <tr><td>(e) + 森林优化（完整）</td><td><b>61.55</b></td><td><b>+1.85</b></td></tr>
+  </table>
+  <p>全部为论文自报 <span class="self-report">自报·未复现</span>。排序是 <b>节点验证器 +5.20 &gt; 多视图 +4.40 &gt; 森林优化 +1.85 &gt; ECV 逐点 +0.90</b>——<b>把证据作为结构化集合来选择的森林优化只占最后一小段</b>。论文自己也承认，这一段差值的价值要靠细粒度实验才看得清。</p>
+
+  <p><b>ECV 的真实作用是「剪边」而非「加边」：</b>固定边变体给每条合格 schema 边统一 0.99 的查询无关可靠性，每题选中 <b>6–7 条</b>边；ECV 角色门控后每题只剩 <b>0.25–1.47 条</b>边，同时 Hit@10 全面提升（ATM 84.20→87.74、Gallery 94.76→96.59、MemEye 85.34→88.89、H2H 89.46→95.06，均自报）<span class="self-report">自报·未复现</span>。<b>抑制无条件传播比「增加结构」更贴近数据</b>——这推翻了「图方法靠多连边涨分」的直觉。</p>
+
+  <p><b>受控证据集选择（冻结 M=48 候选、同样返回 K=10 条）：</b>通用多样性/覆盖方法相对纯节点 Top-K <b>零增益或负增益</b>——MMR 56.84 vs 56.87、facility 56.80、DPP 52.69（负）；ECV 逐点 57.26；<b>森林选择 57.74</b>，同一目标换成前向贪心只有 57.29（确定性 refinement 优于贪心）。净低排名 gold 恢复（自报）：Node 0、MMR −6、DPP −36、<b>Forest Proposal +43</b>（H2H 单独 +31）<span class="self-report">自报·未复现</span>——「森林不只是通用多样性先验，它把已验证的关系路径转化为可测量的低排名证据恢复」。</p>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 5：消融排序与 ECV 剪边 -->
+      <svg viewBox="0 0 760 300" role="img" aria-label="GraphMemix 消融增量排序与 ECV 剪边效果">
+        <!-- 左：增量条形 -->
+        <text x="40" y="34" font-size="13.5" fill="#7e22ce" font-weight="700" font-family="'Noto Serif SC',serif">消融增量（宏平均 J.Acc，自报）</text>
+        <g font-size="11.5" fill="#4a4657" font-family="'Noto Serif SC',serif">
+          <text x="40" y="76">节点验证器</text>
+          <text x="40" y="122">多视图检索</text>
+          <text x="40" y="168">森林优化</text>
+          <text x="40" y="214">ECV 逐点加分</text>
+        </g>
+        <!-- 条：宽 = 值*40 -->
+        <g>
+          <rect x="140" y="62" width="208" height="22" rx="5" fill="#a855f7"/>
+          <rect x="140" y="108" width="176" height="22" rx="5" fill="#c084fc"/>
+          <rect x="140" y="154" width="74" height="22" rx="5" fill="#d9b45b"/>
+          <rect x="140" y="200" width="36" height="22" rx="5" fill="#d1fae5"/>
+        </g>
+        <g font-size="12" font-weight="700" font-family="'Noto Serif SC',serif">
+          <text x="356" y="78" fill="#7e22ce">+5.20</text>
+          <text x="324" y="124" fill="#7e22ce">+4.40</text>
+          <text x="222" y="170" fill="#8a6508">+1.85</text>
+          <text x="184" y="216" fill="#065f46">+0.90</text>
+        </g>
+        <line x1="140" y1="50" x2="140" y2="236" stroke="#23212c" stroke-width="1.6"/>
+
+        <!-- 右：ECV 剪边 -->
+        <text x="470" y="34" font-size="13.5" fill="#8a6508" font-weight="700" font-family="'Noto Serif SC',serif">ECV 的真实作用：剪边</text>
+        <rect x="470" y="56" width="250" height="76" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"/>
+        <text x="486" y="78" font-size="11.5" fill="#4a4657" font-family="'Noto Serif SC',serif">固定边（无角色门控）：</text>
+        <g stroke="#f43f5e" stroke-width="2">
+          <path d="M490,100 L700,92 M490,112 L700,120 M490,106 L660,104 M510,96 L680,114 M500,118 L690,100"/>
+        </g>
+        <text x="712" y="108" font-size="11.5" fill="#9f1239" text-anchor="end" font-family="'Noto Serif SC',serif">6–7 条/题</text>
+
+        <rect x="470" y="150" width="250" height="76" rx="10" fill="#ffffff" stroke="#b8860b" stroke-width="2"/>
+        <text x="486" y="172" font-size="11.5" fill="#8a6508" font-family="'Noto Serif SC',serif">ECV 角色门控后：</text>
+        <g stroke="#10b981" stroke-width="2.4">
+          <path d="M560,200 L640,196"/>
+        </g>
+        <text x="712" y="204" font-size="11.5" fill="#065f46" text-anchor="end" font-family="'Noto Serif SC',serif">0.25–1.47 条/题</text>
+        <text x="595" y="252" font-size="11.5" fill="#065f46" text-anchor="middle" font-family="'Noto Serif SC',serif">边数 ↓ 约 90%，Hit@10 四基准全升</text>
+
+        <line x1="470" y1="140" x2="720" y2="140" stroke="#b8860b" stroke-width="2" stroke-dasharray="6 5"/>
+        <polygon points="730,246 716,240 716,252" fill="#10b981"/>
+        <path d="M726,246 L726,214" stroke="#10b981" stroke-width="2.4"/>
+        <text x="40" y="266" font-size="11" fill="#787887" font-family="'Noto Serif SC',serif">条宽 = 增量幅度；四基准宏平均，单点数值、无方差报告</text>
+      </svg>
+    </div>
+    <figcaption><b>图 5</b>　全文消融的两个反直觉事实：左，增量排序为「节点验证器 +5.20 &gt; 多视图 +4.40 &gt; 森林优化 +1.85 &gt; ECV 逐点 +0.90」；右，ECV 的真实作用是<b>剪边</b>——每题选中边数从 6–7 条压到 0.25–1.47 条，Hit@10 反而四基准全升（均为论文自报）。</figcaption>
+  </div>
+
+  <h3>lifecycle cost 的真实定义：一次 digest + 一次答题的估计耗时</h3>
+  <p>摘要里的「lifecycle cost」既不是 FLOPs 也不是 token 计数——全文 §4.3 的定义是：<b>把全部记忆 digest 一遍 + 把全部问题各答一遍的估计 wall-clock</b>。ATM-Bench（11,034 条记忆 + 1,044 题）上相对基线缩短 <b>1.78×（vs A-MEM）/ 4.27×（vs VimRAG）/ 4.74×（vs LightMem）</b>；另三基准估计 2.19 h / 2.71 h / 3.44 h <span class="self-report">自报·未复现</span>。诚实边界：这是<b>估计</b>耗时，<b>硬件/端点/并发配置未在全文中找到</b>；Pareto 前沿只相对「被比较的这几个方法」成立，不能外推到所有记忆系统。</p>
+
+  <h3>代码比论文更透明的三处</h3>
+  <ul>
+    <li><b>效用标定系数来自 dev fold 的 gold 拟合</b>：论文 A.2 只说「不按基准重调」，而 <code>configs/release/calibration/shared_dev.json</code> 明写协议 <code>graphmemix-shared-logistic-devfold-1.0</code>、机器精确系数 a=4.054056101800787、b=0.22537987366704051、c=−3.711336391577528（62,988 候选 / 8,491 正例 / 患病率 13.48%），并带 warning：「gold evidence 只用在 SHA256 fold 0 的开发问题上」——<b>标定阶段接触过 gold 这一点，论文正文没有明说</b>。</li>
+    <li><b>论文没写的精确 MILP 求解器</b>：<code>scripts/probe_graphmemix_pcsf.py</code> 的 <code>solve_forest()</code> 用 <code>scipy.optimize.milp</code> 解 prize-collecting Steiner forest 形式（固定 <code>Σx = k</code>、根弧、单商品流，<code>time_limit=5.0, mip_rel_gap=0.0</code>），论文只讲「1-swap + Kruskal」。两者数学同源，MILP 是小规模的离线精确对照。</li>
+    <li><b>「精确」的范围被代码标注得更保守</b>：<code>exact_subset()</code> 的元数据诚实写着 <code>exact_scope: "frozen_input_topk"</code>、<code>globally_exact_over_candidate_pool: false</code>——全局最优<b>只在冻结的 K=10 proposal 子集内成立</b>；候选图之外、以及阶段一的 1-swap 搜索都不精确。</li>
+  </ul>
+  <p>代码仓库（纯文本，非链接）：<code>github.com/ligeng0197/graphmemix</code>（pyproject 声明 MIT）。</p>
 
   <h3>自报结果与批判</h3>
-  <p>摘要称在<b>四个长期多模态记忆基准</b>上、跨不同基座模型均取得显著改善，并在准确率与生命周期成本之间建立了新的 Pareto 前沿 <span class="self-report">自报·未复现</span>——本页只存档摘要，未读全文、未复现任何数字，不引用任何图表。</p>
+  <p>论文自报：Qwen3-VL-8B 上四基准宏平均 <b>49.80% → 61.55%（+11.75pp）</b>、Gemma 4 12B 上 67.42%，两个 backbone 的 Judge Accuracy 全胜，并在准确率与生命周期成本之间建立了新的 Pareto 前沿 <span class="self-report">自报·未复现</span>——本页已全文精读（含代码实读），但<b>未复现任何数字、不引用论文任何图表</b>，插图全部自绘。</p>
 
-  <p><b>批判一：组合优化的生命周期成本。</b>摘要批评离线摘要「expensive」，但森林优化本身也要在<b>每次查询时</b>跑候选扩展 + 效用核算 + 结构搜索。若在线计算成本高于一次离线摘要摊销到每问的成本，Pareto 前沿只是把成本从「写时」挪到了「读时」。<b>代价守恒视角</b>下，真正的问题是：哪一侧的成本更容易被硬件/缓存摊掉？（写时成本摊给所有查询，读时成本每次都付。）</p>
-  <p><b>批判二：查询感知的延迟代价。</b>查询感知意味着<b>组织结构在线计算</b>，延迟预算直接进对话轮；对需要即时响应的 agent harness，必须回答「森林没建完时先给什么」——而摘要没有给出降级路径的描述。</p>
-  <p><b>批判三：依赖 schema 质量。</b>候选扩展走「schema and semantic relations」，schema 由谁维护、错了怎么修，摘要未涉及；这恰是 Hy-Memory System 2（schema 归纳 + 跨域清扫）负责的那一段——<b>两篇工作在这里恰好首尾相接</b>。</p>
+  <p><b>批判一：组合优化的生命周期成本。</b>摘要批评离线摘要「expensive」，但森林优化本身也要在<b>每次查询时</b>跑候选扩展 + 两次 listwise 验证 + 结构搜索。若在线计算成本高于一次离线摘要摊销到每问的成本，Pareto 前沿只是把成本从「写时」挪到了「读时」。而且 lifecycle 的口径是「估计 wall-clock」且<b>硬件未披露</b>——同一套算法在不同并发/缓存下，1.78× 与 4.74× 都可能被环境放大或抹平。</p>
+  <p><b>批判二：查询感知的延迟代价。</b>查询感知意味着<b>组织结构在线计算</b>，延迟预算直接进对话轮；对需要即时响应的 agent harness，必须回答「森林没建完时先给什么」——论文没有给出降级路径的描述（对照 Hy-Memory 的 lite 档：它给了）。</p>
+  <p><b>批判三：依赖 schema 质量与标定数据。</b>候选扩展走「schema and semantic relations」，schema 由谁维护、错了怎么修，全文未涉及——这恰是 Hy-Memory System 2（schema 归纳 + 跨域清扫）负责的那一段，<b>两篇工作在这里恰好首尾相接</b>；再加上效用系数用过 dev fold 的 gold，「冻结参数、不碰答案」的洁癖程度需要读者自行打折。</p>
 
   <div class="critique-box">
     <span class="tag-insight">批判</span>
     <h4>最锋利的替代方案：预算给「谁」比预算给「多少」更难</h4>
-    <p>朴素替代不是不做预算，而是<b>按分数截断</b>（先排序再砍尾）——便宜且无感知成本，但对「低相似互补证据」必然系统性漏检。另一极端是全量注入再让模型自己筛：把选择成本转嫁给上下文窗口与注意力，实际上是最贵的方案。中间路线（如本页第 6 章的统一预算目标函数）尚未在摘要覆盖的范围内被检验。</p>
+    <p>朴素替代不是不做预算，而是<b>按分数截断</b>（先排序再砍尾）——便宜且无感知成本，但对「低相似互补证据」必然系统性漏检。另一极端是全量注入再让模型自己筛：把选择成本转嫁给上下文窗口与注意力，实际上是最贵的方案。受控实验已给出参照：MMR/DPP/facility 这类通用多样性先验在冻结预算下<b>零增益甚至负增益</b>，说明「换个花哨的重排器」不是出路——中间路线（如本页第 7 章的统一预算目标函数）仍待检验。</p>
   </div>
 
-  <p><b>跨文连接：</b>① <b>第 4 篇 · 琥珀之心</b>的召回链（关键词/向量/图谱三路粗排 → 证据补充 → 模型精排 → LLM 细选）是同一问题的<b>流水线式</b>解法——分级过滤逐层兑现预算，比一次组合优化更易实现与调试；② <b>第 2 篇 · rolling-memory</b> 的 <code>compBound = (1/e)² · lex · (1 − exp(−lex/total))</code> 结构补偿上界，则是「候选扩展必须带质量上界」的<b>公式化版本</b>——与森林优化的预算约束是同一个思想在词法域的投影。OIA 的落点（report.html §4.5）：候选合并与预算化精排，与琥珀两级精排合并设计。</p>
+  <p><b>跨文连接：</b>① <b>第 4 篇 · 琥珀之心</b>的召回链（关键词/向量/图谱三路粗排 → 证据补充 → 模型精排 → LLM 细选）是同一问题的<b>流水线式</b>解法——分级过滤逐层兑现预算，比一次组合优化更易实现与调试；② <b>第 2 篇 · rolling-memory</b> 的 <code>compBound = (1/e)² · lex · (1 − exp(−lex/total))</code> 结构补偿上界，则是「候选扩展必须带质量上界」的<b>公式化版本</b>——与森林优化的预算约束是同一个思想在词法域的投影；③ κ/λ 作为「链数/边」的影子价格，与本页第 7 章的 compaction 预算统一问题直接对接。OIA 的落点（report.html §4.5）：候选合并与预算化精排，与琥珀两级精排合并设计。</p>
 </section>
 
 <hr class="sep">
 
-<!-- ══════════════ 第 5 章：代码附录 ══════════════ -->
+<!-- ══════════════ 第 5 章：M3-Agent（新增） ══════════════ -->
+<section class="chapter" id="ch5m3">
+  <span class="chapter-no">CHAPTER 05</span>
+  <h2 class="chapter-title">M3-Agent：实体中心记忆图与因果截断评测</h2>
+  <p><span class="pill lav">新增</span><span class="pill warm">2026-11-21 · 全文精读修订</span></p>
+
+  <p class="lead">同一批精读还覆盖了 <b>M3-Agent</b>（ByteDance Seed 等，arXiv 2508.09736v1，2025-08-12，本地 HTML 为 v1）：双进程多模态长期记忆 agent——memorization 逐 30 秒切片在线生成情节+语义记忆挂到<b>实体中心记忆图</b>，control 用多轮检索-推理策略读图答题。全文 + 代码实读笔记见 <code>docs/sources/papers/notes/06-m3-agent.md</code>。它的三处「摘要看不出来的事」正好与本页前四章形成对照。</p>
+
+  <h3>双进程，但只有一半在 RL</h3>
+  <table class="tbl">
+    <tr><th></th><th>Memorization（记忆）</th><th>Control（控制）</th></tr>
+    <tr><td><b>基座</b></td><td>Qwen2.5-Omni-7B（视觉+音频）</td><td>Qwen3-32B（消融另有 8B/14B）</td></tr>
+    <tr><td><b>方式</b></td><td><b>仅 SFT</b>（模仿学习，3 epoch / lr 1e-5 / batch 16 / 16×80GB）</td><td><b>RL：DAPO</b>（GRPO 仅作消融；lr 1e-6、组大小 G=4、180 步、H=5）</td></tr>
+    <tr><td><b>数据</b></td><td>三阶段合成 10,752 训练 + 200 验证样本（GPT-4o→Gemini 起草精修）</td><td>同一批 QA；问答只允许在该视频的记忆里搜</td></tr>
+    <tr><td><b>消融（自报）</b></td><td>去语义记忆 −17.1 / −19.2 / −13.1；去身份等价 −11.2 / −9.2 / −9.7</td><td>RL 增益 +10.0 / +8.0 / +9.3；DAPO vs GRPO +0.7 / +1.2 / +3.1</td></tr>
+  </table>
+  <p>摘要写「M3-Agent, trained via reinforcement learning」，<b>真正走 RL 的只有 control</b>；「概念上一个模型，实践上两个」是论文自己的说法（数字均自报 <span class="self-report">自报·未复现</span>，每格一个数、无方差）。</p>
+
+  <p><b>RL 把长 prompt 吃成了 3 段：</b>基线 GPT-4o control 用的是带 retrieval plan、十几条 query 规范（「用关键词短语、不要与历史查询语义重复」……）的长 prompt；RL 后的 M3-Agent 只剩 <code>system_prompt</code> / <code>instruction_prompt</code> / <code>last_round_prompt</code> 三段极简文本，H=5 轮、二值动作 <code>[Search] / [Answer]</code>、top-2 检索、最后一轮强制作答。<b>这是「prompt engineering 被 RL 替代」的直接证据</b>——表 7 里同样用简单 prompt 的 <code>control-32b-prompt</code> 只有 20.7，RL 后 30.7 <span class="self-report">自报·未复现</span>。</p>
+  <p><b>为什么/代价/替代：</b>手写规范是用人工替模型补策略，改一条规范要重新验证全链路；RL 直接把策略学进权重，prompt 只剩接口。代价是<b>奖励与评测共用 GPT-4o 判官</b>（0/1 奖励即判官输出），策略可能学会迎合判官措辞，而论文只报了判官与人工 96% 一致、未做敏感性分析。替代方案就是那条没走的路——纯 prompt 工程（已被表 7 的 20.7 vs 30.7 否定）或规则状态机（零训练成本，但空结果、换角度重查这类策略学不出来）。</p>
+
+  <h3>「实体中心」的实现真相：等价类 + 并查集，不是边</h3>
+  <ul>
+    <li><b>等价关系以一等公民语义节点保存</b>：模型必须按 <code>Equivalence: &lt;face_x&gt;, &lt;voice_y&gt;</code> 格式输出跨模态等价行（禁用代词与编造名字，把指代消解降级为格式约束）；读图前 <code>refresh_equivalences()</code> 用<b>并查集（按秩合并 + 路径压缩）</b>把同一人的 face/voice 合成 <code>character_i</code>，<code>fix_collisions</code> 保证每个 voice 最多映射到一个 face。</li>
+    <li><b>论文表 3 的 <code>weight</code> 属性在代码里不存在</b>：<code>Node</code> 只有 <code>id / type / embeddings / metadata</code>，权重实际落在<b>边</b>上——<code>reinforce_node</code> / <code>weaken_node</code> 对所有相连边 ±1，且 <code>add_edge</code> 禁止同类型文本节点互连（实际边 = text↔img、text↔voice）。schema 表述与实现存在落差。</li>
+    <li><b>投票发生在写入路径</b>：语义记忆的实体集合若是某已有语义节点实体的子集，按余弦相似度投票——<b>&gt;0.85 强化（边权 +1）、&lt;0 削弱（−1）、否则新建节点</b>；冲突消解则推迟到读取时（<code>fix_collisions</code> 等）。</li>
+  </ul>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 6：实体等价节点 + 并查集 -->
+      <svg viewBox="0 0 760 410" role="img" aria-label="实体等价语义节点与并查集合成 character 的示意图">
+        <text x="40" y="30" font-size="13" fill="#7e22ce" font-weight="700" font-family="'Noto Serif SC',serif">原始观测节点（人脸 / 声纹，持久锚点）</text>
+        <text x="196" y="30" font-size="13" fill="#8a6508" font-weight="700" font-family="'Noto Serif SC',serif">等价语义节点</text>
+        <text x="470" y="30" font-size="13" fill="#065f46" font-weight="700" font-family="'Noto Serif SC',serif">并查集合成</text>
+
+        <!-- 观测节点 -->
+        <g stroke="#23212c" stroke-width="1.8">
+          <circle cx="76" cy="76" r="27" fill="#e9d5ff"/>
+          <circle cx="76" cy="152" r="27" fill="#d1fae5"/>
+          <circle cx="76" cy="262" r="27" fill="#e9d5ff"/>
+          <circle cx="76" cy="338" r="27" fill="#d1fae5"/>
+        </g>
+        <g font-size="9.5" fill="#23212c" text-anchor="middle" font-family="'Noto Serif SC',serif">
+          <text x="76" y="80">&lt;face_1&gt;</text>
+          <text x="76" y="156">&lt;voice_7&gt;</text>
+          <text x="76" y="266">&lt;face_3&gt;</text>
+          <text x="76" y="342">&lt;voice_9&gt;</text>
+        </g>
+
+        <!-- 等价语义节点 -->
+        <rect x="196" y="60" width="210" height="70" rx="10" fill="#fef3c7" stroke="#b8860b" stroke-width="2"/>
+        <text x="301" y="88" font-size="11.5" fill="#78350f" text-anchor="middle" font-family="'Noto Serif SC',serif">Equivalence:</text>
+        <text x="301" y="110" font-size="11.5" fill="#78350f" text-anchor="middle" font-family="'Noto Serif SC',serif">&lt;face_1&gt;, &lt;voice_7&gt;</text>
+        <rect x="196" y="246" width="210" height="70" rx="10" fill="#fef3c7" stroke="#b8860b" stroke-width="2"/>
+        <text x="301" y="274" font-size="11.5" fill="#78350f" text-anchor="middle" font-family="'Noto Serif SC',serif">Equivalence:</text>
+        <text x="301" y="296" font-size="11.5" fill="#78350f" text-anchor="middle" font-family="'Noto Serif SC',serif">&lt;face_3&gt;, &lt;voice_9&gt;</text>
+
+        <!-- text↔entity 边（代码里唯一真实建边处） -->
+        <g stroke="#23212c" stroke-width="1.8" fill="none">
+          <path d="M101,76 L196,92"/>
+          <path d="M101,152 L196,118"/>
+          <path d="M101,262 L196,278"/>
+          <path d="M101,338 L196,304"/>
+        </g>
+        <text x="128" y="216" font-size="10.5" fill="#4a4657" font-family="'Noto Serif SC',serif">add_edge(text, entity)</text>
+        <text x="128" y="234" font-size="10.5" fill="#9f1239" font-family="'Noto Serif SC',serif">禁止同类型文本互连</text>
+
+        <!-- 并查集箭头 -->
+        <g stroke="#10b981" stroke-width="2.6" fill="none">
+          <path d="M412,96 C440,100 450,104 466,110"/>
+          <path d="M412,282 C440,278 450,272 466,266"/>
+        </g>
+        <g fill="#10b981">
+          <polygon points="474,112 460,106 462,118"/>
+          <polygon points="474,264 460,270 462,258"/>
+        </g>
+        <text x="440" y="180" font-size="10.5" fill="#065f46" text-anchor="middle" font-family="'Noto Serif SC',serif">refresh_</text>
+        <text x="440" y="196" font-size="10.5" fill="#065f46" text-anchor="middle" font-family="'Noto Serif SC',serif">equivalences()</text>
+        <text x="440" y="222" font-size="10.5" fill="#065f46" text-anchor="middle" font-family="'Noto Serif SC',serif">按秩合并+路径压缩</text>
+
+        <!-- character 等价类 -->
+        <rect x="486" y="66" width="200" height="92" rx="14" fill="#d1fae5" stroke="#10b981" stroke-width="2.4"/>
+        <text x="586" y="96" font-size="15" fill="#065f46" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">character_4</text>
+        <text x="586" y="122" font-size="11" fill="#047857" text-anchor="middle" font-family="'Noto Serif SC',serif">= { &lt;face_1&gt;, &lt;voice_7&gt; }</text>
+        <text x="586" y="144" font-size="10.5" fill="#047857" text-anchor="middle" font-family="'Noto Serif SC',serif">一个 voice 至多对一个 face</text>
+        <rect x="486" y="234" width="200" height="92" rx="14" fill="#d1fae5" stroke="#10b981" stroke-width="2.4"/>
+        <text x="586" y="264" font-size="15" fill="#065f46" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">character_5</text>
+        <text x="586" y="290" font-size="11" fill="#047857" text-anchor="middle" font-family="'Noto Serif SC',serif">= { &lt;face_3&gt;, &lt;voice_9&gt; }</text>
+        <text x="586" y="312" font-size="10.5" fill="#047857" text-anchor="middle" font-family="'Noto Serif SC',serif">并查集给出的是划分</text>
+
+        <!-- 底部两条注记 -->
+        <rect x="40" y="366" width="340" height="36" rx="9" fill="#ffffff" stroke="#f43f5e" stroke-width="1.6"/>
+        <text x="210" y="389" font-size="11" fill="#9f1239" text-anchor="middle" font-family="'Noto Serif SC',serif">Node 无 weight 字段：权重在边上（&gt;0.85 强化 +1 / &lt;0 削弱 −1）</text>
+        <rect x="420" y="366" width="300" height="36" rx="9" fill="#ffffff" stroke="#a855f7" stroke-width="1.6"/>
+        <text x="570" y="389" font-size="11" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC',serif">读取 &lt;face_1&gt;→character_4；查询展开为成员变体</text>
+      </svg>
+    </div>
+    <figcaption><b>图 6</b>　实体中心的实现不是「把人连成图」，而是<b>等价语义节点 + 并查集</b>：观测节点只与文本节点建边（add_edge 禁止同类型文本互连），<code>Equivalence:</code> 行经 union-find 合成 <code>character_i</code> 等价类；权重不在 Node 上而在边上，投票为 ±1。</figcaption>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「实体中心」解决的是身份漂移，不是存得更多</h4>
+    <p>人脸/声纹以原始特征存节点（每节点最多 10 个脸 embedding、20 个声 embedding），模型只被允许用 <code>&lt;face_i&gt;</code> 指代——<b>把指代消解从生成任务降级为格式约束</b>，再用并查集在读取时统一成 <code>character_i</code>。三层（持久锚点 / 符号化中间层 / 等价类）针对的都是「同一实体跨模态、跨时间的身份漂移」。迁移到 OIA 的屏幕/文档场景时<b>机制可复用、锚点必须换</b>：face/voice → 文件路径、URL、人名、工具名；而冲突消解放在读取路径（投票/阈值）、写入路径保持 append-only，这条取舍与 Hy-Memory 的 L2「版本化不可变」是同一味道。</p>
+    <p class="cite">出处：notes/06-m3-agent.md §3.1/§7.1（论文表 3 vs videograph.py 实读）</p>
+  </div>
+
+  <h3>因果截断：这是评测机制，不是记忆机制</h3>
+  <p>robot 集每条 QA 带提问时刻 <code>timestamp</code> 与其对应 <code>before_clip</code>；control 检索前先 <code>truncate_memory_by_clip(before_clip)</code>，<b>只允许检索提问之前形成的记忆</b>（清空 nodes/edges/文本索引/事件序列）；web 集问题时间戳全在视频末尾，故无截断。<b>为什么必须有它：</b>没有截断，agent 可以用未来信息回答过去的问题——记忆系统越强，这种作弊越隐蔽，多模态长视频尤其如此（视频后半段直接写着答案）。这让 benchmark 从「视频问答集」变成「<b>带因果性的 agent 输入流</b>」：视频=感知流，QA=在指定时刻发出的指令。代价是每题都得标提问时刻（robot 标了、web 没标，web 因此退化为全史问答）；替代方案是「只给全片、靠提示词承诺不用未来」——不可验证，等于没有。</p>
+
+  <div class="critique-box">
+    <span class="tag-insight">批判</span>
+    <h4>数字打架警示：三套口径，务必标「自报·口径不一」</h4>
+    <p>① 主结果增量：arXiv <b>v1 摘要写 6.7%</b>，而其 GitHub README 与本项目 <code>papers-abstracts.md</code> §6 存档写 <b>8.2%</b>——8.2% 在本地任何材料里都对不上（仓库结果图的 M3-Agent 行与 v1 表 5 逐格一致，个别基线格子却不同）<span class="self-report">自报·口径不一</span>。② web 视频数：<b>v1 写 929、README/摘要存档写 920</b>。③ robot QA：正文 §1 写 <b>1,344</b>、表 2 写 <b>1,276</b>，本地 <code>data/annotations/</code> 实测 <b>100 视频 / 1,276 QA</b>；web 实测 <b>920 视频 / 3,214 QA</b>，而正文与表 2 都写 5,037——差 1,823 条，未在全文中找到解释<span class="self-report">自报·口径不一</span>。④ 同一段落里「最强基线」也有两个口径（vs MA-LMM +6.3、vs Hybrid +6.7）。<b>本页照录全部口径、不做调和、不选一个好看的当真值。</b></p>
+  </div>
+
+  <p><b>代码不可开箱即跑：</b><code>configs/api_config.json</code> 只有 <code>base_url</code>/<code>api_key</code>，而 <code>chat_api.py</code> 与 <code>control.py</code> 都按 <code>azure_endpoint</code>/<code>api_version</code> 构造 <code>AzureOpenAI</code>（一处 <code>try/except: pass</code> 静默吞掉）——照 README 只填 base_url 会直接 KeyError；训练代码不在本仓库（外链两个 <code>hyc2026/*</code> 仓库，本次未读）；记忆图 pkl 因 .gitignore 不随仓库提供。许可：Apache-2.0（仓库根 LICENSE）。</p>
+
+  <p><b>跨文连接：</b>① <b>第 1 章 · Hy-Memory 双过程</b>——M3 的 memorization 天然是<b>后台慢整理进程</b>（自己的模型、自己的输入、不打断主循环、不需要知道当前指令），与 <code>evolve()</code> 的解耦逻辑同构：先有不拖慢前台的写入，才有可用的记忆；② <b>第 5 篇 · 主动性论文</b>——因果截断是任何「主动性/流式」评测的底座：要证明系统在<b>当时</b>就该开口，必须先证明它当时能看到什么；③ 与琥珀/治理线的呼应：M3 的冲突消解在<b>读取时投票</b>，Hy 的对账在<b>写入时 reconcile</b>——同一个冲突问题的两种时机选择，OIA 需要显式选边站。</p>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 6 章：代码附录 ══════════════ -->
 <section class="chapter" id="code">
-  <span class="chapter-no">CHAPTER 05 · CODE APPENDIX</span>
-  <h2 class="chapter-title">代码附录：源码原文四则 + 落地示意一则</h2>
-  <p class="lead">以下摘录全部来自本地源码存档 <code>docs/sources/repos/hy-memory/</code>（Apache-2.0），仅作学习引用；块 ⑤ 为本页据其设计写的 OIA 落地示意，不含任何真实实现代码。</p>
+  <span class="chapter-no">CHAPTER 06 · CODE APPENDIX</span>
+  <h2 class="chapter-title">代码附录：源码原文五则 + 落地示意一则</h2>
+  <p class="lead">以下摘录全部来自本地源码存档 <code>docs/sources/repos/hy-memory/</code>（Apache-2.0）与 <code>docs/sources/repos/m3-agent/</code>（Apache-2.0），仅作学习引用；最后一块为本页据其设计写的 OIA 落地示意，不含任何真实实现代码。</p>
 
   <div class="code-appendix">
 
@@ -668,7 +896,54 @@ BODY_MAX_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HC
 
     <!-- 块 ⑤ -->
     <div class="code-explain">
-      <h4>⑤ OIA Vault 挂编辑史的落地示意（据上述设计推演）</h4>
+      <h4>⑤ M3-Agent 语义记忆的边权投票规则</h4>
+      <p>实体集合是已有节点实体的子集时按余弦相似度投票：<b>&gt;0.85 强化、&lt;0 削弱、否则新建节点</b>。这就是论文所说 weight-based voting 的实现——注意 <code>reinforce_node</code>/<code>weaken_node</code> 作用于<b>所有相连边</b>（±1，边权 ≤0 即删边），Node 自身没有 weight 字段。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">m3-agent/mmagent/memory_processing_qwen.py · process_memories（semantic 分支）</span>
+      </div>
+    </div>
+    <pre class="code-block">        <span class="cm"># semantic memories can be used to update the existing text nodes, or create new text nodes</span>
+        elif type == <span class="st">'semantic'</span>:
+            <span class="kw">for</span> memory <span class="kw">in</span> memories:
+                entities = parse_video_caption(video_graph, memory[<span class="st">'contents'</span>][<span class="nu">0</span>])
+                <span class="kw">if</span> len(entities) == <span class="nu">0</span>:
+                    insert_memory(video_graph, memory, type)
+                    continue
+
+                <span class="cm"># update the existing text node for each memory, if needed</span>
+                positive_threshold = <span class="nu">0.85</span>
+                negative_threshold = <span class="nu">0</span>
+
+                <span class="cm"># get all (possible) related nodes</span>
+                node_id = entities[<span class="nu">0</span>][<span class="nu">1</span>]
+                related_nodes = video_graph.get_connected_nodes(node_id, type=[<span class="st">'semantic'</span>])
+
+                <span class="cm"># if there is a node with similarity &gt; positive_threshold, then update the edge weight by +1</span>
+                <span class="cm"># if there is a node with similarity &lt; negative_threshold, then update the edge weight by -1</span>
+                create_new_node = True
+
+                <span class="kw">for</span> node_id <span class="kw">in</span> related_nodes:
+                    <span class="cm"># related nodes to be updated should satisfy two condtions:</span>
+                    <span class="cm"># 1. the caption entities are a subset of the existing node entities</span>
+                    <span class="cm"># 2. the semantic similarity ... shows a positive correlation or a negative correlation</span>
+                    related_node_entities = parse_video_caption(video_graph, video_graph.nodes[node_id].metadata[<span class="st">'contents'</span>][<span class="nu">0</span>])
+                    embedding = video_graph.nodes[node_id].embeddings[<span class="nu">0</span>]
+                    <span class="kw">if</span> all(entity <span class="kw">in</span> related_node_entities <span class="kw">for</span> entity <span class="kw">in</span> entities):
+                        similarity = np.dot(memory[<span class="st">'embeddings'</span>][<span class="nu">0</span>], embedding) / (np.linalg.norm(memory[<span class="st">'embeddings'</span>][<span class="nu">0</span>]) * np.linalg.norm(embedding))
+                        <span class="kw">if</span> similarity &gt; positive_threshold:
+                            video_graph.reinforce_node(node_id)      <span class="cm"># 边权 +1</span>
+                            create_new_node = False
+                        <span class="kw">elif</span> similarity &lt; negative_threshold:
+                            video_graph.weaken_node(node_id)         <span class="cm"># 边权 -1，&lt;=0 即删边</span>
+                            create_new_node = False
+
+                <span class="kw">if</span> create_new_node:
+                    insert_memory(video_graph, memory, type)</pre>
+
+    <!-- 块 ⑥ -->
+    <div class="code-explain">
+      <h4>⑥ OIA Vault 挂编辑史的落地示意（据上述设计推演）</h4>
       <p>把 thread/round 两表、owner 隔离键、失败闸门三条纪律翻译成 OIA 侧的伪代码——仅示意接口形状，不是任何仓库的真实实现。</p>
       <div class="code-meta">
         <span class="chip demo">[示意性实现]</span>
@@ -696,9 +971,9 @@ BODY_MAX_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HC
 
 <hr class="sep">
 
-<!-- ══════════════ 第 6 章：延伸问题 ══════════════ -->
+<!-- ══════════════ 第 7 章：延伸问题 ══════════════ -->
 <section class="chapter" id="ch6">
-  <span class="chapter-no">CHAPTER 06 · OPEN QUESTION</span>
+  <span class="chapter-no">CHAPTER 07 · OPEN QUESTION</span>
   <h2 class="chapter-title">延伸问题：两个预算，一个窗口</h2>
 
   <p class="lead">本页横跨的两套机制——GraphMemix 的<b>证据预算</b>与 harness 侧的 <b>compaction token 预算</b>——都在争夺同一个物理对象：<b>注入窗口</b>。它们应该被统一吗？</p>
@@ -739,7 +1014,7 @@ BODY_MAX_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HC
       <a href="06-dsh-pi-oia.html"><span class="no">06 / 6</span><span class="t">DSH×Pi×OIA</span><span class="d">基座与总体设计（隔离红线）</span></a>
     </div>
     <div class="fine">
-      诚实声明：本页所有 Hy-Memory 层级名、模式与场景信息仅取自本地 README 快照（docs/sources/hy-memory.md），diff-chain 常量与表结构、意图 schema 摘自本地源码存档（docs/sources/repos/hy-memory/，<b>Hy-Memory 以 Apache-2.0 开源</b>，此处仅作学习引用）；GraphMemix（<b>arXiv 2608.26983</b>）只引用 docs/sources/papers-abstracts.md §4 摘要原文，未读全文、未复现任何实验，文中「四基准 Pareto 前沿」等论文结论均标 <span class="self-report">自报·未复现</span>；源码 docstring 与 README 的层级命名漂移已如实记录、未做调和；本页不虚构任何论文图表，全部插图为自绘 SVG；代码附录块 ⑤ 为示意性实现，非真实源码。
+      诚实声明：本页所有 Hy-Memory 层级名、模式与场景信息仅取自本地 README 快照（docs/sources/hy-memory.md），diff-chain 常量与表结构、意图 schema 摘自本地源码存档（docs/sources/repos/hy-memory/，<b>Hy-Memory 以 Apache-2.0 开源</b>，此处仅作学习引用），M3-Agent 代码摘录来自 docs/sources/repos/m3-agent/（<b>Apache-2.0</b>）；<b>GraphMemix（arXiv 2608.26983）与 M3-Agent（arXiv 2508.09736）均已全文精读（含全文提取与代码实读），笔记见 docs/sources/papers/notes/04-graphmemix.md 与 06-m3-agent.md</b>；未复现任何实验，论文数字均标 <span class="self-report">自报·未复现</span>，口径冲突处标 <span class="self-report">自报·口径不一</span>；源码 docstring 与 README 的层级命名漂移、M3 摘要与本地材料的数字不一致均已如实记录、未做调和；本页不虚构任何论文图表，全部插图为自绘 SVG；代码附录块 ⑥ 为示意性实现，非真实源码。
     </div>
   </div>
 </footer>

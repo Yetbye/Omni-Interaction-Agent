@@ -2,6 +2,12 @@
 
 > 来源：`http://export.arxiv.org/api/query`（id_list 批量查询），原文照录，供博客引用。
 > 所有引用数字均为论文自报，未复现。
+>
+> **⚠️ 2026-11-21 更新：六篇已全部升级为「全文级」精读**——
+> 全文 HTML/PDF 与逐篇精读笔记见 `papers/`（HTML 原文、ALIVE 的 PDF+提取文本）与 `papers/notes/01–06.md`（含公式、完整实验数字、代码研读、与摘要级理解的修正）。
+> **本文件降级为「摘要级历史存档」**；凡与笔记冲突处，以笔记为准。已知冲突：
+> - **M3-Agent（§6）**：本存档（据 GitHub README）写 8.2% / 920 视频；arXiv **v1 全文写 6.7%**、robot QA 表 2 为 1,276（摘要处 1,344）；仓库实测 annotations 为 robot 100 视频/1,276 QA、web 920 视频/3,214 QA（论文正文写 5,037）——三处口径不一，见 `notes/06-m3-agent.md`。
+> - ALIVE（§5）：全文级数字（IPIBench、FSI EDP/FDP、消融）见 `notes/05-alive.md`，本摘要数字不再单独引用。
 
 ---
 

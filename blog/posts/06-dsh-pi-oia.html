@@ -292,7 +292,9 @@
     <li><b>Agent Teams 任务板</b>：共享任务板带 <b>owner / CAS 修订 / 阻塞依赖 / 写域（write scope，advisory）</b>——
     多代理协作的一致性与写冲突预防是现成协议，不用自创锁。</li>
     <li><b>workflow 编排</b>：模型写编排脚本，<code>agent() / pipeline() / parallel()</code> 扇出，fatal 错误纪律明确；
-    对应 Omni-IO 的执行图（本报告 §7）。</li>
+    对应 Omni-IO 的 Declare Execution Graph（DEG）执行图（本报告 §7）——其形式化、资产注册表与代码级工程约束
+    已按 2026-11-21 全文精读补全，见 §2.5。
+    <span class="pill warm">2026-11-21 · 全文精读修订</span></li>
   </ul>
   <p><b>为什么</b>把委托交给 seam 而不是自建调度：<b>代价</b>是必须接受 harness 的生命周期语义（激活、中断、深度上限都由它裁决），
   <b>回报</b>是树内消息、中断与任务板的并发语义免费获得；<b>替代方案</b>是进程外编排（如外部工作流引擎），
@@ -459,6 +461,114 @@
     忘带就退回「最后写者赢」。<b>④ 调度语义归宿主</b>：60s 最小间隔与「停机只追赶最新一次」不可绕过，
     想做秒级高频轮询只能换机制。</p>
   </div>
+
+  <h3>2.5 Omni-IO 的 DEG 与注册表：全文精读补记 <span class="pill warm">2026-11-21 · 全文精读修订</span></h3>
+  <p>
+    上文把 Omni-IO 的执行图当作 workflow 的对应物一笔带过；全文 + 代码精读后（笔记
+    <code>docs/sources/papers/notes/03-omni-io.md</code>，论文 arXiv 2609.31847，仓库
+    github.com/any2any-mllm/Omni-IO-Skill，镜像 <code>docs/sources/repos/omni-io-skill/</code>），
+    需要把三件事补清楚：<b>证据强度、DEG 的形式化、注册表与工程约束</b>。
+  </p>
+
+  <div class="critique-box">
+    <span class="tag-insight">证据强度</span>
+    <h4>τ 40%→100% 与 SQCS 增益：自报 · 协议不可核验</h4>
+    <p><b>本页此前若把主结果当强证据，现统一改为「自报 · 协议不可核验」口径。</b>三条硬理由：
+    ① <b>全文无消融</b>（grep <code>ablat</code> 零命中，§6 只有 setup / 主结果 / 两个定性案例），
+    增益无法区分来自技能、MCP 工具、provider 换代还是输出格式约束；
+    ② <b>UniM-90 的 90 条实例选择协议附录在 HTML 中缺失</b>（交叉引用为 <code>ltx_missing_label</code>），
+    无法独立核验「抽取独立于被测 agent 能力」；③ <b>Appendix B 表体为空</b>，「38 个代表性任务」清单未在全文中找到。
+    另无显著性/方差、费用、延迟、人评数据。可放心引用的只有<b>结构事实</b>：27 技能（19 Atomic + 2 Expert + 6 Scenario）
+    可在仓库逐一点数核对。</p>
+    <p class="cite">来源：notes/03-omni-io.md §4.4 / §6 / §8（诚实边界）。</p>
+  </div>
+
+  <p><b>DEG 形式化（§5.2–5.3）</b>：执行图 <span class="math">G = (V, E)</span>，节点是可执行任务<b>或已存在资产源</b>，
+  一条边同时是控制依赖与数据依赖。节点为五元组：</p>
+  <span class="math">v = ⟨ id, type, prompt, params, depends_on ⟩</span>
+  <p>
+    其中 <code>prompt</code> 必须自包含（并行任务的 prompt 写在同一规划上下文里以天然保持语义一致）。
+    四条语义要点：<b>① asset_source 解析即完成</b>——历史资产节点带 <code>asset_ref</code>，引用解析后视为已完成、
+    <b>不发任何生成调用</b>；<b>② 双验证</b>——「每个依赖引用都能解析到某节点或已注册资产」+「诱导子图无环」，
+    <b>任一失败即整图重建</b>，不带病提交；<b>③ Wave 四规则</b>——「pending 且所有前驱已完成」的节点构成下一 Wave、
+    同 Wave 内<b>并发派发</b>、无未解析前驱者进最早 Wave、<b>调度由声明的依赖决定而与模态无关</b>
+    （互不消费的图像与音频可并发，图像条件化的视频必须等参考图）；
+    <b>④ 失败语义</b>——节点失败即<b>取消其全部 pending 后代</b>、<b>独立分支继续执行</b>、
+    记录终态但<b>不回滚已完成节点的输出</b>。
+  </p>
+
+  <p><b>资产注册表（§4.5）</b>：资产元组八字段——</p>
+  <span class="math">a = ⟨ asset_id, type, subtype, path, description, params, turn_id, source_asset_id ⟩</span>
+  <p>
+    <code>asset_id</code> 全局唯一且与物理路径解耦；<code>source_asset_id</code> 记录修订/派生血缘。
+    存储纪律是 <b>append-only JSON（不原地更新，多版本可追溯）+ 临时文件 rename 原子写 + fcntl 文件锁（Windows 无 fcntl
+    跳过锁但保留原子写）</b>，且<b>只在写盘成功后才注册</b>；跨轮时 <code>asset_ref</code> 被物化为新图中已完成的源节点。
+    实现全文仅 119 行（<code>mcp/registry.py</code>），可直接作为 OIA 生成物注册表的最小范本。
+  </p>
+
+  <div class="code-explain">
+    <h4>⑤ 资产注册表的原子写 + 锁内重读（摘录）</h4>
+    <p>这就是「append-only + 原子写 + 文件锁 + 锁内重读」四件套的落地形态：写临时文件再 <code>os.replace</code>
+    全平台原子；锁内先 <code>_load()</code> 重读再写，防止并发 <code>register()</code> 互相覆盖；
+    注释如实承认「Windows 并发进程可能丢记录」。OIA 的 <code>@omni/*</code> 生成物注册表照此形状实现即可。</p>
+    <div class="code-meta">
+      <span class="chip src">[源码原文]</span>
+      <span class="chip path">docs/sources/repos/omni-io-skill/mcp/registry.py（119 行，节选 _save 与 register 锁段）</span>
+    </div>
+  </div>
+  <pre class="code-block"><code><span class="kw">def</span> <span class="fn">_save</span>(<span class="kw">self</span>, store: dict[str, dict]) -&gt; <span class="kw">None</span>:
+    <span class="st">"""Write atomically via a temporary file and rename to preserve history on crashes."""</span>
+    tmp_path = self._path.with_suffix(<span class="st">".json.tmp"</span>)
+    tmp_path.write_text(json.dumps(store, ensure_ascii=<span class="kw">False</span>, indent=<span class="nu">2</span>), encoding=<span class="st">"utf-8"</span>)
+    os.replace(tmp_path, self._path)          <span class="cm"># 全平台原子替换</span>
+
+<span class="cm"># Exclusive lock plus reread inside the lock prevents concurrent register()</span>
+<span class="cm"># calls from overwriting one another. Windows skips the lock without fcntl.</span>
+<span class="kw">with</span> open(self._lock_path, <span class="st">"w"</span>) <span class="kw">as</span> lock_file:
+    <span class="kw">if</span> fcntl:
+        fcntl.flock(lock_file, fcntl.LOCK_EX)  <span class="cm"># Windows 无 fcntl 则跳过</span>
+    <span class="kw">try</span>:
+        store = self._load()                   <span class="cm"># 锁内重读</span>
+        store[asset_id] = record               <span class="cm"># append-only：每次注册都是新 asset_id</span>
+        self._save(store)
+    <span class="kw">finally</span>:
+        <span class="kw">if</span> fcntl:
+            fcntl.flock(lock_file, fcntl.LOCK_UN)</code></pre>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>代码级工程约束（仓库 orchestration/*.md，论文正文只零散提及）</th><th>规则</th><th>OIA 用法</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>单向层级</b></td>
+        <td>Scenario → Expert → Atomic，<b>禁止反调与平行互调</b>；Expert 展开为既有 12 种 type 的扁平 fragment，禁止 <code>expert/poster/scene</code> 类 type</td>
+        <td>技能组织约定，直接写进 <code>ctx.skills</code> 提供方的路由规则</td></tr>
+      <tr><td><b>专家审查 ≤2 轮</b></td>
+        <td>交付前必检 → 问题归到最小责任层 → 增量重做、复用已验证资产 → <b>默认最多两轮</b>，两轮后决定权交回用户</td>
+        <td>专家技能的返工上限，防止无限自修</td></tr>
+      <tr><td><b>全系统禁原地更新</b></td>
+        <td>重生成<b>必换 <code>asset_id</code></b>，血缘走 <code>source/depends_on</code>；<b>重组装前必须把 depends_on 与 get_asset() 解析路径改指新 id，否则会静默复用旧的失败资产</b></td>
+        <td>生成物注册表的硬约束，与记忆层「取代留痕」同构</td></tr>
+      <tr><td><b>五类中断增量改 DAG</b></td>
+        <td>局部改 / 全局改 / 加任务 / 取消 / 换话题——本质是<b>对现有 DAG 的动态重规划而非整体丢弃</b>，附语义相关性三值判定（受影响/不受影响/不确定）</td>
+        <td>可直接写进 OIA 编排 prompt 的规则集</td></tr>
+      <tr><td><b>可照抄文件</b></td>
+        <td><code>mcp/registry.py</code>（119 行注册表实现）、<code>orchestration/dependency_rules.md</code>（保守声明原则：缺依赖=高成本错误，多余依赖=只损失并行度，<b>宁多勿漏</b> + 注入表 <code>first_frame_url/reference_image_url</code>）</td>
+        <td>照抄后改前缀表与存储路径即成 <code>@omni/*</code> 组件</td></tr>
+    </tbody>
+  </table>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>与 DSH 对位的方向差异：输入侧寻址 vs 输出侧索引</h4>
+    <p>最容易混淆的一对：<b>DSH 的 attachments 是输入侧内容寻址存储</b>（私有、内容寻址、存于 DSH_HOME，
+    管「模型要读进来的东西」）；<b>Omni-IO 的 registry 是输出侧可枚举业务索引</b>
+    （<code>turn_id</code> 关联轮次、<code>description</code> 供跨轮语义检索、<code>source_asset_id</code> 记血缘、
+    <code>list_assets()</code> 可枚举，管「agent 产出、要跨轮复用的东西」）。<b>两者互补而非替代</b>——
+    OIA 需要的是后者这类生成物注册表，再把它落成 storage-domain 插件；把两者当成一个东西，
+    会导致「跨轮引用生成物」在 DSH 侧找不到挂载点。</p>
+    <p class="cite">来源：notes/03-omni-io.md §5.6 DSH 对位表（依据本机 DSH 文档，未逐一运行验证）。</p>
+  </div>
 </section>
 
 <!-- ================= 第 3 章 ================= -->
@@ -561,7 +671,10 @@
   <p>
     本报告 §3 给出的框架是：① 记忆 Memory（分层金字塔 · 符号画布 · 白盒治理）、② 委托 Delegation（子代理树 · 团队任务板 · 工作流）、
     ③ 主动性 Proactivity（观察者 · 干预时机 · 沉默与追问）、④ 个性化 Personalization（画像 · 表达规划 · 隐式反馈适应），
-    底座是<b>会话事件日志（唯一事实源）· 投影 · CAS 修订 · 技能/资产注册表 · 全模态执行图</b>。
+    底座是<b>会话事件日志（唯一事实源）· 投影 · CAS 修订 · 技能/资产注册表 · 全模态执行图</b>
+    <span class="pill warm">2026-11-21 · 全文精读修订</span>。
+    其中「技能/资产注册表 · 全模态执行图」两项取自 Omni-IO：注册表是<b>输出侧</b>可枚举业务索引（八字段 + append-only + 原子写 + 文件锁，
+    见 §2.5），与 DSH <b>输入侧</b>内容寻址的 attachments 方向相反、互补而非替代；执行图为 DEG（节点五元组、Wave 四规则、失败不回滚）。
     前三支柱在上一章已各自落到 seam；本章处理记忆支柱的五组件与整体边界。
   </p>
 
