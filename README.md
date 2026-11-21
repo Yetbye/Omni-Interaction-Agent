@@ -3,6 +3,9 @@
 > 面向「实时交互式全模态智能体」的 harness 二次开发线——
 > 以开源 **DeepSeek Harness** 为基座（Pi Agent 生态补给），围绕 **记忆 / 委托与主动性 / 一致性 / 个性化 / 全模态 IO** 做隔离式开发。
 
+**🌐 在线阅读（GitHub Pages）**：**https://yetbye.github.io/Omni-Interaction-Agent/**（根路径自动进入博客首页）
+**📦 仓库**：https://github.com/Yetbye/Omni-Interaction-Agent
+
 **当前阶段：立项调研 + 设计（暂不开发）。**
 
 ## 一句话结论
@@ -47,3 +50,4 @@
 | v0.1 | 2026-11-21 | 立项调研：report.html + code-level-notes.md + 15 份资料存档 |
 | v0.2 | 2026-11-21 | 7 仓库源码实读，产出代码级借鉴清单（精确到文件/函数/公式） |
 | v1.0 | 2026-11-21 | **调研博客建成**（blog/ 七页离线站，paper-reading-blog skill v5 规范，全部验收门控通过） |
+| v1.1 | 2026-11-21 | 推送 GitHub 公开仓库 `Yetbye/Omni-Interaction-Agent` 并部署 GitHub Pages（根重定向 → blog/；第三方克隆 `docs/sources/repos/` 不入库） |
