@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Omni-Interaction-Agent 设计调研报告 · 项目门户立项</title>
+<style>
+  :root{
+    --ink:#1a2332; --ink2:#3d4f66; --line:#d8dee9; --bg:#f7f8fa; --card:#ffffff;
+    --accent:#2f6fde; --accent-soft:#e8f0fe; --warn:#b45309; --warn-bg:#fef3c7;
+    --ok:#0f766e; --ok-bg:#e6f4f1; --violet:#6d28d9; --violet-bg:#f1eafe;
+    --mono:"Cascadia Code","JetBrains Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Source Han Serif SC","Noto Serif CJK SC","Microsoft YaHei",serif;
+    line-height:1.85;font-size:16px}
+  .wrap{max-width:1080px;margin:0 auto;padding:0 28px 96px}
+  header.hero{background:linear-gradient(135deg,#16233b 0%,#223a5e 55%,#2f6fde 130%);color:#eef3fb;padding:64px 28px 52px}
+  header.hero .inner{max-width:1080px;margin:0 auto}
+  header.hero h1{font-size:2.15rem;margin:.2em 0 .35em;letter-spacing:.02em}
+  header.hero .sub{font-size:1.06rem;color:#c6d4e8;max-width:860px}
+  .pill-row{margin-top:22px;display:flex;flex-wrap:wrap;gap:10px}
+  .pill{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.28);
+    border-radius:999px;padding:4px 14px;font-size:.85rem;color:#dce7f7}
+  h2{font-size:1.55rem;margin:2.6em 0 .7em;padding-bottom:.35em;border-bottom:2px solid var(--line)}
+  h3{font-size:1.2rem;margin:2em 0 .5em;color:var(--accent)}
+  h4{font-size:1.03rem;margin:1.5em 0 .4em}
+  p{margin:.75em 0}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+    padding:22px 26px;margin:1.2em 0;box-shadow:0 1px 3px rgba(20,30,50,.05)}
+  .callout{border-left:4px solid var(--accent);background:var(--accent-soft);
+    padding:14px 20px;border-radius:0 10px 10px 0;margin:1.2em 0}
+  .callout.warn{border-color:var(--warn);background:var(--warn-bg)}
+  .callout.ok{border-color:var(--ok);background:var(--ok-bg)}
+  .callout.violet{border-color:var(--violet);background:var(--violet-bg)}
+  .callout b:first-child{display:block;margin-bottom:.25em}
+  table{width:100%;border-collapse:collapse;margin:1.1em 0;font-size:.92rem;background:#fff}
+  th,td{border:1px solid var(--line);padding:9px 12px;vertical-align:top;text-align:left}
+  th{background:#eef2f7;font-weight:600}
+  tr:nth-child(even) td{background:#fafbfd}
+  code,.mono{font-family:var(--mono);font-size:.86em;background:#eef1f6;
+    padding:1px 6px;border-radius:4px;color:#22334d}
+  pre{background:#14202e;color:#d7e3f4;border-radius:10px;padding:16px 20px;
+    overflow-x:auto;font-family:var(--mono);font-size:.83rem;line-height:1.7}
+  pre code{background:none;color:inherit;padding:0}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  ul,ol{padding-left:1.5em}
+  li{margin:.3em 0}
+  .toc{background:#fff;border:1px solid var(--line);border-radius:12px;padding:20px 28px;margin:1.6em 0}
+  .toc ol{columns:2;column-gap:36px}
+  .tag{display:inline-block;border-radius:6px;padding:1px 9px;font-size:.78rem;
+    font-weight:600;margin-right:6px;vertical-align:middle}
+  .tag.ref{background:#e8f0fe;color:#1d4ed8}
+  .tag.drop{background:#fee2e2;color:#b91c1c}
+  .tag.core{background:#dcfce7;color:#166534}
+  .tag.paper{background:#f1eafe;color:#6d28d9}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .small{font-size:.85rem;color:var(--ink2)}
+  .footnote{font-size:.84rem;color:var(--ink2);border-top:1px solid var(--line);margin-top:3em;padding-top:1.2em}
+  .kbd{font-family:var(--mono);background:#223; color:#e8ecf3;border-radius:5px;padding:1px 8px;font-size:.8em}
+  svg text{font-family:"Microsoft YaHei",sans-serif}
+  @media (max-width:820px){ .grid2{grid-template-columns:1fr} .toc ol{columns:1} }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="inner">
+    <div class="pill-row" style="margin:0 0 10px">
+      <span class="pill">项目门户 · 立项调研</span>
+      <span class="pill">2026-11-21</span>
+      <span class="pill">阶段：调研 + 设计（暂不开发）</span>
+    </div>
+    <h1>Omni-Interaction-Agent（OIA）<br>值得借鉴之处与总体设计</h1>
+    <p class="sub">
+      以开源 <b>DeepSeek Harness</b>（含 Pi Agent 生态）为基座做<b>隔离式二次开发</b>，
+      融合记忆系统、委托与主动性、一致性、个性化与全模态 IO 五大主题，
+      打造「实时交互式全模态智能体」的项目门户。本报告为完整调研与设计交付，无需再确认设计细节。
+    </p>
+    <div class="pill-row">
+      <span class="pill">13 份一手资料存档</span>
+      <span class="pill">5 篇论文精读</span>
+      <span class="pill">DSH 内核文档核验</span>
+      <span class="pill">隔离红线：不触碰当前 DSH 与五门户</span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="toc">
+  <b>目录</b>
+  <ol>
+    <li><a href="#s0">执行摘要</a></li>
+    <li><a href="#s1">边界与隔离设计（含门户冲突检查）</a></li>
+    <li><a href="#s2">基座选型：DeepSeek Harness × Pi Agent</a></li>
+    <li><a href="#s3">概念框架：OIA 四支柱</a></li>
+    <li><a href="#s4">主题一 · Harness Memory 深度拆解</a></li>
+    <li><a href="#s5">主题二 · Delegation / Proactivity / Consistency</a></li>
+    <li><a href="#s6">主题三 · Personalization</a></li>
+    <li><a href="#s7">Omni-IO Skills：全模态原生能力层</a></li>
+    <li><a href="#s8">总体架构与集成矩阵</a></li>
+    <li><a href="#s9">路线图与里程碑</a></li>
+    <li><a href="#s10">风险、诚实声明与待办</a></li>
+    <li><a href="#s11">参考资料</a></li>
+  </ol>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s0">0 · 执行摘要</h2>
+
+<div class="card">
+<p><b>一句话定位：</b>Omni-Interaction-Agent 是一条<b>与日常工作环境完全隔离</b>的智能体 harness 二次开发线——
+以 DeepSeek Harness（DSH）的 Cordis 插件架构为骨架，吸收 Pi Agent 的极简扩展哲学，
+把「记忆 / 委托与主动性 / 一致性 / 个性化 / 全模态 IO」做成一套可组合的插件族（<code>@omni/*</code>），
+面向实时交互式全模态智能（Native Real-Time Interactive Omni Intelligence）。</p>
+
+<p><b>三个最重要的结论：</b></p>
+<ol>
+<li><b>基座选 DSH，不另起炉灶。</b>DSH 的能力 seam 体系（<code>ctx.llm / tools / subagents / goals / schedule / skills / storage / workflow</code>）
+天生就是委托、主动性、一致性的落点；文档明示「无特权内核，一切皆插件、皆可 patch 替换」，
+意味着我们能在<b>不 fork 内核</b>的前提下做出完整产品。Pi 的价值在两处：极简扩展模型（extensions / skills / packages）
+与 <code>pi-ai</code> 统一 LLM API——而 DSH 已内置 <code>dsh-llm-pi-ai</code> 适配包，两者天然可组合。</li>
+<li><b>记忆是 OIA 的第一支柱，且必须「白盒、可追溯、可被人类治理」。</b>综合
+腾讯云 TencentDB-Agent-Memory 的分层金字塔 + 符号画布、rolling-memory 的「原文档案 + 零成本词法检索」基线、
+Hy-Memory 的双过程认知与 diff-chain、MemoraX 的四类记忆边界、GraphMemix 的查询感知证据森林，
+以及三个社区插件（续忆 / 琥珀之心 / Anima Brain）的「人审、纠正、抑制、召回透明」机制，
+我们提出 <b>OIA-Memory 五组件</b>（Vault / Distiller / Canvas / Recall / Governance），见 §4.6。</li>
+<li><b>隔离是硬约束。</b>独立 DSH_HOME、独立 profile、独立插件命名空间、独立记忆库、独立工作区目录；
+与当前在用的 DSH Desktop（<code>profiles/desktop</code>）和五个项目门户零共享、零侵入，检查清单见 §1。</li>
+</ol>
+
+<div class="callout warn">
+<b>⚠️ 阅读须知（诚实边界）</b>
+本报告中所有基准数字（如 PersonaMem 48→76、ATM-Bench Recall@10 82.85%、token −61% 等）均为<b>各项目自报</b>，未独立复现，引用时一律标注来源；
+《Native Real-Time Interactive Omni Intelligence》综述仅有用户本地 PDF，公开渠道检索不到，本报告只将其作为方向性指导，<b>不引用其任何具体论断</b>（见 §10）。
+</div>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s1">1 · 边界与隔离设计（含门户冲突检查）</h2>
+
+<h3>1.1 为什么强调隔离</h3>
+<p>用户要求明确：<b>OIA 用的 DeepSeek Harness 必须是隔离的、专门适配 Omni-Interaction-Agent 的新实例</b>，
+而不是当前会话正在使用的 DSH。当前在用的 Desktop 发行版（<code>dsh-desktop-next 2.0.23-next</code>，
+Profile：<code>desktop</code>，Home：<code>~\.dsh</code>）承载日常研发，绝不能被本项目的实验性组合包、
+HMR 重载、插件安装事务所影响。隔离同时也是产品要求：Omni-Interaction-Agent 将来作为独立产品分发，
+必须自带运行时边界。</p>
+
+<h3>1.2 五层隔离红线</h3>
+<table>
+<tr><th>层</th><th>隔离手段</th><th>具体约定</th></tr>
+<tr><td><b>代码</b></td><td>独立目录 + 独立 git 线</td>
+<td>工作区新门户 <code>omni-interaction-agent/</code>；二次开发以 <code>deepseek-harness</code> 开源仓库为 upstream，
+自研内容全部放在 <code>@omni/*</code> 组合包与 patch 层，<b>尽量不改内核</b>；必须改内核时走「最小 patch 分支 + 可 rebase」策略。</td></tr>
+<tr><td><b>运行时</b></td><td>独立 DSH_HOME 与 profile</td>
+<td><code>DSH_HOME=%USERPROFILE%\.omni-dsh</code>；profile 命名 <code>omni</code>（组合包 <code>@omni/omni-base</code>）；
+端口与 IPC 名独立（如 web 端口 8848 起），与当前 Desktop 的系统分配端口不冲突。</td></tr>
+<tr><td><b>插件</b></td><td>命名空间与安装事务隔离</td>
+<td>插件 id 一律 <code>@omni/…</code>，不复用 <code>@deepseek-ai/…</code> 官方 id；
+<b>禁止</b>向当前 <code>~\.dsh\profiles\desktop</code> 安装/启用任何 OIA 插件。</td></tr>
+<tr><td><b>数据</b></td><td>独立记忆库与会话日志</td>
+<td>记忆库 <code>~\.omni-dsh\memory\</code>（SQLite + 附件区）；会话 JSONL 也落在 OIA 自己的 home，
+与 <code>~\.dsh</code> 无任何读写交集。</td></tr>
+<tr><td><b>工作区</b></td><td>独立门户目录</td>
+<td>仅 <code>omni-interaction-agent/</code> 一个入口；不 import、不复制、不改动其余五个项目门户的任何文件。</td></tr>
+</table>
+
+<h3>1.3 与现有五个项目门户的冲突检查</h3>
+<table>
+<tr><th>现有门户</th><th>内容</th><th>与 OIA 的交集</th><th>结论</th></tr>
+<tr><td><code>code2music/</code>（异兽乐志）</td><td>代码→音乐浏览器创作工具 + 官网</td><td>无（纯静态前端，自有 docs/prototype/site）</td><td>✅ 零冲突</td></tr>
+<tr><td><code>shenglv/</code>（声律在手）</td><td>古诗词格律引擎 + 闸门实验</td><td>无（Dart 引擎 + 实验协议）</td><td>✅ 零冲突</td></tr>
+<tr><td><code>savepoint/</code>（存档点）</td><td>事件溯源成长系统（Vite/TS）</td><td>概念上同源（事件溯源 ↔ 会话日志），但代码零共享；OIA 借鉴「状态=事件折叠」思想仅作设计参考</td><td>✅ 零冲突（仅思想借鉴）</td></tr>
+<tr><td><code>innerpond/</code>（心湖）</td><td>多智能体内省应用（CHI 2026 复刻）</td><td>无；其「观察者/调和者」角色与 OIA 主动性设计有思想共鸣，但不共享代码</td><td>✅ 零冲突</td></tr>
+<tr><td><code>pitch/</code>（同桌）</td><td>主动式日程陪伴（CHI 2026 复刻）</td><td>无；其「主动签到三缺陷修复」是 OIA 主动性设计的宝贵前车之鉴（见 §5.2）</td><td>✅ 零冲突</td></tr>
+</table>
+<div class="callout ok"><b>✅ 隔离验收清单（M0 完成标准）</b>
+① 两套 DSH（Desktop 日常版 + OIA 版）可同时运行，互不可见对方的插件/会话/设置；
+② OIA 组合树 <code>dsh --profile omni --dump-config</code> 中不含任何 <code>@omni</code> 之外的自研条目；
+③ 五个门户目录 git status 干净、无新增文件；
+④ 记忆库写入测试只出现在 <code>~\.omni-dsh\memory\</code>。</div>
+
+<!-- ============================================================ -->
+<h2 id="s2">2 · 基座选型：DeepSeek Harness × Pi Agent</h2>
+
+<h3>2.1 两条候选路线对比</h3>
+<table>
+<tr><th>维度</th><th>DeepSeek Harness（已核验安装文档）</th><th>Pi Agent（pi-mono，已读 README）</th></tr>
+<tr><td>架构</td><td>Cordis 插件树；profile + bundle + 分层 <code>cordis.patch.yml</code>；「无特权内核，一切皆插件，注册即副作用可撤销」</td><td>极简 harness：extensions / skills / prompt templates / themes 打包为 Pi packages（npm/git 分发）</td></tr>
+<tr><td>委托 / 多智能体</td><td><b>原生完备</b>：subagent seam（spawn/fork/ACP/Codex/Claude Code/DSH SDK 多 provider）、Agent Teams 共享任务板、workflow 引擎（模型写编排脚本）、depth 限制、树内消息/中断</td><td>默认<b>不带</b> sub-agents 与 plan mode，靠扩展自建</td></tr>
+<tr><td>主动性</td><td>宿主级 Schedule（cron/rrule/每日每周…七种时间类型、投递到会话/新会话）、Goals（事件溯源目标 + 轮次预算 + blocked 理由）、webhook 外部触发</td><td>无内置；依赖外部编排（如 OpenClaw）</td></tr>
+<tr><td>一致性</td><td>会话日志为唯一事实源（「模型可见即已记录」）、投影 seam、CAS 修订（goals/schedule）、会话格式 v0→v4 迁移链、消息投影机制</td><td>pi-durable 提供持久会话/任务/文档运行时，chord 对象运行时（契约/存储/热重载）</td></tr>
+<tr><td>LLM 层</td><td><code>ctx.llm</code> 适配器注册表；官方已含 <b>dsh-llm-pi-ai</b>（即 Pi 的统一 LLM API）与 deepseek 适配</td><td><code>pi-ai</code>：OpenAI/Anthropic/Google 等统一多 provider API（DSH 已在用）</td></tr>
+<tr><td>记忆</td><td>无内置长期记忆（官方仅提供 MCP 记忆服务参考配置：Memorix / MCP Reference Memory / Engram）；但 seam 齐备：<code>storage / sessionQuery(sqlite) / sessionReference / skills / compaction / agent.inject()</code></td><td>无内置记忆；靠 packages 扩展</td></tr>
+<tr><td>安全</td><td>sandbox seam、approval seam、permission presets、凭据分离（references + 实际值分离）</td><td>无内置权限系统，官方建议容器化（Gondolin / Docker / OpenShell）</td></tr>
+<tr><td>扩展哲学</td><td>能力 seam 三角色（Definition/Provider/Consumer），换 provider 即换整条能力</td><td>「适应你的工作流而非相反」，包即插即用、热重载</td></tr>
+</table>
+
+<h3>2.2 结论：DSH 为主基座，Pi 为生态补给</h3>
+<div class="callout">
+<b>选型决策（已定，不再询问）</b>
+<ul>
+<li><b>主基座 = DeepSeek Harness</b>：OIA 的核心命题（Delegation / Proactivity / Consistency）恰好一一命中 DSH 的 subagent+teams / schedule+goals / session-log+projections 三大 seam 群。二开形态为<b>叠加组合包（bundle）+ patch 层</b>，不 fork 内核——这正是 DSH 文档推荐的扩展方式（「新行为附加到已有文档记录的扩展点」映射表）。</li>
+<li><b>Pi 生态为补给</b>：① <code>pi-ai</code> 已通过 <code>dsh-llm-pi-ai</code> 进入 DSH，Omni 多模态模型接入优先扩这条适配线；② Pi 的 extensions/skills/prompt-templates/packages 模型作为 <code>@omni/*</code> 包设计的对照参考；③ Pi 的 RPC/SDK/JSON 模式启发 OIA 的 headless 集成面。</li>
+<li><b>不选 Pi 为主基座的理由</b>：委托与主动性都要从零造，且无权限系统；对「实时交互全模态智能体」而言，事件溯源会话日志（一致性底座）是刚需，DSH 现成。</li>
+</ul>
+</div>
+
+<h3>2.3 二开落点速查（功能 → DSH 机制 → 归属包）</h3>
+<table>
+<tr><th>OIA 功能</th><th>DSH 机制（文档核验）</th><th>归属形态</th></tr>
+<tr><td>记忆写回（轮次结束蒸馏）</td><td><code>agent/turn-stopping</code> / <code>session/event</code> 消费</td><td><code>@omni/memory-distiller</code> 插件</td></tr>
+<tr><td>记忆召回注入</td><td><code>agent.inject()</code>（模型可见上下文注入）或 <code>agent/pre-step</code> waterfall</td><td><code>@omni/memory-recall</code> 插件</td></tr>
+<tr><td>短期符号画布（上下文卸载）</td><td>compaction seam（<code>ctx.compaction</code>）/ tool-result pruner</td><td><code>@omni/memory-canvas</code>（compaction 后端）</td></tr>
+<tr><td>跨会话检索</td><td><code>ctx.sessionQuery</code>（SQLite）+ <code>sessionReference</code></td><td><code>@omni/memory-vault</code>（storage-domain）</td></tr>
+<tr><td>主动性干预（观察→决策→出声/沉默）</td><td>Schedule 定时 + subagent（Observer）+ <code>agent/turn-stopping</code></td><td><code>@omni/observer</code> + <code>@omni/intervention-policy</code></td></tr>
+<tr><td>委托与团队一致性</td><td>subagent seam / Agent Teams 任务板（写域/依赖/CAS）/ workflow</td><td>直接使用，少量 preset 裁剪</td></tr>
+<tr><td>全模态技能与资产</td><td><code>ctx.skills</code>（分层提供方）+ <code>ctx.attachments</code>/<code>spill</code> + workflow 执行图</td><td><code>@omni/omni-io</code>（skill 提供方 + 工具族）</td></tr>
+<tr><td>个性化画像</td><td>storage-domain + <code>systemPrompt</code> 组装 + persona 包对照</td><td><code>@omni/persona</code>（profile 固定记忆层）</td></tr>
+<tr><td>记忆治理 UI</td><td>client-modules 插件（Web 面板）+ settings</td><td><code>@omni/memory-panel</code>（客户端插件）</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s3">3 · 概念框架：OIA 四支柱</h2>
+<p>用户给出的三大角度（Memory / Delegation-Proactivity-Consistency / Personalization）加上论文群中反复出现的
+「全模态原生 IO」，构成 OIA 的四支柱 + 一个底座：</p>
+
+<div class="card">
+<svg viewBox="0 0 1000 320" width="100%" height="320" role="img" aria-label="OIA 四支柱框架图">
+  <defs>
+    <linearGradient id="g1" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#223a5e"/><stop offset="1" stop-color="#2f6fde"/>
+    </linearGradient>
+  </defs>
+  <rect x="20" y="24" width="960" height="272" rx="14" fill="#f2f5fa" stroke="#c9d4e4"/>
+  <text x="500" y="56" text-anchor="middle" font-size="17" font-weight="bold" fill="#223a5e">Omni-Interaction-Agent · 概念框架</text>
+  <rect x="60" y="84" width="200" height="76" rx="10" fill="url(#g1)"/>
+  <text x="160" y="116" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">① 记忆 Memory</text>
+  <text x="160" y="140" text-anchor="middle" fill="#d8e4f6" font-size="11.5">分层金字塔·符号画布·白盒治理</text>
+  <rect x="285" y="84" width="200" height="76" rx="10" fill="url(#g1)"/>
+  <text x="385" y="116" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">② 委托 Delegation</text>
+  <text x="385" y="140" text-anchor="middle" fill="#d8e4f6" font-size="11.5">子代理树·团队任务板·工作流</text>
+  <rect x="510" y="84" width="200" height="76" rx="10" fill="url(#g1)"/>
+  <text x="610" y="116" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">③ 主动性 Proactivity</text>
+  <text x="610" y="140" text-anchor="middle" fill="#d8e4f6" font-size="11.5">观察者·干预时机·沉默与追问</text>
+  <rect x="735" y="84" width="205" height="76" rx="10" fill="url(#g1)"/>
+  <text x="837" y="116" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">④ 个性化 Personalization</text>
+  <text x="837" y="140" text-anchor="middle" fill="#d8e4f6" font-size="11.5">画像·表达规划·隐式反馈适应</text>
+  <rect x="220" y="204" width="560" height="64" rx="10" fill="#16233b"/>
+  <text x="500" y="232" text-anchor="middle" fill="#fff" font-size="15" font-weight="bold">底座：一致性与全模态 IO</text>
+  <text x="500" y="254" text-anchor="middle" fill="#bcd0ea" font-size="11.5">会话事件日志（唯一事实源） · 投影 · CAS 修订 · 技能/资产注册表 · 全模态执行图</text>
+  <line x1="160" y1="160" x2="160" y2="204" stroke="#8aa4c8" stroke-width="2"/>
+  <line x1="385" y1="160" x2="385" y2="204" stroke="#8aa4c8" stroke-width="2"/>
+  <line x1="610" y1="160" x2="610" y2="204" stroke="#8aa4c8" stroke-width="2"/>
+  <line x1="837" y1="160" x2="837" y2="204" stroke="#8aa4c8" stroke-width="2"/>
+</svg>
+</div>
+
+<div class="callout violet"><b>三大主题 ↔ 论文 ↔ 机制 的映射（先给结论）</b>
+<ul>
+<li><b>Memory</b>：8 个开源项目 + GraphMemix → OIA-Memory 五组件（§4.6）。</li>
+<li><b>Delegation / Proactivity / Consistency</b>：DSH subagent+Teams / Schedule+Goals / 会话日志，叠加 ALIVE 的「何时响应/何时沉默/何时求助」三态决策与 Coco 的隐式反馈闭环（§5）。</li>
+<li><b>Personalization</b>：Coco 的观察-保留-适应闭环 + Pandora 的表达规划器 + 社区插件的人审与抑制机制（§6）。</li>
+</ul>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s4">4 · 主题一 · Harness Memory 深度拆解</h2>
+<p>以下逐项给出：<b>它是什么 → 机制要点 → 值得借鉴 → 不借鉴/风险 → 在 OIA 的落点</b>。
+所有数字均为项目自报。资料原文存档于 <code>omni-interaction-agent/docs/sources/</code>。</p>
+
+<h3>4.1 TencentDB-Agent-Memory（腾讯云）<span class="tag ref">工作场景首选</span></h3>
+<div class="card">
+<p><b>它是什么：</b>团队级记忆中枢：把对话/文档/代码沉淀为四类可复用记忆资产（Chat Memory / Skill / LLM-Wiki / Code-Graph），
+带治理与共享面板，官方提供 OpenClaw 插件、Hermes 网关，甚至有 <b>DSH 适配文档</b>（Anthropic Messages 协议接入细节，见 sources/tencent-dsh-adapter.md）。</p>
+<p><b>机制要点：</b></p>
+<ul>
+<li><b>长短期两套分层</b>：长期 L0 对话→L1 原子事实→L2 场景→L3 人格（语义金字塔）；短期 refs 原文卸载→jsonl 步骤摘要→<b>Mermaid 符号画布</b>（node_id 可下钻回原文）。</li>
+<li><b>异构存储 + 渐进披露</b>：底层（事实/日志/轨迹）进数据库供全文检索，顶层（人格/场景/画布）存人可读 Markdown；「下层保存证据，上层保存结构」。</li>
+<li><b>全链路可追溯</b>：人格→场景→原子→原对话的确定性下钻，拒绝不可逆有损压缩。</li>
+<li><b>记忆即负载（loadout）</b>：私有/团队/受限/agent 四级可见性 + ACL，按 Agent 绑定不同资产；Skill 是带版本、资源、触发边界、校验规则的一等资产。</li>
+<li><b>知识按需</b>：Wiki 与 CodeGraph 是工具化查询而非整体注入，「不让 Agent 每次先读完整文件清单再干活」。</li>
+<li>自报数据（OpenClaw 集成）：WideSearch token −61.38%、通过率 +51.52%（相对）；PersonaMem 48%→76%。</li>
+</ul>
+<p><b>值得借鉴：</b>① 语义金字塔 L0–L3 作为长期记忆主干；② Mermaid 符号画布 + node_id 下钻（上下文卸载与可追溯兼得）；③ 白盒调试（记忆目录即文档）；④ 资产 ACL 与 per-agent loadout；⑤ 「压缩不牺牲证据链」是硬约束。<br>
+<b>不借鉴/风险：</b>依赖 LLM 后台持续抽取（token 成本、延迟）；其 Benchmark 为自报；云向量库后端不需要。<br>
+<b>OIA 落点：</b><code>@omni/memory-distiller</code>（L1–L3 蒸馏）+ <code>@omni/memory-canvas</code>（符号画布 compaction 后端）+ 治理面板的 ACL 设计。</p>
+</div>
+
+<h3>4.2 rolling-memory（Agent Memory 挑战赛佳绩 · 开源）<span class="tag ref">零成本基线</span></h3>
+<div class="card">
+<p><b>它是什么：</b>本地优先、source-available 的编码智能体长期记忆：单个 Go 二进制 + 本地 SQLite 库，
+向连接的 agent 暴露<b>唯一一个 MCP 工具 <code>recall</code></b>；零云端、零向量、零后台 LLM 调用，约 30ms 检索。PolyForm 非商用许可（商用需注意）。</p>
+<p><b>机制要点：</b></p>
+<ul>
+<li><b>原文档案铁律</b>：「历史发生即记录」，绝不在入库时用 LLM 改写/摘要——「用可能幻觉的模型去改写可能被误解的对话是错误复合」；只做确定性格式清理（去协议外壳、thinking 块、重复日志行）。</li>
+<li><b>无向量信息论检索核</b>：纯子串分词 + 聚类排序，三机制——自适应自信息与突发克隆折叠（同日重复日志对数折叠，不稀释稀有词）、确定性跨形态对齐（「May 12, 2025」↔「2025-05-12」、复合标识符、500ms/16GiB 数量单位对）、多线索共振（查询多个稀有线索短窗口共现加权）。</li>
+<li><b>turn-elimination 经济学</b>：长上下文（100k–400k token）下每次免掉的盲搜轮 = 省一次全上下文重发；有专门的 falsification 文档与 24h/7 天自用审计（自报：81.8% 命中卡省了平均 4.3 盲搜轮；89.1% 召回结果被后续采纳）。</li>
+<li><b>评测文化</b>：ATM-Bench Recall@10 82.85%（Main）、LoCoMo 端到端 85.26%（自报）；词法骨干 + 小权重向量融合（w=0.15）再涨，等权融合反而伤 Hard 集。</li>
+<li>单文件 USB 便携模式；对 grep 的边界论证（background-vs-grep 文档）。</li>
+</ul>
+<p><b>值得借鉴：</b>① <b>先建零成本 verbatim + 词法检索基线，再谈向量/图谱</b>（与 TensorDB 的 BM25+向量 RRF 相互印证）；② 采纳率审计（记忆是否真被用上）作为一等指标；③ 「摘要会丢证据」的反面教材转为我们的「摘要必须挂原文链」约束；④ 数字字面量/标识符的跨形态对齐对编码场景极其有效。<br>
+<b>不借鉴/风险：</b>纯词法对自然语言零重叠查询（昵称/省略主语）弱——这恰是社区陪伴场景的主战场，需向量+图谱补；非商用许可，<b>思路可用、代码不并入</b>。<br>
+<b>OIA 落点：</b><code>@omni/memory-recall</code> 的检索分级（T0 词法 → T1 向量 → T2 图谱）与采纳审计事件。</p>
+</div>
+
+<h3>4.3 memorax-code（国内记忆公司 MemoraX 开源部分）<span class="tag ref">工程化最完整</span></h3>
+<div class="card">
+<p><b>它是什么：</b>面向 Codex / Claude Code / <b>DeepSeek Harness</b> / Cursor 等 9 种客户端的共享记忆层 npm 包：
+跨会话召回、可复用经验沉淀、仓库知识、个人偏好延续；云端记忆为产品主体（90 天访客模式），开源部分含客户端集成与本地 Backend。</p>
+<p><b>机制要点：</b></p>
+<ul>
+<li><b>四类记忆边界</b>（问题域划分，非常清晰）：Coding Memory（工程经验教训）/ Repo Memory（仓库架构图、模块归属、入口、commit/PR 证据）/ Personal Memory·User Profile（语言、语气、解释深度、结果格式）/ Procedure Memory（可复用步骤、检查单、校验门）。</li>
+<li><b>意图式保存 + 语义去重</b>：用户说出「想长期生效」的规则即存（不等说“记住”）；写入前语义比较——等价则不动、精炼则更新并保留被取代措辞、过时才删除；一次性任务指令不入记忆；意图不明先问再写。</li>
+<li><b>节奏化注入防遗忘</b>：User Profile 首个合格轮注入 + Procedure 按提醒节奏（默认第 1/6/11 轮、此后每 5 轮）；compaction 后下一轮恢复注入。</li>
+<li><b>记忆影响可见</b>：最终答案开头用一句自然语言注明「本次哪些记忆实际影响了任务」（透明度设计）。</li>
+<li><b>Repo Memory 后台维护</b>：默认分支基线一份、各 worktree 复用并校验，由原生后台 subagent 构建/更新。</li>
+<li>本地可观测：trace + reconciliation 记录，可查检索/写回状态与失败。</li>
+</ul>
+<p><b>值得借鉴：</b>四类边界直接采用为 OIA 记忆分类；「保存按意图 + 语义去重 + 取代留痕」的写入策略；<b>记忆影响披露</b>；<b>节奏化注入</b>（防 compaction/长任务遗忘）；Repo Memory 基线复用思想。<br>
+<b>不借鉴/风险：</b>云端账户依赖与自动写回无二次确认（隐私默认偏激进）；与我们「本地优先」相悖，仅取机制不取服务。<br>
+<b>OIA 落点：</b><code>@omni/memory-distiller</code> 的写入策略；<code>@omni/persona</code> 的注入节奏；答复级「记忆影响披露」进 OIA 文案规范。</p>
+</div>
+
+<h3>4.4 Hy-Memory（腾讯混元）+ MemHub <span class="tag ref">认知架构参照</span></h3>
+<div class="card">
+<p><b>它是什么：</b>生产级<b>双过程认知记忆引擎</b>（Python SDK <code>hy-memory</code>）+ 本地优先桌面汇聚产品 MemHub。
+配套三篇论文（EMNLP 2026 双过程记忆、CMB 编码记忆基准、Hy-Memory-30B-A3B 归因强化学习记忆写入模型）。</p>
+<p><b>机制要点：</b></p>
+<ul>
+<li><b>双过程</b>：System 1（lite/pro：快速读写检索）+ System 2（ultra：<code>evolve()</code> 触发 schema 归纳、跨域清扫，需图库）。</li>
+<li><b>Chat 场景 8 层</b>：L0 基本信息 → L1 原始对话 → L2 原子事实（版本化不可变）→ L3 摘要 → L6 SCHEMA 心智模型（叙事模板、图层）→ L7 <b>INTENTION 前瞻意图（带过期，过期降级为普通事实）</b>。</li>
+<li><b>Working/Coding 双层</b>：Facts（本会话做了什么，1 条/会话）+ Experiences（可复用解法，0–N 条需过价值阈值），双向互链；被取代事实走任务进展链可追溯。</li>
+<li><b>Coding 版本演化 diff-chain</b>：事实抽取刻意不贴代码（预算留给坐标），而被 revert 的版本连工作树里都没有——diff-chain 用零 LLM 成本存每版真实 diff，是「装饰器而非检索器」，挂在事实下面。</li>
+<li><b>场景路由</b>（chat/working/coding）与来源隔离（source 过滤）；lite/pro/ultra 三档模式。</li>
+<li>MemHub：把 Claude Code / Cursor / Codex / OpenCode / Qwen Code 等的对话与轨迹统一汇聚到本地受治理记忆（对多入口 Omni 交互是关键形态）。</li>
+</ul>
+<p><b>值得借鉴：</b>① 双过程（快检索 + 慢整理）作为 OIA-Memory 的运行节律；② L7 前瞻意图层（「下周一要交报告」）对主动性极有价值；③ Facts↔Experiences 双层互链；④ <b>diff-chain 挽回「说错又撤回」的版本</b>——与会话事件日志天然同构；⑤ MemHub 式跨 harness 汇聚对应 OIA 未来多入口（QQ/桌面/语音）。<br>
+<b>不借鉴/风险：</b>8 层全量对个人场景过重（默认参考 L0–L3+L7）；30B 记忆写入模型不引入（用现有 LLM 蒸馏）。<br>
+<b>OIA 落点：</b>Distiller 的分层目标模型；diff-chain 挂载到 <code>@omni/memory-vault</code> 的编辑历史；意图层进 Observer 的触发源。</p>
+</div>
+
+<h3>4.5 GraphMemix（论文 · memorax 技术博客对应）<span class="tag paper">检索组织学</span></h3>
+<div class="card">
+<p><b>要点：</b>把长期记忆组织建模为<b>查询感知的证据森林构造</b>（组合优化）：
+① 候选图构造（多视角种子记忆经 schema+语义关系扩展）；
+② 证据效用与激活成本解耦（直接记忆支持 vs 锚点条件关系验证，抑制冗余/冲突）；
+③ 森林优化（最大证据预算下选森林结构）。避免了「问题无关的离线摘要」与「朴素向量相似」两坑，
+能找回<b>低相似但互补</b>的证据，在四个长期多模态记忆基准上改善准确率-生命周期成本的 Pareto 前沿。<br>
+<b>值得借鉴：</b>召回不应是「相似度 Top-K 灌入」，而是<b>带预算的证据选择问题</b>——查询感知、效用-成本核算、去冗余去冲突；
+低相似互补证据的恢复对「用模糊描述找旧事」至关重要。<br>
+<b>OIA 落点：</b><code>@omni/memory-recall</code> 的候选合并与预算化精排（与琥珀之心的两级精排合并设计）。</p>
+</div>
+
+<h3>4.6 其余项目速览 + 社区插件（个人使用场景）</h3>
+<table>
+<tr><th>项目</th><th>核心机制</th><th>借鉴</th><th>不借鉴 / 风险</th></tr>
+<tr><td><b>CAMEL Memory</b>（拆解文档）</td>
+<td>MemoryBlock 组合模式（ChatHistoryBlock 窗口近因 + VectorDBBlock 语义）→ LongtermAgentMemory 混合；
+<b>ScoreBasedContextCreator</b>：token 预算内按分数组装上下文；Mem0 云存储适配</td>
+<td>「上下文组装器」独立成策略（token 预算 × 相关性分数）；Block 可插拔组合</td>
+<td>其默认打分较简单；云存储不需要</td></tr>
+<tr><td><b>M3-Agent</b>（字节 Seed，ICLR 2026）</td>
+<td>多模态长期记忆：实体中心记忆图（情景+语义）；<b>memorization 与 control 双进程并行</b>（在线消化视音频流 vs 执行指令迭代检索）；RL 训练记忆/控制模型；M3-Bench</td>
+<td>① 记忆构建进程与任务执行进程<b>解耦并行</b>（后台 memorizer）；② 实体中心图组织多模态记忆（人/物/事件）</td>
+<td>面向视频流机器人场景，模型训练路线不迁移；实体抽取质量依赖专用模型</td></tr>
+<tr><td><b>续忆 xuyi-memory</b>（DSH 插件！）</td>
+<td>QQ 陪伴长期记忆 + 日记本：每晚定稿日记（不改写）；「TA的记忆」页显示<b>原话+日期</b>；改口旧值小字留存；「别再提了」抑制、「记错了」纠正；时间词限定检索（昨天/上周）；隐私边界（他人秘密不外泄、敏感事不主动提）；自建 20 题盲测对比 2 个竞品并诚实公布 4 题失败；本地 <code>~/.xuyi/data</code> + 备份导出；语义模型（bge-small-zh）后装、先词法兜底</td>
+<td>① 记忆条目「原话+时间」的证据式呈现；② 抑制/纠正双机制（用户主权）；③ 时间限定检索；④ <b>诚实盲测评测法</b>（题先写、干净环境、失败公开）；⑤ 模型后装、词法兜底的降级路径；⑥ 它就是 DSH 插件——安装/打包/市场索引流程可直接参考</td>
+<td>QQ 场景绑定；日记定稿不改写与记忆纠错存在张力（日记可不动，记忆层要可改）</td></tr>
+<tr><td><b>琥珀之心 amber-heart</b></td>
+<td>三层记忆：固定（人设/核心画像，稳定注入不受召回污染）/ 短期（记忆书签+及时摘要+接力棒近几轮+近 3 天日记）/ 长期（卡片 + <b>关键词/向量/图谱三路召回 + 两级精排 + 记忆养护</b>）；
+每晚抽取→<b>「待审核」人审</b>（48h 自动收录）；管理网页全可视（概览/审核/召回/书签/导入/设置）；<b>召回透明页</b>（每轮召回了什么卡片可见）；生命周期（归档/恢复/整篇撤销）</td>
+<td>① 人审门 + 超时自动通过（治理与效率平衡）；② 召回透明（调试与信任）；③ 固定/流动分层防人格漂移；④ 接力棒（近几轮原话保语气连续）；⑤ 三路召回+两级精排的工程链路</td>
+<td>图谱维护成本高（M1 不做图谱）；每晚后台模型成本</td></tr>
+<tr><td><b>Anima Brain</b></td>
+<td>陪伴智能体的记忆+情感连续性 SDK：grounded memory（原话、有据事实、纠正、关联证据）；词法检索+可选向量+有界追问；<b>引用式核心/情景摘要</b>；人设与表达偏好；情绪连续性（PAD/张力衰减）；语音/视频通话链路；SQLite+FTS5 本地；Brain Atlas 可视化</td>
+<td>① 「记忆必附证据链」（cited summaries）；② 情绪状态连续性（对 Omni 交互体验重要）；③ SQLite+FTS5 作为轻量全栈验证；④ 表达偏好与人设分离</td>
+<td>情感建模深度超出 OIA v1 范围（取情绪状态位即可）；多模态通话依赖外部 provider</td></tr>
+</table>
+
+<h3>4.7 OIA-Memory 五组件设计（综合结论）</h3>
+<div class="card">
+<svg viewBox="0 0 1000 380" width="100%" height="380" role="img" aria-label="OIA-Memory 五组件架构">
+  <rect x="16" y="16" width="968" height="348" rx="12" fill="#fbfcfe" stroke="#c9d4e4"/>
+  <text x="500" y="44" text-anchor="middle" font-size="16" font-weight="bold" fill="#16233b">OIA-Memory：五组件 · 双过程 · 全链路可下钻</text>
+  <!-- write path -->
+  <rect x="48" y="72" width="170" height="86" rx="10" fill="#e8f0fe" stroke="#2f6fde"/>
+  <text x="133" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">① Vault 原文库</text>
+  <text x="133" y="124" text-anchor="middle" font-size="10.5" fill="#33507a">verbatim + L0 对话</text>
+  <text x="133" y="142" text-anchor="middle" font-size="10.5" fill="#33507a">SQLite + FTS5 · 只追加</text>
+  <rect x="248" y="72" width="170" height="86" rx="10" fill="#e8f0fe" stroke="#2f6fde"/>
+  <text x="333" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">② Distiller 蒸馏</text>
+  <text x="333" y="124" text-anchor="middle" font-size="10.5" fill="#33507a">L1 事实→L2 场景→L3 画像</text>
+  <text x="333" y="142" text-anchor="middle" font-size="10.5" fill="#33507a">意图式保存·取代留痕·双过程</text>
+  <rect x="448" y="72" width="170" height="86" rx="10" fill="#f1eafe" stroke="#6d28d9"/>
+  <text x="533" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#6d28d9">③ Canvas 符号画布</text>
+  <text x="533" y="124" text-anchor="middle" font-size="10.5" fill="#4c2a85">短期任务状态 Mermaid</text>
+  <text x="533" y="142" text-anchor="middle" font-size="10.5" fill="#4c2a85">node_id 下钻·compaction 后端</text>
+  <rect x="648" y="72" width="170" height="86" rx="10" fill="#e6f4f1" stroke="#0f766e"/>
+  <text x="733" y="102" text-anchor="middle" font-size="13" font-weight="bold" fill="#0f766e">④ Recall 召回</text>
+  <text x="733" y="124" text-anchor="middle" font-size="10.5" fill="#155e56">T0 词法→T1 向量→T2 图谱</text>
+  <text x="733" y="142" text-anchor="middle" font-size="10.5" fill="#155e56">证据森林预算精排·采纳审计</text>
+  <rect x="828" y="72" width="126" height="86" rx="10" fill="#fef3c7" stroke="#b45309"/>
+  <text x="891" y="102" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#92400e">⑤ Governance</text>
+  <text x="891" y="122" text-anchor="middle" font-size="10" fill="#7c4a06">人审待收录</text>
+  <text x="891" y="139" text-anchor="middle" font-size="10" fill="#7c4a06">抑制/纠正/ACL</text>
+  <text x="891" y="156" text-anchor="middle" font-size="10" fill="#7c4a06">影响披露·召回透明</text>
+  <!-- evidence chain -->
+  <rect x="48" y="212" width="906" height="60" rx="10" fill="#16233b"/>
+  <text x="500" y="238" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">证据链硬约束（借 TencentDB / Anima / rolling-memory）</text>
+  <text x="500" y="260" text-anchor="middle" font-size="11" fill="#bcd0ea">画像 → 场景 → 事实 → 原话/工具轨迹，每一层可确定性下钻；摘要永不脱离原文；记忆条目默认携带「原话 + 时间戳 + 来源会话」</text>
+  <!-- flows -->
+  <rect x="48" y="296" width="906" height="46" rx="10" fill="#eef2f7" stroke="#c9d4e4"/>
+  <text x="500" y="316" text-anchor="middle" font-size="11.5" fill="#223a5e">写入流：轮次结束 → Distiller（意图判定→语义去重→待审核/自动收录）｜ 召回流：用户消息 → Recall 分级检索 → 预算精排 → agent.inject() 注入 → 答复披露「本次记忆影响」</text>
+  <text x="500" y="333" text-anchor="middle" font-size="11.5" fill="#223a5e">节律：System 1 每轮即时读写 ｜ System 2 每晚（Schedule）做整合、主题总结、意图过期、养护</text>
+  <path d="M218 115 h30 M418 115 h30 M618 115 h30 M818 115 h10" stroke="#7d92b3" stroke-width="2" marker-end="none"/>
+</svg>
+<p class="small">存储底座：<code>~\.omni-dsh\memory\</code>（SQLite + FTS5 必选；向量可选本地 ONNX 小模型，遵循续忆「后装 + 词法兜底」策略）。四类记忆边界采用 MemoraX 划分：Coding / Repo / Personal(Profile) / Procedure，Procedure 与 Personal 直接对接 <code>ctx.skills</code> 与 persona 注入。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s5">5 · 主题二 · Delegation / Proactivity / Consistency</h2>
+
+<h3>5.1 DSH 原生机制盘点（已核验内核文档）</h3>
+<table>
+<tr><th>轴</th><th>DSH 机制</th><th>对 OIA 的意义</th></tr>
+<tr><td rowspan="3"><b>Delegation</b></td>
+<td>subagent seam：spawn / fork / ACP / Codex / Claude Code / DSH SDK 多 provider，统一 activation 生命周期、深度限制、树内消息/中断/收件箱等待</td>
+<td>Omni 场景的「专职子代理」（观察者、记忆员、全模态执行器）直接成形</td></tr>
+<tr><td>Agent Teams：共享任务板（owner / CAS 修订 / 阻塞依赖 / 写域 advisory）</td>
+<td>多代理协作的一致性与冲突预防</td></tr>
+<tr><td>workflow 引擎：模型写编排脚本，<code>agent()/pipeline()/parallel()</code> 扇出，fatal 错误纪律明确</td>
+<td>大规模任务编排（Omni-IO 执行图的载体）</td></tr>
+<tr><td rowspan="3"><b>Proactivity</b></td>
+<td>宿主级 Schedule：七种时间类型（after/at/every/daily/weekly/cron/rrule）、投递到现有/预留/全新会话、停机只追赶最新一次、60s 最小间隔</td>
+<td>签到、每晚记忆整理、周期巡检的时基</td></tr>
+<tr><td>Goals：事件溯源目标 + 轮次预算 + blocked 理由码 + 激活边沿（armed/disarmed）</td>
+<td>长程任务自动续跑的「有界主动」</td></tr>
+<tr><td>webhook 运行时：外部事件启动会话</td>
+<td>消息/设备/日历事件驱动的主动入口</td></tr>
+<tr><td rowspan="2"><b>Consistency</b></td>
+<td>会话日志唯一事实源：「模型可见即已记录」，deriveMessages 投影模型历史；fork/恢复/导出/遥测全从日志派生；格式 v0→v4 迁移链</td>
+<td>一致性底座：任何记忆/委托/主动行为都可回放审计</td></tr>
+<tr><td>投影 seam + CAS 修订（goals/schedule 的 expectedRevision/expectedUpdatedAt）</td>
+<td>并发写的一致性协议现成</td></tr>
+</table>
+
+<h3>5.2 论文洞见 → harness 转译</h3>
+<div class="card">
+<p><b>ALIVE（2611.21366）</b>——用户判断「直接来看没什么参考价值」（其训练法确不可迁移），但注意它恰好定义了交互式流模型的三态决策：<b>何时响应 / 如何响应 / 何时沉默</b>，外加<b>反馈寻求</b>（feedback-seeking）；对比式 SFT 教「何时与如何」，RL 的 BACA 用轨迹级+局部信用分配调「决策、响应与沉默」。
+<b>转译到 harness：</b>主动性不是「多说话」，而是把「出声 / 沉默监测 / 主动追问」建模为可评估的动作序列——这直接决定 OIA 干预策略器的输出词汇表（§5.3），且「沉默」必须是显式动作而非缺席。</p>
+<p><b>Deep Personalization / Coco（2611.13457）</b>——桌面主动智能体：独立 <b>Observer Agent</b> 持续观察桌面活动、维护紧凑长期用户建模上下文、并从<b>隐式信号</b>（投入、忽略、显式请求、重复劳动模式）学习「何时帮助合意」；
+本地运行不外发原始活动流；OSWorld-Persona 基准把干预时机变成可测标签（macro F1 0.12–0.19 → 0.35–0.48，自报 2.4–3.0×；一周用户研究 0.199→0.515）。
+<b>转译：</b>观察者独立成 subagent（不占主对话上下文）；干预时机个性化是<b>可度量目标</b>；隐式反馈（被关掉=负反馈）进策略学习环。</p>
+<p><b>Pitch（本工作区 pitch 门户，CHI 2026）的三大缺陷</b>——僵化、抢话、过度承诺，是主动性设计的现成反面清单：
+OIA 文案与策略必须允许随时跳过/换题/拒绝，一次只问一件事，未回复不追问，措辞克制不承诺效果。</p>
+</div>
+
+<h3>5.3 OIA 干预策略器（设计定稿）</h3>
+<div class="card">
+<pre><code>InterventionPolicy.state : {RESPOND, SILENT_MONITOR, SEEK_FEEDBACK}
+
+输入  : 观察事件流(Observer subagent) × 用户画像(L3) × 意图层(L7, 带过期)
+       × 隐式反馈(engagement / dismissal / 显式求助 / 重复模式) × 静默时段
+输出  : {state, topic?, budget: 1 问/次, channel: 会话内|轻唤|不打扰}
+约束  : 每类触发每日至多 1 次(借 Pitch「每日每种至多一次」)；
+       被忽略/关闭 N 次 → 该触发降频并记录负反馈(Coco 环)；
+       RESPOND 必须可被跳过/拒绝，措辞模板内置克制条款(不过度承诺)。
+学习  : 时机标签 = (触发, 是否被打断/采纳)，按周聚合，进 OSWorld-Persona 式评测集</code></pre>
+<p><b>一致性保障：</b>干预决策与用户反应全部落为会话事件（可回放）；Goals 轮次预算防无限续跑；Teams 写域防多代理同时改同一文件；
+记忆层的「取代留痕 + 冲突对账」（Hy-Memory reconcile / memorax 语义去重）保证画像不自相矛盾。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s6">6 · 主题三 · Personalization</h2>
+
+<h3>6.1 论文</h3>
+<table>
+<tr><th>论文</th><th>要点</th><th>对 OIA 的落点</th></tr>
+<tr><td><b>Deep Personalization</b>（Coco，2611.13457）<span class="tag paper">arXiv 2026-11</span></td>
+<td>闭环「持续观察 → 选择性保留长期上下文 → 从隐式反馈适应干预」；Observer Agent 本地观察桌面；隐私约束（原始活动不出设备）；干预时机宏 F1 自报 2.4–3.0× 提升</td>
+<td>Observer subagent 架构 + 时机学习环 + 隐私边界（选择性保留而非全量上传）</td></tr>
+<tr><td><b>Words Caught in the Heart</b>（Pandora，2611.00617）<span class="tag paper">arXiv 2026-10</span></td>
+<td>心理咨询来访者模拟：心理/关系状态随干预更新，主观归因与披露规划，<b>独立的表达规划器</b>把决策与「从该用户话语中蒸馏的语言模式」结合再生成；
+防「自我阐释过度」（来访者往往说不清自己的痛苦，AI 不该说得比本人还清楚）；AI 味评分从 43–67% 降到 7.2%（自报）</td>
+<td>① <b>表达规划层</b>：回复内容决策与语言风格渲染分离，风格从用户原话语料蒸馏；② 「self-opaque」意识：对用户自身状态的推断要克制、留白；③ 人设-表达-内容三层解耦</td></tr>
+</table>
+
+<h3>6.2 社区实践的个性化设计（三插件共识）</h3>
+<ul>
+<li><b>固定画像层不被召回污染</b>（琥珀之心）：人设、核心画像稳定注入；普通记忆只影响措辞与联想，不改「这个人是谁」。</li>
+<li><b>用户主权三件套</b>：纠正（旧值小字留存）/ 抑制（别再提了）/ 删除（仅删指定条目）——续忆与琥珀之心都有，OIA 作为治理硬接口。</li>
+<li><b>表达与语气连续性</b>：接力棒（近几轮原话）+ 表达偏好（Anima）+ Pandora 表达规划器，三层保证「像同一个人在说话」。</li>
+<li><b>披露分寸</b>：敏感事（健康、情绪）不主动提起，仅用户提起时才接（续忆的隐私测试「嘴严」题）。</li>
+</ul>
+
+<h3>6.3 OIA 个性化设计（定稿）</h3>
+<div class="card">
+<pre><code>UserModel
+ ├─ L3 Persona（长期画像：稳定事实/偏好/边界）        ← 固定注入，人审可改
+ ├─ StyleLexicon（表达蒸馏：高频句式/称呼/语气位）     ← Pandora 式，从原话语料提炼
+ ├─ InteractionProfile（干预偏好：时段/频率/渠道/克制度）← 隐式反馈持续校准
+ └─ Intentions（L7 前瞻意图，带过期）                  ← Observer 触发源之一
+
+渲染管线：内容决策(任务层) → 表达规划器(StyleLexicon) → 克制检查(不过度承诺/不猜心) → 输出
+          └─ 输出尾注：「本次哪些记忆影响了回答」（MemoraX 式披露）</code></pre>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s7">7 · Omni-IO Skills：全模态原生能力层</h2>
+<div class="card">
+<p><b>Omni-IO Skills（2609.31847，arXiv 2026-09）</b>：即插即用的 Agent Harness，把既有智能体变成「omni-native」——
+分层 Skills + 标准化多模态执行接口 + 依赖感知编排 + <b>持久资产注册表（Asset Registry）</b>；
+多资产工作流表示为 <b>Declare Execution Graph</b>（独立操作并发调度，产出注册后跨轮复用）；
+27 技能覆盖 7 种工件模态 × 4 能力族（理解/生成/推理/检索）；自报 UniM-90 上把两家前沿模型的输入支持率从 ~40% 拉到 100%。
+<b>核心主张：能力扩展发生在 harness 层而非模型层。</b></p>
+<p><b>与 DSH 的对位（这是最顺的一篇）：</b></p>
+<table>
+<tr><th>Omni-IO 概念</th><th>DSH 对应机制</th><th>OIA 动作</th></tr>
+<tr><td>Hierarchical Skills</td><td><code>ctx.skills</code> 分层提供方注册表（项目/用户/随包 rank 优先级、调用策略）</td><td>做 <code>@omni/skill-omniio</code> 提供方：文本/图/音/视/文档/3D/代码技能目录</td></tr>
+<tr><td>标准化多模态执行接口</td><td><code>ctx.tools</code> 工具流水线 + attachments（二进制持久引用）+ spill（大输出外置）</td><td>统一 Artifact I/O 工具族（read/write/transcode，跨后端可替换）</td></tr>
+<tr><td>Declare Execution Graph</td><td>workflow 引擎（<code>agent()/pipeline()/parallel()</code>，meta phases）</td><td>把多资产工作流写成 workflow 脚本模板，产出注册 attachments</td></tr>
+<tr><td>Persistent Asset Registry</td><td><code>ctx.attachments</code> + storage-domain + 会话日志事件</td><td><code>@omni/asset-registry</code>：资产元数据（模态/血缘/复用状态）挂会话事件</td></tr>
+<tr><td>可替换执行后端</td><td>能力 seam（Provider 可替换）</td><td>本地 ONNX / 远程 API / 专用模型三档 provider</td></tr>
+</table>
+<p><b>不借鉴：</b>其评测数字为自报；27 技能全量不抄，按 Omni-Interaction 场景（语音、屏幕、文档、音视频）裁剪首批 8–12 个。</p>
+</div>
+
+<!-- ============================================================ -->
+<h2 id="s8">8 · 总体架构与集成矩阵</h2>
+
+<h3>8.1 运行时架构</h3>
+<div class="card">
+<svg viewBox="0 0 1000 460" width="100%" height="460" role="img" aria-label="OIA 运行时架构">
+  <rect x="14" y="14" width="972" height="432" rx="12" fill="#fbfcfe" stroke="#c9d4e4"/>
+  <text x="500" y="42" text-anchor="middle" font-size="16" font-weight="bold" fill="#16233b">OIA 运行时（独立 DSH 实例 · profile: omni · DSH_HOME: ~\.omni-dsh）</text>
+  <!-- ingress -->
+  <rect x="40" y="66" width="200" height="72" rx="10" fill="#eef2f7" stroke="#94a8c4"/>
+  <text x="140" y="94" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#223a5e">OmniSense 感知入口</text>
+  <text x="140" y="114" text-anchor="middle" font-size="10.5" fill="#41556f">桌面观察(Observer subagent)</text>
+  <text x="140" y="130" text-anchor="middle" font-size="10.5" fill="#41556f">语音/消息/webhook/日历</text>
+  <!-- agent core -->
+  <rect x="290" y="66" width="420" height="72" rx="10" fill="#223a5e"/>
+  <text x="500" y="94" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">Agent 核心（DSH agent-loop · 事件溯源会话日志）</text>
+  <text x="500" y="116" text-anchor="middle" font-size="10.5" fill="#c6d4e8">pre-step 注入记忆 · turn-stopping 写回 · Goals 续跑 · Schedule 时基</text>
+  <text x="500" y="132" text-anchor="middle" font-size="10.5" fill="#c6d4e8">subagent 树 · Teams 任务板 · workflow 编排</text>
+  <!-- omni io -->
+  <rect x="760" y="66" width="200" height="72" rx="10" fill="#eef2f7" stroke="#94a8c4"/>
+  <text x="860" y="94" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#223a5e">Omni-IO 执行层</text>
+  <text x="860" y="114" text-anchor="middle" font-size="10.5" fill="#41556f">Skills(文本/图/音/视/文档/3D)</text>
+  <text x="860" y="130" text-anchor="middle" font-size="10.5" fill="#41556f">资产注册表 · 执行图</text>
+  <!-- memory -->
+  <rect x="40" y="192" width="920" height="118" rx="10" fill="#e8f0fe" stroke="#2f6fde"/>
+  <text x="500" y="218" text-anchor="middle" font-size="13" font-weight="bold" fill="#1d4ed8">OIA-Memory 记忆织物（Vault · Distiller · Canvas · Recall · Governance）</text>
+  <text x="500" y="242" text-anchor="middle" font-size="10.8" fill="#33507a">长期：L0 原话 → L1 事实 → L2 场景 → L3 画像(+L7 意图)　｜　短期：符号画布 + 接力棒 + 及时摘要　｜　检索：T0 词法 → T1 向量 → T2 图谱 + 证据森林预算</text>
+  <text x="500" y="266" text-anchor="middle" font-size="10.8" fill="#33507a">治理：待审核人审(48h 自动收录) · 抑制/纠正 · ACL(private/team/agent loadout) · 影响披露 · 召回透明页 · 采纳审计</text>
+  <text x="500" y="290" text-anchor="middle" font-size="10.8" fill="#33507a">存储：~\.omni-dsh\memory\（SQLite+FTS5；向量可选本地小模型；diff-chain 挂编辑史）</text>
+  <!-- consistency -->
+  <rect x="40" y="340" width="920" height="76" rx="10" fill="#16233b"/>
+  <text x="500" y="368" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#fff">一致性与治理底座</text>
+  <text x="500" y="392" text-anchor="middle" font-size="10.5" fill="#bcd0ea">会话事件日志（唯一事实源，可回放） · 投影缓存 · CAS 修订 · 目标轮次预算 · Teams 写域 · 干预决策全量落日志 · 隐私边界（原始活动不出设备）</text>
+  <line x1="140" y1="138" x2="140" y2="192" stroke="#7d92b3" stroke-width="2"/>
+  <line x1="860" y1="138" x2="860" y2="192" stroke="#7d92b3" stroke-width="2"/>
+  <line x1="500" y1="138" x2="500" y2="192" stroke="#7d92b3" stroke-width="2"/>
+  <line x1="500" y1="310" x2="500" y2="340" stroke="#7d92b3" stroke-width="2"/>
+</svg>
+</div>
+
+<h3>8.2 集成矩阵：项目 → 借鉴点 → 落点 → 优先级</h3>
+<table>
+<tr><th>#</th><th>来源</th><th>借鉴点</th><th>OIA 落点</th><th>优先级</th></tr>
+<tr><td>1</td><td>rolling-memory</td><td>verbatim 词法基线、turn-elimination 经济学、采纳审计、数字/标识符对齐</td><td>memory-recall T0 层 + 采纳事件</td><td>P0</td></tr>
+<tr><td>2</td><td>TencentDB-Agent-Memory</td><td>L0–L3 金字塔、Mermaid 符号画布 + node_id 下钻、白盒、ACL/loadout</td><td>Distiller + Canvas + 治理面板</td><td>P0</td></tr>
+<tr><td>3</td><td>MemoraX</td><td>四类记忆边界、意图式保存+语义去重、节奏注入、影响披露</td><td>Distiller 写入策略 + persona 注入</td><td>P0</td></tr>
+<tr><td>4</td><td>Hy-Memory</td><td>双过程节律、L7 意图层、Facts↔Experiences、diff-chain、MemHub 汇聚</td><td>Distiller 节律 + 意图层 + 编辑史</td><td>P1</td></tr>
+<tr><td>5</td><td>GraphMemix</td><td>查询感知证据森林、效用-成本预算、低相似互补证据</td><td>Recall 精排预算器</td><td>P1</td></tr>
+<tr><td>6</td><td>琥珀之心</td><td>待审核人审 + 48h 自动、召回透明页、固定/流动分层、三路召回+两级精排</td><td>Governance + Recall + persona</td><td>P0（人审）/P1（图谱）</td></tr>
+<tr><td>7</td><td>续忆</td><td>原话+日期证据式呈现、纠正/抑制、时间限定检索、诚实盲测、词法兜底降级</td><td>Governance 硬接口 + 评测方法论</td><td>P0</td></tr>
+<tr><td>8</td><td>Anima Brain</td><td>引用式摘要、情绪连续性、表达偏好分离、SQLite+FTS5 全栈</td><td>Distiller 摘要格式 + 情绪状态位</td><td>P1</td></tr>
+<tr><td>9</td><td>M3-Agent</td><td>memorization/control 双进程、实体中心记忆图</td><td>后台记忆员 subagent；实体图 P2</td><td>P1 / P2</td></tr>
+<tr><td>10</td><td>CAMEL</td><td>ScoreBasedContextCreator（预算×分数组装上下文）、Block 组合</td><td>注入组装器策略</td><td>P1</td></tr>
+<tr><td>11</td><td>Omni-IO Skills</td><td>分层技能、资产注册表、执行图、后端可替换</td><td>@omni/omni-io 全家桶</td><td>P1</td></tr>
+<tr><td>12</td><td>ALIVE</td><td>响应/沉默/反馈寻求三态决策、干预信用分配</td><td>InterventionPolicy 动作词汇表</td><td>P1</td></tr>
+<tr><td>13</td><td>Coco（Deep Personalization）</td><td>Observer 独立观察者、隐式反馈环、时机可测化、本地隐私</td><td>Observer subagent + 时机评测集</td><td>P1</td></tr>
+<tr><td>14</td><td>Pandora（Words Caught in the Heart）</td><td>表达规划器、风格蒸馏、self-opaque 克制</td><td>StyleLexicon + 渲染管线</td><td>P2</td></tr>
+<tr><td>15</td><td>Pi Agent</td><td>极简扩展/包模型、pi-ai 统一 LLM（DSH 已内置）、RPC/SDK</td><td>包设计对照 + 多模态模型接入</td><td>P1</td></tr>
+</table>
+
+<h3>8.3 代码级借鉴（源码实读，2026-11-21 补课）</h3>
+<div class="callout ok"><b>✅ 已实读 7 仓库核心源码</b>（本地存档 <code>docs/sources/repos/</code>），逐文件/函数/公式的借鉴清单见
+<a href="docs/code-level-notes.md"><b>docs/code-level-notes.md</b></a>。要点摘录：</div>
+<table>
+<tr><th>组件</th><th>搬什么（代码级）</th><th>来源文件</th></tr>
+<tr><td>recall-T0</td><td>自信息权重（汉字 10 bit/字母 2/数字 3.32 + 重复阻尼 0.25^(k-2)）、突发克隆折叠（<code>familyEffectiveWeight</code>：离散熵 H/ln(df) 降权 + burstFreeQuota=3 饱和衰减）、事件分段 <code>tau_episode=e^(μ+σ)−1</code>、两跳扩散预算（1/e per hop）</td><td>rolling-memory <code>entropy.go / cluster_state_aggregates.go / unit_relations.go / pipeline*.go</code></td></tr>
+<tr><td>distiller</td><td>抽取提示词（情境切分+persona/episodic/instruction 三类+priority 打分+负面清单）、去重动作集 <code>store/skip/update/merge</code> + <code>target_ids</code> 多对多合并 + 时间戳并集</td><td>tencent <code>prompts/l1-extraction.ts / l1-dedup.ts</code></td></tr>
+<tr><td>canvas</td><td><code>offload.jsonl {tool_call_id, node_id|null|wait, result_ref→refs/*.md}</code>；L2 触发阈值 4 条 null、wait 重试、注入模板与「node_id→jsonl→result_ref」下钻说明</td><td>tencent <code>src/offload/*</code></td></tr>
+<tr><td>vault</td><td>schema：l1_records/l0_conversations + FTS5 + sqlite-vec vec0；编辑史 thread/round 表 + thread 键三级降级 + 注入预算常量表</td><td>tencent <code>store/sqlite.ts</code>；hy-memory <code>coding/chain_store.py</code></td></tr>
+<tr><td>意图层</td><td>time_based / event_based / 关怀型 三触发 + expiry + is_proactive_care 字段</td><td>hy-memory <code>intention_detector.py</code></td></tr>
+<tr><td>governance</td><td>pending 状态机（pending/structure_pending/…/approved/rejected/deleted）+ version/review_key/policy_revision 三重 CAS + 48h 自动收录参数</td><td>amber <code>cards/drafts.py / review.py / review_policy.py</code></td></tr>
+<tr><td>recall-T1</td><td>三路粗排→父卡替换→证据补充→模型精排→LLM 细选，stats 诊断全程流转（召回透明页数据源）；精排公式 <code>0.6·rel+0.25·e^(−age/45)+0.15·imp/10</code>（RRF 1/(60+k)）</td><td>amber <code>recall/*.py</code>；anima <code>retrieval.py</code></td></tr>
+<tr><td>@omni/* 打包</td><td>DSH bundle 清单模板：<code>dsh.bundle.patch</code> + <code>dsh.client{platform:web}</code> + locale + market 索引</td><td>xuyi <code>dsh-adapter/package.json / cordis.patch.yml</code></td></tr>
+</table>
+<p class="small">许可纪律：rolling-memory（PolyForm 非商用）公式与思想自实现、不搬代码；其余 MIT/Apache 项目集成前复核 LICENSE。
+明确未读部分（memorax 云侧核心未开源、amber 图谱实现、Pi 各包内部）已在 notes 文末如实登记。</p>
+
+<!-- ============================================================ -->
+<h2 id="s9">9 · 路线图与里程碑</h2>
+<table>
+<tr><th>里程碑</th><th>目标</th><th>关键交付</th><th>完成判据</th></tr>
+<tr><td><b>M0 · 立项与隔离</b><br><span class="small">本次已完成</span></td>
+<td>调研 + 设计 + 隔离边界</td>
+<td>本报告、门户目录、资料存档、隔离验收清单（§1.3）</td>
+<td>报告评审通过；隔离清单可执行</td></tr>
+<tr><td><b>M1 · 记忆内核 MVP</b></td>
+<td>OIA-Memory 最小闭环</td>
+<td>独立 DSH_HOME + profile <code>omni</code>；<code>@omni/memory-vault</code>（SQLite+FTS5）+ <code>@omni/memory-recall</code>（T0 词法）+ 写回钩子；证据式条目（原话+时间）</td>
+<td>两会话交叉验证「写得进、找得到、带原文」；词法兜底可离线；对照续忆 20 题式盲测脚本</td></tr>
+<tr><td><b>M2 · 分层蒸馏与治理</b></td>
+<td>L1–L3 蒸馏 + 人审</td>
+<td>Distiller（意图式保存/语义去重/取代留痕）；待审核面板（48h 自动收录）；纠正/抑制接口；符号画布 compaction 后端</td>
+<td>蒸馏可下钻回原话；人审流可拒绝可改；画布 node_id 可追原文</td></tr>
+<tr><td><b>M3 · 主动性与个性化</b></td>
+<td>Observer + 干预策略 + 画像</td>
+<td>Observer subagent、InterventionPolicy 三态、Schedule 时基、L7 意图层、StyleLexicon、影响披露</td>
+<td>干预时机标签可记录可评测；pitch 三缺陷检查表全过；隐式反馈降频生效</td></tr>
+<tr><td><b>M4 · 委托一致性 + Omni-IO</b></td>
+<td>团队协作与全模态</td>
+<td>Teams preset、workflow 执行图模板、资产注册表、8–12 个 Omni 技能（首批：图/文档/音/视）</td>
+<td>多代理任务零写冲突（写域+审计）；跨轮资产复用演示</td></tr>
+<tr><td><b>M5 · 评测与硬化</b></td>
+<td>可信度</td>
+<td>自建盲测集（题先写、失败公开，续忆方法论）；采纳率/ROI 仪表（rolling-memory 方法论）；ATM/LoCoMo 式可复现脚本</td>
+<td>基线数字可复现；所有自报与实测分开标注</td></tr>
+</table>
+
+<!-- ============================================================ -->
+<h2 id="s10">10 · 风险、诚实声明与待办</h2>
+<div class="callout warn">
+<b>风险登记</b>
+<ul>
+<li><b>基准数字均自报</b>：本报告引用的所有提升数字来自各项目 README/论文摘要，M5 必须自测后才可对外引用。</li>
+<li><b>综述 PDF 未获取全文</b>：《Native Real-Time Interactive Omni Intelligence: A Unified Framework》仅用户本地有 PDF，arXiv/公开检索不到；本报告未引用其论断。<b>待办 R1</b>：请把 PDF 放入 <code>omni-interaction-agent/docs/sources/</code>，下一轮精读后回填 §5「统框架」一节。</li>
+<li><b>许可边界</b>：rolling-memory 为 PolyForm 非商用（思路可用，代码不并入）；TencentDB-Agent-Memory（MIT）、MemoraX（MIT）、Hy-Memory（Apache-2.0）、M3-Agent（其仓库许可）、续忆（MIT）可再分发，集成前逐一复核 LICENSE。</li>
+<li><b>DSH 版本演进快</b>：当前安装为 0.2.2-rc.3 系；二开线固定 upstream 版本，按 upgrade-guide 迁移，禁止漂移跟踪 unstable。</li>
+<li><b>隐私</b>：Observer 采集桌面活动必须默认本地、选择性保留、可见可关（Coco 边界 + 续忆「嘴严」测试纳入评测）。</li>
+<li><b>主动性反模式</b>：僵化/抢话/过度承诺（Pitch 论文 RQ2）——已进 InterventionPolicy 约束与文案规范。</li>
+</ul>
+</div>
+<div class="callout ok"><b>待办清单（下一轮开工项，不需再确认方向）</b>
+R1 精读综述 PDF 并回填 §5 ｜ R2 M1 开工：独立 DSH_HOME 与 <code>@omni/memory-vault</code> 骨架 ｜ R3 对 8 个开源仓库逐一复核 LICENSE 与 DSH 集成路径（TencentDB 的 dsh 适配文档是现成参考） ｜ R4 设计盲测题集（20 题式，题先写、失败公开）。</div>
+
+<!-- ============================================================ -->
+<h2 id="s11">11 · 参考资料</h2>
+<p class="small">全部一手材料已存档于 <code>omni-interaction-agent/docs/sources/</code>（13 份 README/文档快照，2026-11-21 抓取）。</p>
+<table>
+<tr><th>类别</th><th>条目</th><th>链接</th></tr>
+<tr><td rowspan="5">记忆 · 工程</td><td>TencentDB-Agent-Memory（+DSH 适配文档）</td><td><a href="https://github.com/TencentCloud/TencentDB-Agent-Memory">github.com/TencentCloud/TencentDB-Agent-Memory</a></td></tr>
+<tr><td>rolling-memory</td><td><a href="https://github.com/rocareer/rolling-memory">github.com/rocareer/rolling-memory</a></td></tr>
+<tr><td>memorax-code</td><td><a href="https://github.com/memorax-ai/memorax-code">github.com/memorax-ai/memorax-code</a></td></tr>
+<tr><td>Hy-Memory + MemHub</td><td><a href="https://github.com/Tencent-Hunyuan/Hy-Memory">github.com/Tencent-Hunyuan/Hy-Memory</a></td></tr>
+<tr><td>CAMEL Memory 模块文档</td><td><a href="https://docs.camel-ai.org/key_modules/memory">docs.camel-ai.org/key_modules/memory</a></td></tr>
+<tr><td rowspan="3">记忆 · 社区</td><td>续忆 xuyi-memory（DSH 插件）</td><td><a href="https://github.com/joymitu/xuyi-memory-release">github.com/joymitu/xuyi-memory-release</a></td></tr>
+<tr><td>琥珀之心 amber-heart-memory</td><td><a href="https://github.com/lixiaomeng-eng/amber-heart-memory">github.com/lixiaomeng-eng/amber-heart-memory</a></td></tr>
+<tr><td>Anima Brain</td><td><a href="https://github.com/spearsheep/anima-brain">github.com/spearsheep/anima-brain</a></td></tr>
+<tr><td rowspan="5">论文</td><td>GraphMemix（2608.26983）</td><td><a href="https://arxiv.org/abs/2608.26983">arxiv.org/abs/2608.26983</a></td></tr>
+<tr><td>M3-Agent（2508.09736，ICLR 2026）</td><td><a href="https://arxiv.org/abs/2508.09736">arxiv.org/abs/2508.09736</a></td></tr>
+<tr><td>Omni-IO Skills（2609.31847）</td><td><a href="https://arxiv.org/abs/2609.31847">arxiv.org/abs/2609.31847</a></td></tr>
+<tr><td>ALIVE（2611.21366）</td><td><a href="https://arxiv.org/abs/2611.21366">arxiv.org/abs/2611.21366</a></td></tr>
+<tr><td>Deep Personalization / Coco（2611.13457）· Words Caught in the Heart / Pandora（2611.00617）</td><td><a href="https://arxiv.org/abs/2611.13457">2611.13457</a> · <a href="https://arxiv.org/abs/2611.00617">2611.00617</a></td></tr>
+<tr><td rowspan="2">基座</td><td>DeepSeek Harness（本机安装 0.2.2-rc.3 系，内核文档核验）</td><td><a href="https://github.com/deepseek-ai/deepseek-harness">github.com/deepseek-ai/deepseek-harness</a></td></tr>
+<tr><td>Pi（pi-mono）</td><td><a href="https://github.com/badlogic/pi-mono">github.com/badlogic/pi-mono</a> · <a href="https://pi.dev">pi.dev</a></td></tr>
+<tr><td>综述</td><td>Native Real-Time Interactive Omni Intelligence（用户本地 PDF，未获取全文，见 §10）</td><td>—</td></tr>
+</table>
+
+<div class="footnote">
+<b>文档信息</b>：Omni-Interaction-Agent 立项调研与设计报告 · 生成于 2026-11-21（Asia/Shanghai）·
+单文件 HTML、离线可读 · 配套 README 与资料存档见本门户目录。
+报告中「自报」标注的数字均未独立复现；DSH 机制描述以本机安装版内核文档（architecture / capability-seams / subagent / goal / schedule / compaction / skills / workflow / mcp-memory）为准。
+</div>
+
+</div>
+</body>
+</html>

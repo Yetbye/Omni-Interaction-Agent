@@ -1,0 +1,937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DeepSeek Harness × Pi Agent 与 OIA 总体设计：无特权内核、能力 seam 与隔离红线 · OIA 读书会 第 6 篇</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- ================= HERO（模板 A） ================= -->
+<header class="hero">
+  <div class="hero-wrap">
+    <div class="hero-badge">OIA 读书会 · 第 6 篇 / 6 · 收官</div>
+    <h1>DeepSeek Harness × Pi Agent<br>与 OIA 总体设计</h1>
+    <div class="hero-tagline">一切皆插件 × 三大命题的原生落点 × 双 DSH 隔离 × @omni/* 插件族</div>
+    <div class="hero-desc">
+      无特权内核、能力 seam 与隔离红线——收官篇把前五篇的记忆组件逐一挂回 DSH 已文档化的扩展点，
+      并给出不 fork 内核的总体设计。
+    </div>
+
+    <div class="hero-art">
+      <div class="cover-frame">
+        <svg viewBox="0 0 800 340" width="100%" role="img" aria-label="水墨封面：两座互不相通的庭院">
+          <defs>
+            <linearGradient id="paper" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f9f6ef"/><stop offset="1" stop-color="#f1ecdf"/>
+            </linearGradient>
+            <linearGradient id="wash" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#c084fc" stop-opacity="0.30"/>
+              <stop offset="1" stop-color="#c084fc" stop-opacity="0.04"/>
+            </linearGradient>
+            <radialGradient id="moon" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#e9d5ff" stop-opacity="0.9"/>
+              <stop offset="1" stop-color="#e9d5ff" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <rect width="800" height="340" fill="url(#paper)"/>
+          <!-- 远山淡紫 -->
+          <path d="M0 118 Q90 66 190 104 T388 96 Q470 60 560 100 T800 92 L800 150 L0 150 Z" fill="url(#wash)"/>
+          <circle cx="676" cy="76" r="54" fill="url(#moon)"/>
+          <!-- 题字 -->
+          <text x="46" y="66" font-family="Noto Serif SC, SimSun, serif" font-size="42" font-weight="900" fill="#23212c" letter-spacing="6">双院各自春</text>
+          <text x="48" y="94" font-family="Noto Serif SC, SimSun, serif" font-size="14" fill="#b8860b" letter-spacing="5">无特权内核 · 能力 seam · 五层隔离</text>
+          <!-- 泥金印章 -->
+          <rect x="252" y="40" width="46" height="46" rx="6" fill="#b8860b"/>
+          <text x="275" y="60" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="13" font-weight="700" fill="#fff">收官</text>
+          <text x="275" y="78" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="13" font-weight="700" fill="#fff">之篇</text>
+
+          <!-- 左庭院：日常 DSH -->
+          <g>
+            <rect x="56" y="176" width="292" height="120" rx="8" fill="#ffffff" stroke="#23212c" stroke-width="2.5"/>
+            <path d="M46 176 L202 138 L358 176 Z" fill="#23212c"/>
+            <rect x="178" y="240" width="48" height="56" fill="#efe9dc" stroke="#23212c" stroke-width="2"/>
+            <path d="M172 240 h60" stroke="#b8860b" stroke-width="3"/>
+            <!-- 庭中树（插件树意象） -->
+            <path d="M96 288 v-52 M96 252 l-16 -16 M96 262 l18 -18" stroke="#4a4657" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="80" cy="232" r="15" fill="#a855f7" fill-opacity="0.55"/>
+            <circle cx="112" cy="228" r="18" fill="#a855f7" fill-opacity="0.45"/>
+            <circle cx="96" cy="212" r="14" fill="#a855f7" fill-opacity="0.35"/>
+            <circle cx="316" cy="266" r="10" fill="#d9b45b" fill-opacity="0.8"/>
+            <circle cx="292" cy="278" r="7" fill="#d9b45b" fill-opacity="0.6"/>
+            <text x="202" y="166" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="15" font-weight="700" fill="#23212c">日常桌面实例</text>
+            <text x="202" y="212" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="12.5" fill="#4a4657">~\.dsh · profile desktop</text>
+            <text x="202" y="232" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="12.5" fill="#4a4657">@deepseek-ai/* 官方插件</text>
+          </g>
+
+          <!-- 中缝：互不相通 -->
+          <g>
+            <path d="M376 168 v140" stroke="#b8860b" stroke-width="2.5" stroke-dasharray="8 8"/>
+            <path d="M424 168 v140" stroke="#b8860b" stroke-width="2.5" stroke-dasharray="8 8"/>
+            <path d="M382 226 l32 32 M414 226 l-32 32" stroke="#23212c" stroke-width="5" stroke-linecap="round"/>
+            <text x="400" y="298" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="13" font-weight="700" fill="#b8860b">零共享</text>
+            <text x="400" y="318" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="13" font-weight="700" fill="#b8860b">零侵入</text>
+          </g>
+
+          <!-- 右庭院：OIA -->
+          <g>
+            <rect x="452" y="176" width="292" height="120" rx="8" fill="#ffffff" stroke="#23212c" stroke-width="2.5"/>
+            <path d="M442 176 L598 138 L754 176 Z" fill="#23212c"/>
+            <rect x="574" y="240" width="48" height="56" fill="#efe9dc" stroke="#23212c" stroke-width="2"/>
+            <path d="M568 240 h60" stroke="#b8860b" stroke-width="3"/>
+            <!-- 庭中双树 -->
+            <path d="M500 288 v-48 M500 254 l-14 -14 M500 264 l16 -16" stroke="#4a4657" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <circle cx="486" cy="236" r="14" fill="#c084fc" fill-opacity="0.6"/>
+            <circle cx="516" cy="232" r="16" fill="#c084fc" fill-opacity="0.45"/>
+            <circle cx="712" cy="272" r="9" fill="#b8860b" fill-opacity="0.75"/>
+            <circle cx="690" cy="282" r="6" fill="#b8860b" fill-opacity="0.55"/>
+            <text x="598" y="166" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="15" font-weight="700" fill="#23212c">OIA 实例</text>
+            <text x="598" y="212" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="12.5" fill="#4a4657">~\.omni-dsh · profile omni</text>
+            <text x="598" y="232" text-anchor="middle" font-family="Noto Serif SC, SimSun, serif" font-size="12.5" fill="#4a4657">@omni/* 组合包与记忆库</text>
+          </g>
+
+          <!-- 底部泥金地线 -->
+          <path d="M40 322 H760" stroke="#d9b45b" stroke-width="2"/>
+          <text x="756" y="334" text-anchor="end" font-family="Noto Serif SC, SimSun, serif" font-size="11" fill="#b8860b">两座互不相通的庭院 · 双引擎并行</text>
+        </svg>
+      </div>
+      <div class="hero-caption">封面自绘：双院图——左院为日常 DSH Desktop 实例，右院为 OIA 专属实例，中缝断桥喻示五层隔离红线。</div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat"><b>6 / 6</b><span>系列收官</span></div>
+      <div class="stat"><b>5 层</b><span>隔离红线</span></div>
+      <div class="stat"><b>8 条</b><span>能力 seam 群</span></div>
+      <div class="stat"><b>3 大</b><span>命题落点</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">继续阅读<span>▾</span></div>
+</header>
+
+<!-- ================= 导航条 ================= -->
+<nav class="navbar">
+  <span class="brand">OIA 读书会<i>·</i></span>
+  <a href="../index.html">首页</a>
+  <a href="01-tencentdb-memory.html">腾讯云记忆</a>
+  <a href="02-rolling-memory.html">rolling-memory</a>
+  <a href="03-hy-graphmemix.html">Hy×GraphMemix</a>
+  <a href="04-memorax-community.html">MemoraX×社区</a>
+  <a href="05-omni-papers.html">论文·主动性</a>
+  <a class="active" href="06-dsh-pi-oia.html">DSH×Pi×OIA</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= 第 1 章 ================= -->
+<section class="chapter">
+  <div class="chapter-no">第一章 · PLUGIN TREE</div>
+  <h2 class="chapter-title">无特权内核的插件树</h2>
+
+  <p class="lead">
+    DSH 文档把它的架构哲学写成一句话：<b>「无特权内核，一切皆插件、皆可 patch 替换」</b>。
+    这不是修辞——它决定了 OIA 这条二开线能否<b>不 fork 内核</b>地做出完整产品（本报告 §0 执行摘要的第一条结论）。
+  </p>
+
+  <h3>1.1 为什么「没有特权内核」反而让二次开发变简单</h3>
+  <p>
+    常规思路是：内核不可动，扩展靠预留钩子。DSH 走的是 Cordis 插件树路线——<b>产品每一部分都是插件</b>：
+    模型适配器是插件、工具注册表是插件、会话日志与投影是插件，连 <b>agent loop 本身也是插件</b>。
+    插件的生命周期语义极其干脆：<b>注册即副作用、卸载即撤销</b>。没有一段「只有内核才能改」的隐秘状态，
+    于是二次开发的动作退化成两个动词——<b>装（insert）</b>与<b>改（按 id 定位替换）</b>。
+  </p>
+  <p>
+    <b>代价</b>也很直白：没有「官方后门」可用，任何行为都必须用插件注册与 patch 表达；
+    调试的对象从「读内核源码」变成「看插件树拼装结果」；而被你替换掉的 provider，
+    其一致性责任随之转移到你身上（例如会话日志的 CAS 修订协议）。
+    <b>替代方案</b>有三条：① fork 内核（升级即漂移，被 OIA 明令禁止，只保留「最小 patch 分支 + 可 rebase」兜底）；
+    ② monkey-patch 运行时（不可审计、不可下钻，与「白盒可追溯」的产品要求冲突）；
+    ③ 外挂网关在 harness 之外改写流量（正是第三方接入文档展示的思路，代价是看不见会话内部事件）。
+    DSH 选择 ① 的反面：把一切变成可组合的树。
+  </p>
+
+  <h3>1.2 三层组装：profile → bundle → home patch → --patch overlay</h3>
+  <p>
+    插件树不是手拼的，而是<b>分层配置</b>叠出来的（本报告 §2 记为 profile + bundle + 分层 <code>cordis.patch.yml</code>）：
+  </p>
+  <ul>
+    <li><b>profile 列 bundle</b>——profile（如 <code>omni</code>）声明本实例加载哪些组合包（如 <code>@omni/omni-base</code>）；</li>
+    <li><b>bundle patch</b>——每个组合包自带自己的 <code>cordis.patch.yml</code>，声明它要插入/替换的条目；</li>
+    <li><b>home patch</b>——DSH_HOME 级别的 patch（OIA 即 <code>~\.omni-dsh</code> 下的配置），覆盖到该 home 的所有会话；</li>
+    <li><b>--patch overlay</b>——命令行显式追加的一次性覆盖层，优先级最高，用于实验与验收（<code>dsh --profile omni --dump-config</code> 就是看这四层叠加后的最终树）。</li>
+  </ul>
+  <p>
+    patch 的语义只有两种，且都<b>按 id 定位</b>：<b>替换整条 config</b>（同 id 的条目整条换掉，不做字段级魔法合并），
+    或<b>插入</b>一条新条目。这条纪律看似粗，实则把「改了什么」变成可 diff、可回滚、可审计的文本——
+    正是隔离验收清单第 ② 条（组合树中不含任何 <code>@omni</code> 之外的自研条目）能机械检查的原因。
+  </p>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 1000 520" width="100%" role="img" aria-label="插件树与 patch 分层图">
+        <rect x="0" y="0" width="1000" height="520" rx="12" fill="#fbfcfe" stroke="#e3ddf0"/>
+        <text x="500" y="34" text-anchor="middle" font-size="16" font-weight="bold" fill="#23212c">Cordis 插件树：一切皆插件，按 id 拼装</text>
+
+        <!-- 根 -->
+        <rect x="360" y="54" width="280" height="46" rx="10" fill="#23212c"/>
+        <text x="500" y="83" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">Cordis 插件树（无特权内核）</text>
+
+        <!-- 第一层节点 -->
+        <g stroke="#7d92b3" stroke-width="2" fill="none">
+          <path d="M500 100 v18 M120 118 H880 M120 118 v18 M300 118 v18 M500 118 v18 M700 118 v18 M880 118 v18"/>
+        </g>
+        <g>
+          <rect x="44" y="136" width="152" height="72" rx="9" fill="#e9d5ff" stroke="#9333ea"/>
+          <text x="120" y="162" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#5b21b6">模型适配器插件</text>
+          <text x="120" y="182" text-anchor="middle" font-size="10.5" fill="#5b21b6">ctx.llm 注册表</text>
+          <text x="120" y="199" text-anchor="middle" font-size="10.5" fill="#5b21b6">deepseek / pi-ai…</text>
+
+          <rect x="224" y="136" width="152" height="72" rx="9" fill="#e9d5ff" stroke="#9333ea"/>
+          <text x="300" y="162" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#5b21b6">工具注册表</text>
+          <text x="300" y="182" text-anchor="middle" font-size="10.5" fill="#5b21b6">ctx.tools 流水线</text>
+          <text x="300" y="199" text-anchor="middle" font-size="10.5" fill="#5b21b6">sandbox / approval</text>
+
+          <rect x="424" y="136" width="152" height="72" rx="9" fill="#ffe4e6" stroke="#e11d48"/>
+          <text x="500" y="162" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#9f1239">agent loop 本身</text>
+          <text x="500" y="182" text-anchor="middle" font-size="10.5" fill="#9f1239">step / turn 推进</text>
+          <text x="500" y="199" text-anchor="middle" font-size="10.5" fill="#9f1239">也是插件（可 patch）</text>
+
+          <rect x="624" y="136" width="152" height="72" rx="9" fill="#d1fae5" stroke="#059669"/>
+          <text x="700" y="162" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#065f46">会话日志与投影</text>
+          <text x="700" y="182" text-anchor="middle" font-size="10.5" fill="#065f46">唯一事实源</text>
+          <text x="700" y="199" text-anchor="middle" font-size="10.5" fill="#065f46">deriveMessages 投影</text>
+
+          <rect x="804" y="136" width="152" height="72" rx="9" fill="#fef3c7" stroke="#d97706"/>
+          <text x="880" y="162" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#92400e">能力 seam 群</text>
+          <text x="880" y="182" text-anchor="middle" font-size="10.5" fill="#92400e">subagents / goals</text>
+          <text x="880" y="199" text-anchor="middle" font-size="10.5" fill="#92400e">schedule / skills…</text>
+        </g>
+
+        <!-- 三角色 seam -->
+        <text x="150" y="248" text-anchor="middle" font-size="13" font-weight="bold" fill="#23212c">能力 seam 三角色</text>
+        <g>
+          <rect x="40" y="262" width="180" height="52" rx="8" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+          <text x="130" y="284" text-anchor="middle" font-size="12" font-weight="bold" fill="#5b21b6">Definition 定义</text>
+          <text x="130" y="303" text-anchor="middle" font-size="10.5" fill="#4a4657">这条能力叫什么、契约是什么</text>
+
+          <rect x="250" y="262" width="180" height="52" rx="8" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+          <text x="340" y="284" text-anchor="middle" font-size="12" font-weight="bold" fill="#5b21b6">Provider 提供方</text>
+          <text x="340" y="303" text-anchor="middle" font-size="10.5" fill="#4a4657">谁真正实现它（可替换）</text>
+
+          <rect x="460" y="262" width="180" height="52" rx="8" fill="#ffffff" stroke="#9333ea" stroke-width="2"/>
+          <text x="550" y="284" text-anchor="middle" font-size="12" font-weight="bold" fill="#5b21b6">Consumer 消费方</text>
+          <text x="550" y="303" text-anchor="middle" font-size="10.5" fill="#4a4657">调用它的插件，不关心谁实现</text>
+
+          <path d="M220 288 h30 M430 288 h30" stroke="#9333ea" stroke-width="2.5"/>
+          <path d="M244 282 l8 6 l-8 6 M454 282 l8 6 l-8 6" fill="#9333ea"/>
+        </g>
+        <text x="790" y="292" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#7e22ce">换 provider = 换整条能力</text>
+        <text x="790" y="310" text-anchor="middle" font-size="10.5" fill="#4a4657">消费方零改动（如 pi-ai ↔ deepseek）</text>
+
+        <!-- patch 分层 -->
+        <text x="500" y="352" text-anchor="middle" font-size="13" font-weight="bold" fill="#23212c">配置叠加顺序（按 id 定位：替换整条 config 或插入）</text>
+        <g>
+          <rect x="150" y="366" width="700" height="34" rx="8" fill="#efe9dc" stroke="#b8860b" stroke-width="1.6"/>
+          <text x="500" y="388" text-anchor="middle" font-size="12" fill="#23212c">① profile 列 bundle —— profile: omni → @omni/omni-base</text>
+
+          <rect x="150" y="406" width="700" height="34" rx="8" fill="#f3e8ff" stroke="#9333ea" stroke-width="1.6"/>
+          <text x="500" y="428" text-anchor="middle" font-size="12" fill="#23212c">② bundle patch —— 每个组合包自带 cordis.patch.yml</text>
+
+          <rect x="150" y="446" width="700" height="34" rx="8" fill="#e9d5ff" stroke="#7e22ce" stroke-width="1.6"/>
+          <text x="500" y="468" text-anchor="middle" font-size="12" fill="#23212c">③ home patch —— DSH_HOME（~\.omni-dsh）级配置</text>
+
+          <rect x="150" y="486" width="700" height="30" rx="8" fill="#23212c"/>
+          <text x="500" y="506" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">④ --patch overlay —— 命令行一次性覆盖（优先级最高，用于实验与验收）</text>
+
+          <path d="M866 383 v100 M862 476 l5 9 l5 -9" stroke="#b8860b" stroke-width="2" fill="none"/>
+          <text x="886" y="436" font-size="11" fill="#b8860b">叠加</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>图 1</b> 插件树与 patch 分层：根下每一层都是可插拔插件，能力 seam 以 Definition / Provider / Consumer 三角色解耦；配置按 profile → bundle → home → overlay 四层叠加、按 id 定位替换或插入。</figcaption>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「无特权内核」的工程红利：二开 = 叠加，不是分叉</h4>
+    <p>因为连 agent loop 都是插件，OIA 的全部自研内容都能落在<b>组合包 + patch 层</b>这两个纯增量位置上。
+    上游更新时，我们的树只是「重新拼一次」，而不是「合并一次冲突」。这正是本报告 §2.2 所说的：
+    DSH 文档推荐的扩展方式就是「新行为附加到已有文档记录的扩展点」。</p>
+    <p class="cite">来源：report.html §0 / §1.2 / §2.1（已核验本机安装版内核文档 architecture / capability-seams）。</p>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">证据</span>
+    <h4>第三方记忆已经证明这条路通：腾讯云 DSH 接入文档</h4>
+    <p>本机存档的 TencentDB 官方 DSH 接入文档（<code>docs/sources/tencent-dsh-adapter.md</code>）显示：
+    dsh v0.2+ 的配置入口就是 <code>~/.dsh/profiles/&lt;profile&gt;/cordis.patch.yml</code>（loader patch 数组），
+    插件以 <code>- id: … / name: "@deepseek-ai/…"</code> 条目形式写入，凭据单独放 <code>.credentials.yaml</code> 的 <code>refs:</code> 段；
+    记忆侧则把 <code>&lt;user_memory&gt;</code>、<code>&lt;tdai_profile_memory&gt;</code> 等标签追加到请求 <code>system</code> 段、并复用原生
+    <code>ask_user_question</code> 工具做会话初始化。<b>整套接入没有 fork 任何一行内核</b>——
+    这是「DSH 生态可接第三方记忆」的现成实证，也是 OIA 插件族要复用的同一形态。</p>
+    <p class="cite">来源：docs/sources/tencent-dsh-adapter.md §1.1 / §6；report.html §4.1。</p>
+  </div>
+</section>
+
+<!-- ================= 第 2 章 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 2 · THREE THESES</div>
+  <h2 class="chapter-title">三大命题的原生落点</h2>
+
+  <p class="lead">
+    Delegation（委托）、Proactivity（主动性）、Consistency（一致性）是本系列反复出现的三大命题。
+    选型阶段最重要的发现是：<b>它们在 DSH 里不是三个待实现的需求，而是三群已文档化的 seam</b>
+    （本报告 §2.2：subagent+teams / schedule+goals / session-log+projections 三大 seam 群，一一命中）。
+  </p>
+
+  <h3>2.1 Delegation：subagent seam × Agent Teams × workflow</h3>
+  <ul>
+    <li><b>subagent seam</b>：spawn / fork 两种派生方式，多 provider（ACP / Codex / Claude Code / DSH SDK），
+    统一 activation 生命周期、<b>深度限制</b>、树内消息 / 中断 / 收件箱等待。OIA 的观察者（Observer）、记忆员由此直接成形。</li>
+    <li><b>Agent Teams 任务板</b>：共享任务板带 <b>owner / CAS 修订 / 阻塞依赖 / 写域（write scope，advisory）</b>——
+    多代理协作的一致性与写冲突预防是现成协议，不用自创锁。</li>
+    <li><b>workflow 编排</b>：模型写编排脚本，<code>agent() / pipeline() / parallel()</code> 扇出，fatal 错误纪律明确；
+    对应 Omni-IO 的执行图（本报告 §7）。</li>
+  </ul>
+  <p><b>为什么</b>把委托交给 seam 而不是自建调度：<b>代价</b>是必须接受 harness 的生命周期语义（激活、中断、深度上限都由它裁决），
+  <b>回报</b>是树内消息、中断与任务板的并发语义免费获得；<b>替代方案</b>是进程外编排（如外部工作流引擎），
+  但那样跨代理的会话事实源会分裂，违反一致性底座。</p>
+
+  <h3>2.2 Proactivity：宿主级 Schedule × Goals × webhook</h3>
+  <ul>
+    <li><b>Schedule</b>（宿主级，不依赖会话存活）：<b>七种时间类型</b>（after / at / every / daily / weekly / cron / rrule）、
+    可投递到现有 / 预留 / 全新会话；<b>停机期间只追赶最新一次</b>（不补一堆重复触发）；<b>60s 最小间隔</b>。</li>
+    <li><b>Goals</b>：事件溯源的目标 + <b>轮次预算</b> + <b>blocked 理由码</b> + 激活边沿（armed / disarmed）——
+    长程任务的「有界主动」，既会自动续跑，又天然可停。</li>
+    <li><b>webhook 运行时</b>：外部事件（消息 / 设备 / 日历）直接启动会话，作为主动入口。</li>
+  </ul>
+  <p><b>为什么</b>用宿主级时基：主动性最容易犯的错是「挂在某个会话里等会话活着」。
+  <b>代价</b>：调度语义归宿主，插件不能随意改写触发规则（只能用其时间类型表达）；
+  <b>替代方案</b>：进程内 setTimeout / 外部 cron——前者随进程消失，后者拿不到投递目标，也进不了会话日志。</p>
+
+  <h3>2.3 Consistency：会话日志唯一事实源 × 投影 seam × CAS</h3>
+  <ul>
+    <li><b>会话日志 = 唯一事实源</b>：核心不变量是<b>「模型可见即已记录」</b>——模型看到的每一段上下文都已经写进日志；
+    <code>deriveMessages</code> 投影出模型历史，fork / 恢复 / 导出 / 遥测<b>全部从日志派生</b>；格式带 <b>v0→v4 迁移链</b>。</li>
+    <li><b>投影 seam + CAS 修订</b>：goals / schedule 的更新要带 <code>expectedRevision</code> / <code>expectedUpdatedAt</code>，
+    并发写冲突被协议化而不是靠运气。</li>
+  </ul>
+  <p><b>为什么</b>一致性排到最后讲却最重要：记忆、委托、主动行为只要都落日志，就<b>可回放、可审计</b>。
+  <b>代价</b>是任何绕过日志的「暗写」都会破坏不变量；<b>替代方案</b>是应用层自建状态库——
+  那会造出第二个事实源，正是 savepoint 门户「状态 = 事件折叠」思想（本报告 §1.3）要避免的分裂。</p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>命题</th><th>DSH 原生机制（内核文档核验）</th><th>OIA 归属包</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><b>Delegation</b></td>
+        <td>subagent seam（spawn/fork、多 provider、深度限制、树内消息/中断）；Agent Teams 任务板（owner / CAS / 阻塞 / 写域）；workflow（<code>agent()/pipeline()/parallel()</code>）</td>
+        <td>直接使用，少量 preset 裁剪；<code>@omni/observer</code>（观察者子代理）</td>
+      </tr>
+      <tr>
+        <td><b>Proactivity</b></td>
+        <td>Schedule 七种时间类型 + 停机追赶最新一次 + 60s 最小间隔；Goals 事件溯源 + 轮次预算 + blocked 理由；webhook 外部触发</td>
+        <td><code>@omni/observer</code> + <code>@omni/intervention-policy</code>（干预策略器）</td>
+      </tr>
+      <tr>
+        <td><b>Consistency</b></td>
+        <td>会话日志唯一事实源（模型可见即已记录）、<code>deriveMessages</code> 投影、v0→v4 迁移链；投影 seam + CAS（expectedRevision）</td>
+        <td>直接依赖，作为五组件的回放与审计底座</td>
+      </tr>
+      <tr>
+        <td><b>（记忆挂载）</b></td>
+        <td><code>storage</code> / <code>sessionQuery(sqlite)</code> / <code>sessionReference</code> / <code>compaction</code> / <code>agent.inject()</code> / <code>agent/pre-step</code> / <code>agent/turn-stopping</code> / <code>session/event</code></td>
+        <td><code>@omni/memory-vault / -distiller / -canvas / -recall / -governance</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>2.4 跨文连接：前五篇的组件如何挂进这些 seam</h3>
+  <p>收官篇的真正工作是「收线」——把本系列前五篇产出的每一个组件，钉到上表的挂载点上：</p>
+  <ul>
+    <li><b>篇 1 腾讯云 TencentDB-Agent-Memory</b>：L0–L3 金字塔与 Mermaid 符号画布 →
+    <code>@omni/memory-vault</code> 挂 <code>storage / sessionQuery(sqlite)</code>，
+    <code>@omni/memory-canvas</code> 挂 <b>compaction seam</b>（<code>ctx.compaction</code> / tool-result pruner）；</li>
+    <li><b>篇 2 rolling-memory</b>：verbatim 词法基线 → <code>@omni/memory-recall</code> 的 T0 层，召回结果经
+    <code>agent.inject()</code> 注入；</li>
+    <li><b>篇 3 Hy×GraphMemix</b>：diff-chain 编辑史与意图层 → <code>@omni/memory-distiller</code>（写回时挂
+    <code>agent/turn-stopping</code> / <code>session/event</code> 消费）；查询感知证据森林 → Recall 精排预算；</li>
+    <li><b>篇 4 MemoraX × 三个社区插件</b>：四类记忆边界、人审状态机、纠正/抑制三接口 →
+    <code>@omni/memory-governance</code>（面板部分挂 client-modules 插件）；其 DSH 适配器（profile 生命周期管理）
+    与本篇 xuyi 打包范本同族；</li>
+    <li><b>篇 5 论文·主动性</b>：ALIVE 三态（响应/沉默/追问）与 Coco Observer →
+    Observer 走 <b>subagent seam</b>，干预时机走 <b>Schedule</b>，决策与用户反应全部落会话日志（Consistency），
+    轮次预算交给 <b>Goals</b>。</li>
+  </ul>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 1000 430" width="100%" role="img" aria-label="turn/step 生命周期与记忆读写钩子">
+        <rect x="0" y="0" width="1000" height="430" rx="12" fill="#fbfcfe" stroke="#e3ddf0"/>
+        <text x="500" y="32" text-anchor="middle" font-size="16" font-weight="bold" fill="#23212c">一轮对话的生命周期：记忆从哪里读进来、写出去</text>
+
+        <!-- 主流程 -->
+        <g stroke="#7d92b3" stroke-width="2.5" fill="none">
+          <path d="M158 120 h44 M356 120 h44 M578 120 h44 M780 120 h44"/>
+          <path d="M198 114 l7 6 l-7 6 M396 114 l7 6 l-7 6 M618 114 l7 6 l-7 6 M820 114 l7 6 l-7 6"/>
+        </g>
+
+        <rect x="26" y="94" width="132" height="54" rx="9" fill="#efe9dc" stroke="#b8860b" stroke-width="2"/>
+        <text x="92" y="116" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#23212c">用户消息</text>
+        <text x="92" y="136" text-anchor="middle" font-size="10.5" fill="#4a4657">事件写入会话日志</text>
+
+        <rect x="202" y="94" width="154" height="54" rx="9" fill="#e8f0fe" stroke="#2f6fde" stroke-width="2"/>
+        <text x="279" y="114" text-anchor="middle" font-size="12" font-weight="bold" fill="#1d4ed8">pre-step 阶段</text>
+        <text x="279" y="132" text-anchor="middle" font-size="10.5" fill="#33507a">agent/pre-step waterfall</text>
+
+        <rect x="400" y="94" width="178" height="54" rx="9" fill="#f1eafe" stroke="#6d28d9" stroke-width="2"/>
+        <text x="489" y="114" text-anchor="middle" font-size="12" font-weight="bold" fill="#6d28d9">记忆召回注入</text>
+        <text x="489" y="132" text-anchor="middle" font-size="10.5" fill="#4c2a85">agent.inject() → 模型可见即已记录</text>
+
+        <rect x="622" y="94" width="158" height="54" rx="9" fill="#23212c"/>
+        <text x="701" y="114" text-anchor="middle" font-size="12" font-weight="bold" fill="#ffffff">模型 step × N</text>
+        <text x="701" y="132" text-anchor="middle" font-size="10.5" fill="#bcd0ea">工具执行 / 子代理派生</text>
+
+        <rect x="824" y="94" width="150" height="54" rx="9" fill="#d1fae5" stroke="#059669" stroke-width="2"/>
+        <text x="899" y="114" text-anchor="middle" font-size="12" font-weight="bold" fill="#065f46">turn 结束</text>
+        <text x="899" y="132" text-anchor="middle" font-size="10.5" fill="#065f46">agent/turn-stopping</text>
+
+        <!-- 钩子注释 -->
+        <g>
+          <path d="M279 148 v40" stroke="#6d28d9" stroke-width="2" stroke-dasharray="6 5"/>
+          <path d="M273 181 l6 8 l6 -8" fill="#6d28d9"/>
+          <rect x="126" y="190" width="306" height="62" rx="9" fill="#f1eafe" stroke="#6d28d9"/>
+          <text x="279" y="212" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#4c2a85">钩子 A · 读：每步模型调用前</text>
+          <text x="279" y="232" text-anchor="middle" font-size="10.5" fill="#4c2a85">Recall 分级检索（T0 词法→T1 向量→T2 图谱）</text>
+          <text x="279" y="247" text-anchor="middle" font-size="10.5" fill="#4c2a85">→ 预算精排 → 注入上下文（不阻断原 waterfall）</text>
+        </g>
+
+        <g>
+          <path d="M899 148 v40" stroke="#059669" stroke-width="2" stroke-dasharray="6 5"/>
+          <path d="M893 181 l6 8 l6 -8" fill="#059669"/>
+          <rect x="700" y="190" width="300" height="62" rx="9" fill="#d1fae5" stroke="#059669"/>
+          <text x="850" y="212" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#065f46">钩子 B · 写：一轮结束时</text>
+          <text x="850" y="232" text-anchor="middle" font-size="10.5" fill="#065f46">Distiller 蒸馏（意图判定→语义去重→待审核）</text>
+          <text x="850" y="247" text-anchor="middle" font-size="10.5" fill="#065f46">→ Vault 追加（原话 + 时间戳 + 来源会话）</text>
+        </g>
+
+        <!-- 旁路 -->
+        <rect x="26" y="278" width="440" height="54" rx="9" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+        <text x="246" y="300" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#92400e">旁路一 · 主动性</text>
+        <text x="246" y="320" text-anchor="middle" font-size="10.5" fill="#7c4a06">Schedule 到点投递 / webhook 触发 → 新会话（同样先落日志）</text>
+
+        <rect x="500" y="278" width="474" height="54" rx="9" fill="#eef2f7" stroke="#94a8c4" stroke-width="2"/>
+        <text x="737" y="300" text-anchor="middle" font-size="11.5" font-weight="bold" fill="#223a5e">旁路二 · 委托</text>
+        <text x="737" y="320" text-anchor="middle" font-size="10.5" fill="#41556f">subagent 派生（深度受限）· Teams 任务板（owner/CAS/写域）· workflow 扇出</text>
+
+        <!-- 底部不变量 -->
+        <rect x="26" y="352" width="948" height="52" rx="9" fill="#16233b"/>
+        <text x="500" y="374" text-anchor="middle" font-size="12.5" font-weight="bold" fill="#fff">不变量：模型可见即已记录 —— 一切注入、一切干预决策、一切子代理消息都是会话事件</text>
+        <text x="500" y="395" text-anchor="middle" font-size="10.5" fill="#bcd0ea">deriveMessages 从日志投影出模型历史；fork / 恢复 / 导出 / 遥测全部同源，可回放审计</text>
+
+        <g stroke="#7d92b3" stroke-width="2" fill="none">
+          <path d="M246 332 v20 M737 332 v20"/>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>图 2</b> turn/step 生命周期与记忆读写钩子：钩子 A 在 pre-step 阶段注入召回结果，钩子 B 在 turn-stopping 阶段写回蒸馏结果；主动与委旁路同样汇入唯一事实源。</figcaption>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「模型可见即已记录」是记忆系统的宪法</h4>
+    <p>只要召回结果必须经 <code>agent.inject()</code> / <code>agent/pre-step</code> 进入模型上下文，
+    它就<b>自动进了会话日志</b>——于是「这次回答被哪条记忆影响」天然可追溯（MemoraX 式影响披露的数据源），
+    干预决策也一样。反过来推论：<b>任何绕过 seam 的暗写（直接改消息数组）都会同时破坏一致性与可审计性</b>，
+    在 OIA 里应视为 bug 而非捷径。</p>
+    <p class="cite">来源：report.html §5.1 / §2.3 / §8.1（内核文档 capability-seams / session）。</p>
+  </div>
+
+  <div class="critique-box">
+    <span class="tag-insight">代价清单</span>
+    <h4>原生落点不等于免费</h4>
+    <p><b>① 注入有预算</b>：召回条目必须受上下文预算约束，否则记忆越全、上下文越爆（CAMEL 的预算×分数组装思路，本报告 §8.2 #10）。
+    <b>② 事件有粒度</b>：<code>agent/turn-stopping</code> 是<b>轮次级</b>钩子，「轮次结束才蒸馏」意味着流式中途的半句话不会被写回——
+    需要即时性时得另找 <code>session/event</code> 消费点。<b>③ CAS 要带版本</b>：并发写必须携带 expectedRevision，
+    忘带就退回「最后写者赢」。<b>④ 调度语义归宿主</b>：60s 最小间隔与「停机只追赶最新一次」不可绕过，
+    想做秒级高频轮询只能换机制。</p>
+  </div>
+</section>
+
+<!-- ================= 第 3 章 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 3 · PI AS SUPPLY</div>
+  <h2 class="chapter-title">Pi 生态的补给位</h2>
+
+  <p class="lead">
+    Pi（pi-mono）是另一条候选路线：一个<b>极简、可完全自定义的 agent harness</b>——
+    「Adapt Pi to your workflows, not the other way around」。它没被选为主基座，却在三个位置持续给 OIA 供货。
+  </p>
+
+  <h3>3.1 Pi 是什么（README 已读部分）</h3>
+  <ul>
+    <li><b>扩展四件套 + 包模型</b>：extensions / skills / prompt templates / themes，打包为 <b>Pi packages</b>，
+    通过 <b>npm 或 git 分发</b>——「包即插即用」的分发哲学。</li>
+    <li><b>chord 对象运行时</b>（<code>@earendil-works/chord</code>）：跨进程的对象运行时，含契约、文档、存储、链接、
+    <b>带热重载的插件</b>、HTTP、workers、web 与终端客户端。</li>
+    <li><b>pi-ai</b>：统一多 provider LLM API（OpenAI / Anthropic / Google 等）；
+    <b>pi-durable</b> 提供持久会话 / 任务 / 文档运行时；另有 pi-agent-core、pi-tui、telemetry 等包。</li>
+    <li><b>自动化与集成面</b>：交互式、print / JSON 模式、<b>RPC</b> 控制、<b>TypeScript SDK</b>（OpenClaw 是其真实集成案例）。</li>
+    <li><b>关键事实</b>：DSH 已内置 <code>dsh-llm-pi-ai</code> 适配包——<b>Pi 的 LLM 层已经在 DSH 里跑着</b>，两者天然可组合。</li>
+  </ul>
+
+  <h3>3.2 六维对比：为什么 Pi 不做主基座</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>维度</th><th>DeepSeek Harness（内核文档核验）</th><th>Pi（README 已读）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>委托</b></td>
+      <td>原生完备：subagent seam（spawn/fork/多 provider）、Agent Teams 共享任务板、workflow 引擎、深度限制、树内消息/中断</td>
+      <td><b>默认不带 sub-agents 与 plan mode</b>，「让 Pi 按你想要的方式造」或装包自建</td></tr>
+      <tr><td><b>主动性</b></td>
+      <td>宿主级 Schedule（七种时间类型、投递三目标、停机追赶最新一次、60s 最小间隔）+ Goals + webhook</td>
+      <td>无内置；依赖外部编排</td></tr>
+      <tr><td><b>一致性</b></td>
+      <td>会话日志唯一事实源（模型可见即已记录）、投影 seam、CAS 修订、v0→v4 迁移链</td>
+      <td>pi-durable 持久会话/任务/文档运行时；chord 对象运行时（契约/存储/热重载）</td></tr>
+      <tr><td><b>LLM 层</b></td>
+      <td><code>ctx.llm</code> 适配器注册表；官方已含 <b>dsh-llm-pi-ai</b>（即 pi-ai）与 deepseek 适配</td>
+      <td><code>pi-ai</code>：统一多 provider API（DSH 已在用）</td></tr>
+      <tr><td><b>记忆</b></td>
+      <td>无内置长期记忆（官方仅给 MCP 记忆服务参考配置），但 seam 齐备：storage / sessionQuery / sessionReference / skills / compaction / agent.inject()</td>
+      <td>无内置记忆；靠 packages 扩展</td></tr>
+      <tr><td><b>安全</b></td>
+      <td>sandbox seam、approval seam、permission presets、凭据分离（refs 与实际值分离）</td>
+      <td><b>无内置权限系统</b>，默认以启动进程的权限运行；官方建议容器化（Gondolin / Docker / OpenShell）</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    <b>为什么</b>结论是「DSH 主基座、Pi 补给」：OIA 的三大命题在 DSH 侧全部有原生 seam，
+    而 Pi 侧的委托与主动性<b>要从零造</b>，一致性只有运行时库而没有「唯一事实源 + 迁移链」的纪律，
+    安全还要自备容器。<b>代价</b>是接受 DSH 更重的插件体系与更快的版本演进（当前安装 0.2.2-rc.3 系，需按 upgrade-guide 固定 upstream）；
+    <b>替代方案</b>是把 Pi 当主基座、用其 packages 拼一个最小产品——对「实时交互全模态智能体」而言，
+    事件溯源会话日志是刚需，自建这条底座的成本远高于学习 DSH 的 patch 体系。
+  </p>
+
+  <h3>3.3 Pi 作为补给的三个具体位置</h3>
+  <ul>
+    <li><b>① LLM 层</b>：<code>pi-ai</code> 已通过 <code>dsh-llm-pi-ai</code> 进入 DSH，Omni 多模态模型接入优先扩这条适配线
+    （注意接入文档的教训：pi-ai 适配器会过滤掉 <code>x-deepseek-harness-*</code> 系列头，走自定义卡时要清楚其副作用）；</li>
+    <li><b>② 包模型</b>：extensions / skills / prompt-templates / packages 的划分，作为 <code>@omni/*</code> 包设计的对照参考
+    （本篇代码附录的打包范本即按此精神裁剪）；</li>
+    <li><b>③ 集成面</b>：Pi 的 RPC / SDK / JSON 模式启发 OIA 的 headless 集成设计。</li>
+  </ul>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「已内置」比「可集成」值钱一个数量级</h4>
+    <p>Pi 对 OIA 最大的价值不是「以后可以接」，而是 <b>DSH 官方已经把 pi-ai 打包成 dsh-llm-pi-ai</b>——
+    这意味着 LLM provider 这条能力 seam 上，Pi 与 DSH 的组合<b>已被上游验证过</b>。
+    选型时应优先复用「已被上游合并的第三方能力」，而不是自己再接一遍：</p>
+    <p class="cite">来源：report.html §0 / §2.1 / §2.2；docs/sources/pi-mono.md（README 已读部分）。</p>
+  </div>
+
+  <div class="critique-box">
+    <span class="tag-insight">反面提醒</span>
+    <h4>Pi 侧的两个「默认没有」会咬人</h4>
+    <p><b>① 默认无 sub-agents 与 plan mode</b>——如果误把 Pi 当主基座，Delegation 整章要重写；
+    <b>② 无内置权限系统</b>——Pi 默认以启动它的用户与进程权限运行文件系统 / 进程 / 网络 / 凭据访问，
+    官方给的三种边界（Gondolin 微虚机、Docker、OpenShell）都是<b>进程外</b>方案。
+    对要采集桌面观察流的 OIA Observer 来说，权限边界必须一等设计，这条差异是决定性的。</p>
+    <p class="cite">来源：docs/sources/pi-mono.md「Permissions &amp; Containerization」段。</p>
+  </div>
+</section>
+
+<!-- ================= 第 4 章 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 4 · ISOLATION RED LINES</div>
+  <h2 class="chapter-title">OIA 总体设计与五层隔离红线</h2>
+
+  <p class="lead">
+    回到概念框架：四支柱（记忆 / 委托 / 主动性 / 个性化）+ 一个底座（一致性与全模态 IO）。
+    本章把它落成两样东西：<b>五组件的挂载表</b>与<b>五层隔离红线</b>。
+  </p>
+
+  <h3>4.1 四支柱 + 底座的回顾</h3>
+  <p>
+    本报告 §3 给出的框架是：① 记忆 Memory（分层金字塔 · 符号画布 · 白盒治理）、② 委托 Delegation（子代理树 · 团队任务板 · 工作流）、
+    ③ 主动性 Proactivity（观察者 · 干预时机 · 沉默与追问）、④ 个性化 Personalization（画像 · 表达规划 · 隐式反馈适应），
+    底座是<b>会话事件日志（唯一事实源）· 投影 · CAS 修订 · 技能/资产注册表 · 全模态执行图</b>。
+    前三支柱在上一章已各自落到 seam；本章处理记忆支柱的五组件与整体边界。
+  </p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>OIA-Memory 五组件</th><th>职责</th><th>挂载的 seam / 机制</th><th>主要出处（前 5 篇）</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Vault 原文库</b></td><td>verbatim + L0 对话，SQLite + FTS5，只追加</td>
+        <td><code>storage</code> / <code>sessionQuery(sqlite)</code> / <code>sessionReference</code></td>
+        <td>篇 1 腾讯云 schema、篇 2 rolling-memory 原文档案铁律</td></tr>
+      <tr><td><b>Distiller 蒸馏</b></td><td>L1 事实 → L2 场景 → L3 画像，意图式保存、取代留痕、双过程节律</td>
+        <td><code>agent/turn-stopping</code> / <code>session/event</code> 消费</td>
+        <td>篇 1 抽取与去重提示词、篇 3 diff-chain 与意图层</td></tr>
+      <tr><td><b>Canvas 符号画布</b></td><td>短期任务状态 Mermaid，node_id 下钻，上下文卸载</td>
+        <td>compaction seam（<code>ctx.compaction</code>）/ tool-result pruner</td>
+        <td>篇 1 offload 管线（node_id / result_ref / refs）</td></tr>
+      <tr><td><b>Recall 召回</b></td><td>T0 词法 → T1 向量 → T2 图谱，证据森林预算精排，采纳审计</td>
+        <td><code>agent.inject()</code> 或 <code>agent/pre-step</code> waterfall</td>
+        <td>篇 2 自信息权重、篇 3 GraphMemix 预算、篇 4 三路召回</td></tr>
+      <tr><td><b>Governance 治理</b></td><td>人审待收录、抑制/纠正/删除、ACL、影响披露、召回透明</td>
+        <td>client-modules 插件（Web 面板）+ settings；CAS 版本字段</td>
+        <td>篇 4 MemoraX 边界与三个社区插件的用户主权三件套</td></tr>
+    </tbody>
+  </table>
+  <p>
+    底座不变：五组件全部读写 <code>~\.omni-dsh\memory\</code>（SQLite + FTS5 必选，向量可选本地 ONNX 小模型，遵循续忆「后装 + 词法兜底」策略），
+    并把干预决策、采纳事件全部落会话日志。
+  </p>
+
+  <h3>4.2 五层隔离红线</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>层</th><th>隔离手段</th><th>具体约定</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>代码</b></td><td>独立目录 + 独立 git 线</td>
+        <td>仅 <code>omni-interaction-agent/</code> 门户；以 <code>deepseek-harness</code> 开源仓库为 upstream，
+        自研内容全放 <code>@omni/*</code> 组合包与 patch 层，<b>尽量不改内核</b>；必须改时走「最小 patch 分支 + 可 rebase」</td></tr>
+      <tr><td><b>运行时</b></td><td>独立 DSH_HOME 与 profile</td>
+        <td><code>DSH_HOME=%USERPROFILE%\.omni-dsh</code>；profile 命名 <code>omni</code>（组合包 <code>@omni/omni-base</code>）；
+        端口与 IPC 独立（web 端口 8848 起），与日常 Desktop 不冲突</td></tr>
+      <tr><td><b>插件</b></td><td>命名空间与安装事务隔离</td>
+        <td>插件 id 一律 <code>@omni/…</code>，不复用 <code>@deepseek-ai/…</code>；<b>禁止</b>向
+        <code>~\.dsh\profiles\desktop</code> 安装/启用任何 OIA 插件</td></tr>
+      <tr><td><b>数据</b></td><td>独立记忆库与会话日志</td>
+        <td>记忆库 <code>~\.omni-dsh\memory\</code>（SQLite + 附件区）；会话 JSONL 同落 OIA 自己的 home，与 <code>~\.dsh</code> 无读写交集</td></tr>
+      <tr><td><b>工作区</b></td><td>独立门户目录</td>
+        <td>仅 <code>omni-interaction-agent/</code> 一个入口；不 import、不复制、不改动其余五个项目门户的任何文件</td></tr>
+    </tbody>
+  </table>
+
+  <h3>4.3 与五个既有门户的零冲突结论</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>现有门户</th><th>与 OIA 的交集</th><th>结论</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>code2music/</code>（异兽乐志）</td><td>无（纯静态前端，自有目录）</td><td>✅ 零冲突</td></tr>
+      <tr><td><code>shenglv/</code>（声律在手）</td><td>无（Dart 引擎 + 实验协议）</td><td>✅ 零冲突</td></tr>
+      <tr><td><code>savepoint/</code>（存档点）</td><td>概念同源（事件溯源 ↔ 会话日志），代码零共享，仅思想借鉴</td><td>✅ 零冲突</td></tr>
+      <tr><td><code>innerpond/</code>（心湖）</td><td>无（「观察者/调和者」与 OIA 主动性有思想共鸣，不共享代码）</td><td>✅ 零冲突</td></tr>
+      <tr><td><code>pitch/</code>（同桌）</td><td>无（其「主动签到三缺陷」是 OIA 的前车之鉴，见篇 5）</td><td>✅ 零冲突</td></tr>
+    </tbody>
+  </table>
+  <p>
+    M0 验收清单（report §1.3）：① 两套 DSH 可同时运行且互不可见；② <code>dsh --profile omni --dump-config</code>
+    中不含任何 <code>@omni</code> 之外的自研条目；③ 五门户 git status 干净；④ 记忆库写入只出现在 <code>~\.omni-dsh\memory\</code>。
+  </p>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 1000 440" width="100%" role="img" aria-label="双 DSH 隔离图">
+        <rect x="0" y="0" width="1000" height="440" rx="12" fill="#fbfcfe" stroke="#e3ddf0"/>
+        <text x="500" y="34" text-anchor="middle" font-size="16" font-weight="bold" fill="#23212c">双 DSH 隔离：两套实例、五条红线、互不可见</text>
+
+        <!-- 左：日常 -->
+        <g>
+          <rect x="30" y="60" width="410" height="256" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="2.5"/>
+          <rect x="30" y="60" width="410" height="44" rx="12" fill="#23212c"/>
+          <text x="235" y="88" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">日常 DSH Desktop 实例</text>
+          <text x="235" y="128" text-anchor="middle" font-size="12" fill="#4a4657">DSH_HOME：<tspan font-family="Consolas, monospace">~\.dsh</tspan></text>
+          <text x="235" y="154" text-anchor="middle" font-size="12" fill="#4a4657">profile：<tspan font-family="Consolas, monospace">desktop</tspan>（dsh-desktop-next 2.0.23-next）</text>
+          <text x="235" y="180" text-anchor="middle" font-size="12" fill="#4a4657">插件：<tspan font-family="Consolas, monospace">@deepseek-ai/*</tspan> 官方 + 日常安装</text>
+          <text x="235" y="206" text-anchor="middle" font-size="12" fill="#4a4657">数据：会话 / 设置 / 凭据 refs</text>
+          <text x="235" y="232" text-anchor="middle" font-size="12" fill="#4a4657">端口：系统分配（与 8848 起不冲突）</text>
+          <text x="235" y="262" text-anchor="middle" font-size="12" font-weight="bold" fill="#23212c">工作区：五个既有门户</text>
+          <text x="235" y="284" text-anchor="middle" font-size="11" fill="#4a4657">code2music · shenglv · savepoint · innerpond · pitch</text>
+          <text x="235" y="305" text-anchor="middle" font-size="11" fill="#9f1239">承载日常研发，绝不能被实验影响</text>
+        </g>
+
+        <!-- 中缝 -->
+        <g>
+          <path d="M466 60 v256" stroke="#b8860b" stroke-width="2.5" stroke-dasharray="9 7"/>
+          <path d="M534 60 v256" stroke="#b8860b" stroke-width="2.5" stroke-dasharray="9 7"/>
+          <path d="M474 168 l56 56 M530 168 l-56 56" stroke="#23212c" stroke-width="6" stroke-linecap="round"/>
+          <text x="500" y="264" text-anchor="middle" font-size="13" font-weight="bold" fill="#b8860b">零共享</text>
+          <text x="500" y="286" text-anchor="middle" font-size="13" font-weight="bold" fill="#b8860b">零侵入</text>
+          <text x="500" y="308" text-anchor="middle" font-size="11" fill="#4a4657">插件 / 会话 / 设置互不可见</text>
+        </g>
+
+        <!-- 右：OIA -->
+        <g>
+          <rect x="560" y="60" width="410" height="256" rx="12" fill="#ffffff" stroke="#9333ea" stroke-width="2.5"/>
+          <rect x="560" y="60" width="410" height="44" rx="12" fill="#7e22ce"/>
+          <text x="765" y="88" text-anchor="middle" font-size="14" font-weight="bold" fill="#ffffff">OIA 专属 DSH 实例</text>
+          <text x="765" y="128" text-anchor="middle" font-size="12" fill="#4a4657">DSH_HOME：<tspan font-family="Consolas, monospace">%USERPROFILE%\.omni-dsh</tspan></text>
+          <text x="765" y="154" text-anchor="middle" font-size="12" fill="#4a4657">profile：<tspan font-family="Consolas, monospace">omni</tspan>（组合包 <tspan font-family="Consolas, monospace">@omni/omni-base</tspan>）</text>
+          <text x="765" y="180" text-anchor="middle" font-size="12" fill="#4a4657">插件：一律 <tspan font-family="Consolas, monospace">@omni/*</tspan> 命名空间</text>
+          <text x="765" y="206" text-anchor="middle" font-size="12" fill="#4a4657">数据：<tspan font-family="Consolas, monospace">~\.omni-dsh\memory\</tspan>（SQLite+FTS5）</text>
+          <text x="765" y="232" text-anchor="middle" font-size="12" fill="#4a4657">端口：web 8848 起，IPC 独立</text>
+          <text x="765" y="262" text-anchor="middle" font-size="12" font-weight="bold" fill="#23212c">工作区：<tspan font-family="Consolas, monospace">omni-interaction-agent/</tspan></text>
+          <text x="765" y="284" text-anchor="middle" font-size="11" fill="#4a4657">唯一入口；实验性组合包 / HMR / 安装事务都在此</text>
+          <text x="765" y="305" text-anchor="middle" font-size="11" fill="#065f46">将来作为独立产品自带运行时边界</text>
+        </g>
+
+        <!-- 五层红线条 -->
+        <rect x="30" y="340" width="940" height="74" rx="10" fill="#16233b"/>
+        <text x="500" y="366" text-anchor="middle" font-size="13" font-weight="bold" fill="#fff">五层隔离红线</text>
+        <g font-size="11.5" fill="#bcd0ea">
+          <text x="120" y="396" text-anchor="middle">① 代码 · 独立 git 线</text>
+          <text x="310" y="396" text-anchor="middle">② 运行时 · 独立 home/profile/端口</text>
+          <text x="510" y="396" text-anchor="middle">③ 插件 · @omni/* 命名空间</text>
+          <text x="700" y="396" text-anchor="middle">④ 数据 · 独立记忆库与日志</text>
+          <text x="880" y="396" text-anchor="middle">⑤ 工作区 · 仅本门户</text>
+        </g>
+      </svg>
+    </div>
+    <figcaption><b>图 3</b> 双 DSH 隔离图：左为日常 Desktop 实例，右为 OIA 实例，中缝断桥表示互不可见；底部为代码/运行时/插件/数据/工作区五条红线，任何一条被突破即验收失败。</figcaption>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>隔离既是工程约束，也是产品需求</h4>
+    <p>两重理由：其一，日常 Desktop 承载研发，绝不能被 OIA 的实验性组合包、HMR 重载、插件安装事务波及；
+    其二，<b>OIA 将来作为独立产品分发，必须自带运行时边界</b>——隔离不是临时护栏，而是交付形态的一部分。
+    五层红线里最容易被忽视的是<b>插件层</b>：home 分开了但插件 id 混用，安装事务仍可能互相污染，所以
+    <code>@omni/*</code> 命名空间与「禁装日常 profile」是硬规则而非风格偏好。</p>
+    <p class="cite">来源：report.html §1.1 / §1.2。</p>
+  </div>
+
+  <div class="critique-box">
+    <span class="tag-insight">代价与替代</span>
+    <h4>双实例的维护税</h4>
+    <p><b>代价</b>：两套 home 意味着双份配置、双份升级、双份凭据管理，版本还可能漂移（当前安装 0.2.2-rc.3 系，
+    二开线需固定 upstream 版本、按 upgrade-guide 迁移，禁止跟踪 unstable）。
+    <b>替代方案</b>：同一 DSH 多 profile 省一半运维——但数据层（记忆库、会话 JSONL）与插件安装事务仍共享 home，
+    达不到「数据零交集」的验收第 ④ 条。权衡结论：宁可付双实例的运维成本，也要保住数据与插件两条红线；
+    缓解手段是把 OIA 侧全部配置收敛进 <code>@omni/*</code> 组合包，让升级动作退化为「重拼一次树」。</p>
+    <p class="cite">来源：report.html §1.2 / §10 风险登记（DSH 版本演进快）。</p>
+  </div>
+</section>
+
+<!-- ================= 第 5 章：代码附录 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 5 · CODE APPENDIX</div>
+  <h2 class="chapter-title">代码附录：@omni/* 打包范本与写回钩子</h2>
+
+  <p class="lead">
+    <code>@omni/*</code> 每个 bundle 都按同一个形状落地。范本来自本机存档的续忆（xuyi）DSH 适配器
+    （<code>docs/sources/repos/xuyi-memory/dsh-adapter/</code>，code-level-notes §5 已登记为「OIA 插件的直接模板」），
+    下面先给<b>逐字原文</b>，再给<b>按范本构造的 OIA 模板</b>与<b>钩子伪代码</b>。
+  </p>
+
+  <div class="code-appendix">
+    <!-- 代码块 1 -->
+    <div class="code-explain">
+      <h4>① cordis.patch.yml 全文：一个插件的最小声明</h4>
+      <p>续忆适配器的 patch 文件只有 3 行：一个 <code>insert</code> 动作，两条字段（id / name）。
+      这就是「按 id 定位、插入一条」的全部语法——OIA 的 <code>@omni/*</code> 组合包 patch 与此同形，
+      只是 id 前缀换成 <code>omni-</code>。极小的体积正是可审计性的来源：改了什么，一眼看完。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">docs/sources/repos/xuyi-memory/dsh-adapter/cordis.patch.yml</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="kw">- insert</span>:
+    <span class="kw">- id</span>: <span class="st">xuyi-memory</span>
+      <span class="kw">name</span>: <span class="st">dsh-xuyi-memory</span></code></pre>
+
+    <!-- 代码块 2 -->
+    <div class="code-explain">
+      <h4>② package.json 的 dsh 字段节选：bundle 与 client 插件的挂载点</h4>
+      <p><code>dsh.bundle.patch</code> 指向同目录的 <code>cordis.patch.yml</code>（Host 侧插件树声明），
+      <code>dsh.client</code> 声明 Web 客户端插件（<code>platform: web</code> + <code>immediately</code>）。
+      配合 <code>exports</code> 里显式列出的 <code>./client</code> 与 <code>./locale/*.json</code>，
+      形成「Host 入口 + Web 面板 + 多语言」三件套——这正是 code-level-notes §5.1 总结的
+      <code>dsh.bundle.patch</code> + <code>dsh.client{platform:web}</code> + locale + market 索引的打包形状。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">docs/sources/repos/xuyi-memory/dsh-adapter/package.json（节选）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code>{
+  <span class="st">"name"</span>: <span class="st">"dsh-xuyi-memory"</span>,
+  <span class="st">"version"</span>: <span class="st">"1.0.3"</span>,
+  <span class="st">"type"</span>: <span class="st">"module"</span>,
+  <span class="st">"main"</span>: <span class="st">"./index.js"</span>,
+  <span class="st">"exports"</span>: {
+    <span class="st">"."</span>: <span class="st">"./index.js"</span>,
+    <span class="st">"./client"</span>: <span class="st">"./client.js"</span>,
+    <span class="st">"./locale/*.json"</span>: <span class="st">"./locale/*.json"</span>,
+    <span class="st">"./package.json"</span>: <span class="st">"./package.json"</span>
+  },
+  <span class="st">"files"</span>: [
+    <span class="st">"index.js"</span>, <span class="st">"logic.js"</span>, <span class="st">"client.js"</span>, <span class="st">"rhythm.js"</span>,
+    <span class="st">"cordis.patch.yml"</span>, <span class="st">"icon.png"</span>, <span class="st">"locale"</span>, <span class="st">"README.md"</span>, <span class="st">"LICENSE"</span>
+  ],
+  <span class="st">"license"</span>: <span class="st">"MIT"</span>,
+  <span class="st">"engines"</span>: { <span class="st">"node"</span>: <span class="st">"&gt;=20"</span> },
+  <span class="st">"dsh"</span>: {
+    <span class="st">"bundle"</span>: { <span class="st">"patch"</span>: <span class="st">"./cordis.patch.yml"</span> },
+    <span class="st">"client"</span>: { <span class="st">"platform"</span>: <span class="st">"web"</span>, <span class="st">"immediately"</span>: <span class="kw">true</span> }
+  }
+}</code></pre>
+
+    <!-- 代码块 3 -->
+    <div class="code-explain">
+      <h4>③ @omni/memory 的 package.json 模板：按范本构造</h4>
+      <p><b>按范本构造的模板，非已存在代码</b>——形状逐字段仿照 ①②（id 前缀改 <code>omni-</code>、
+      name 进入 <code>@omni/*</code> 命名空间、patch 与 client 结构不变），仅把文件清单换成五组件的入口文件。
+      它是 M1「记忆内核 MVP」开工时的第一份产物，尚未创建任何真实文件。</p>
+      <div class="code-meta">
+        <span class="chip demo">[示意性实现]</span>
+        <span class="chip path">@omni/memory/package.json（模板，非已存在代码）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code>{
+  <span class="st">"name"</span>: <span class="st">"@omni/memory"</span>,
+  <span class="st">"version"</span>: <span class="st">"0.0.1"</span>,
+  <span class="st">"description"</span>: <span class="st">"OIA-Memory 组合包：Vault / Distiller / Canvas / Recall / Governance 五组件的 bundle 入口"</span>,
+  <span class="st">"type"</span>: <span class="st">"module"</span>,
+  <span class="st">"main"</span>: <span class="st">"./index.js"</span>,
+  <span class="st">"exports"</span>: {
+    <span class="st">"."</span>: <span class="st">"./index.js"</span>,
+    <span class="st">"./client"</span>: <span class="st">"./client.js"</span>,
+    <span class="st">"./locale/*.json"</span>: <span class="st">"./locale/*.json"</span>
+  },
+  <span class="st">"files"</span>: [
+    <span class="st">"index.js"</span>, <span class="st">"vault.js"</span>, <span class="st">"distiller.js"</span>, <span class="st">"canvas.js"</span>,
+    <span class="st">"recall.js"</span>, <span class="st">"governance.js"</span>, <span class="st">"client.js"</span>,
+    <span class="st">"cordis.patch.yml"</span>, <span class="st">"locale"</span>, <span class="st">"README.md"</span>, <span class="st">"LICENSE"</span>
+  ],
+  <span class="st">"keywords"</span>: [<span class="st">"dsh"</span>, <span class="st">"dsh-plugin"</span>, <span class="st">"deepseek-harness"</span>, <span class="st">"memory"</span>, <span class="st">"omni"</span>],
+  <span class="st">"license"</span>: <span class="st">"MIT"</span>,
+  <span class="st">"engines"</span>: { <span class="st">"node"</span>: <span class="st">"&gt;=20"</span> },
+  <span class="st">"dsh"</span>: {
+    <span class="st">"bundle"</span>: { <span class="st">"patch"</span>: <span class="st">"./cordis.patch.yml"</span> },
+    <span class="st">"client"</span>: { <span class="st">"platform"</span>: <span class="st">"web"</span>, <span class="st">"immediately"</span>: <span class="kw">true</span> }
+  }
+}</code></pre>
+
+    <!-- 代码块 4 -->
+    <div class="code-explain">
+      <h4>④ OIA 记忆读写钩子的伪代码：pre-step 注入 + turn-stopping 写回</h4>
+      <p><b>示意性实现</b>：机制名（<code>agent/pre-step</code> waterfall、<code>agent.inject()</code>、
+      <code>agent/turn-stopping</code>、<code>session/event</code>）全部出自本机安装版内核文档（见 report §2.3 / §5.1），
+      函数体是按语义编写的示意代码，<b>非官方 API 实现</b>；语义约束（注入不阻断 waterfall、写回必带原话与时间戳、
+      待人审走 Governance）来自本系列前四篇的设计结论。</p>
+      <div class="code-meta">
+        <span class="chip demo">[示意性实现]</span>
+        <span class="chip path">机制名出自内核文档 capability-seams / agent；函数体为示意</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">// ---- 钩子 A · 读：每步模型调用前注入召回结果 ----</span>
+<span class="kw">plugin</span> <span class="st">'@omni/memory-recall'</span> {
+  <span class="kw">on</span> <span class="st">'agent/pre-step'</span> (waterfall):        <span class="cm">// 内核文档：agent/pre-step waterfall</span>
+    facts <span class="op">=</span> recall(query <span class="op">=</span> step.userText, budget <span class="op">=</span> <span class="nu">2000</span>)
+    <span class="kw">if</span> facts.nonEmpty:
+      agent.inject(text <span class="op">=</span> render(facts))   <span class="cm">// 「模型可见即已记录」：注入即进会话日志</span>
+    <span class="kw">return</span> continue                        <span class="cm">// 不阻断原 waterfall，其余提供方照常执行</span>
+}
+
+<span class="cm">// ---- 钩子 B · 写：一轮结束后蒸馏写回 ----</span>
+<span class="kw">plugin</span> <span class="st">'@omni/memory-distiller'</span> {
+  <span class="kw">on</span> <span class="st">'agent/turn-stopping'</span>:              <span class="cm">// 内核文档：agent/turn-stopping（轮次级）</span>
+    draft <span class="op">=</span> distill(session.tail(),
+               intent <span class="op">=</span> <span class="st">'auto'</span>,
+               style <span class="op">=</span> <span class="st">'intent-preserving + semantic-dedup'</span>)
+    vault.append(draft)                    <span class="cm">// 原话 + 时间戳 + 来源会话，只追加不改写</span>
+    governance.enqueue(draft)              <span class="cm">// 待人审（48h 自动收录），可抑制/纠正/删除</span>
+
+  <span class="kw">on</span> <span class="st">'session/event'</span>:                     <span class="cm">// 需要更细粒度时的旁路消费点</span>
+    <span class="kw">if</span> event.kind <span class="op">==</span> <span class="st">'user.dismissed'</span>:
+      feedback.record(<span class="st">'negative'</span>)          <span class="cm">// 隐式反馈 → 该触发降频（Coco 环）</span>
+}
+
+<span class="cm">// ---- 一致性约束：一切干预决策也落日志 ----</span>
+<span class="kw">on</span> <span class="st">'intervention/decided'</span>:
+  log.append({state, topic, budget, channel})  <span class="cm">// 可回放：出声/沉默/追问皆为显式事件</span></code></pre>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>范本的可迁移性：换 id 不换形状</h4>
+    <p>把 ①② 与 ③ 并排看：<code>insert</code> 结构、<code>dsh.bundle.patch</code>、<code>dsh.client</code>、
+    exports 三件套<b>一个字段都没变</b>，变的只有命名空间与文件清单。这说明 <code>@omni/*</code> 族可以做到
+    「复制范本 → 改名 → 填业务文件」的量产节奏；再叠加 ④ 的两个钩子，M1 的最小闭环
+    （写得进、找得到、带原文）就只差业务函数本身。</p>
+    <p class="cite">来源：docs/code-level-notes.md §5.1 / §8 汇总表（@omni/* 打包：模板照搬）。</p>
+  </div>
+</section>
+
+<!-- ================= 第 6 章：延伸问题 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 6 · OPEN QUESTION</div>
+  <h2 class="chapter-title">延伸问题：seam 的边界在哪里</h2>
+
+  <p class="lead">
+    收官不收口。下面这个问题，决定了 OIA 未来所有「深度定制」需求的处理纪律。
+  </p>
+
+  <div class="research-question">
+    <span class="tag-q">延伸研究问题</span>
+    <h4>在不 fork 内核的约束下，深度定制的理论上限在哪里？</h4>
+    <p>
+      <span class="rq-label">理论分析：</span>能力 seam 的覆盖度给出了一个清晰的上限——<b>凡是被文档化的扩展点
+      （Definition / Provider / Consumer 三角色所及之处），都可以不 fork 地整条替换</b>：
+      换 <code>ctx.llm</code> 的 provider 即换模型接入，换 compaction 后端即换符号画布，换 subagent provider 即换子代理实现。
+      但<b>循环语义本身由 agent-loop 拥有</b>——step 如何推进、turn 何时结束、日志何时落盘的编排次序，
+      是 seam 之间的「胶水」，不是 seam 自身。seam 之外的需求只有两条路：找一个语义相近的扩展点绕行，
+      或者落进<b>最小 patch 分支</b>。后者可以形式化为一个可维护性指标：
+    </p>
+    <span class="math">R<sub>rebase</sub> <span class="op">=</span> L<sub>patch</sub> <span class="op">×</span> f<sub>upstream</sub>
+      <span class="op">（</span>patch 行数 <span class="op">×</span> 上游变更频率<span class="op">）</span></span>
+    <div class="math-note">R 越小，上游升级时的合并成本越低；理想态是 L→0（全走 seam）。</div>
+    <p>
+      <span class="rq-label">研究方向：</span>做一次<b>seam 覆盖度审计</b>——枚举 OIA 需要的全部行为
+      （记忆写回、召回注入、上下文卸载、跨会话检索、观察者派生、干预调度、任务板并发、治理面板），
+      逐条判定它落在哪个已文档化扩展点，统计 <code>L_patch</code> 的初始值与高危行
+      （触及 agent-loop 次序的行）；此后每个上游版本按 <code>R_rebase</code> 重估一次，
+      把「何时必须放弃某条 patch」从直觉变成数字。配套问题是：<b>能否把「模型可见即已记录」
+      做成一条可执行的一致性测试</b>（对任意注入路径断言日志可回放），作为 CI 门禁防止暗写回潮。
+    </p>
+  </div>
+
+  <p>
+    系列回顾：篇 1–4 给出记忆五组件的证据与代码级来源，篇 5 给出主动性与个性化的行为设计，
+    本篇把它们全部挂回 DSH 的能力 seam，并用五层红线把运行时圈起来——
+    下一步是 M1：独立 DSH_HOME + profile <code>omni</code> + <code>@omni/memory-vault</code> + T0 词法召回 + 写回钩子。
+  </p>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ================= 页脚 ================= -->
+<footer class="site">
+  <div class="inner">
+    <h4>OIA 读书会 · 六篇系列导航</h4>
+    <div class="post-nav">
+      <a href="../index.html"><span class="no">INDEX</span><span class="t">首页 · 系列总览</span><span class="d">全景地图、阅读路线与自主科研问题五问。</span></a>
+      <a href="01-tencentdb-memory.html"><span class="no">篇 1 / 6</span><span class="t">腾讯云记忆</span><span class="d">分层金字塔 × 符号画布：下层证据，上层结构。</span></a>
+      <a href="02-rolling-memory.html"><span class="no">篇 2 / 6</span><span class="t">rolling-memory</span><span class="d">零成本词法检索：信息量即权重，原文档案铁律。</span></a>
+      <a href="03-hy-graphmemix.html"><span class="no">篇 3 / 6</span><span class="t">Hy × GraphMemix</span><span class="d">双过程认知 × diff-chain × 查询感知证据森林。</span></a>
+      <a href="04-memorax-community.html"><span class="no">篇 4 / 6</span><span class="t">MemoraX × 社区</span><span class="d">四类记忆边界 × 人审治理 × 用户主权三件套。</span></a>
+      <a href="05-omni-papers.html"><span class="no">篇 5 / 6</span><span class="t">论文 · 主动性</span><span class="d">何时出声、何时沉默、怎么说：四篇论文的主动性设计。</span></a>
+      <a href="06-dsh-pi-oia.html"><span class="no">篇 6 / 6 · 收官</span><span class="t">DSH × Pi × OIA</span><span class="d">无特权内核、能力 seam 与双 DSH 隔离红线。</span></a>
+    </div>
+    <div class="fine">
+      诚实声明：本页所有 DSH 机制描述以<b>本机安装版内核文档</b>（architecture / capability-seams / subagent / goal / schedule /
+      compaction / skills / workflow / session）核验过的内容为准，以 <code>report.html</code> 已核验段落为唯一转述来源，
+      不编造未见的 DSH API；机制细节以本机安装文档实际版本为准，DSH 版本演进较快，升级前请按 upgrade-guide 复核。
+      引用的源码原文均出自本地存档（<code>docs/sources/repos/xuyi-memory/dsh-adapter/</code>、<code>docs/code-level-notes.md</code>），
+      许可与出处逐处标注；标注 [示意性实现] 的代码为按机制描述编写，非官方代码。
+      文中所有项目基准提升数字（如各篇自报的 token / 通过率 / Recall@10 等）均为<b>项目自报、未独立复现</b>；
+      Pi 的信息来自其 README 已读部分（pi-mono），各包内部实现未读，已如实登记。
+      本页面为纯静态单文件，离线可读，无任何外部网络请求。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

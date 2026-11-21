@@ -1,0 +1,1040 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>腾讯云 TencentDB-Agent-Memory：分层金字塔与符号画布 · OIA 读书会 第 1 篇</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- ================= HERO（模板 A） ================= -->
+<header class="hero">
+  <div class="hero-wrap">
+    <div class="hero-badge">OIA 读书会 · 第 1 篇 / 6 · MIT</div>
+    <h1>腾讯云 TencentDB-Agent-Memory：<br>分层金字塔与符号画布</h1>
+    <div class="hero-tagline">「下层证据，上层结构」 · 语义金字塔 L0→L3 × Mermaid 符号画布 × 白盒可下钻</div>
+    <p class="hero-desc">一份从 README 到源码逐行走读的拆解：它为什么拒绝扁平向量堆，为什么把短期上下文卸载成符号图，
+      以及这套「上层结构、下层证据」的哲学要付出什么代价。</p>
+
+    <div class="hero-art">
+      <div class="cover-frame">
+        <!-- 自绘水墨风封面：分层金字塔 + 证据下钻链 -->
+        <svg viewBox="0 0 800 340" width="800" height="340" role="img" aria-label="水墨封面：分层金字塔与证据下钻链">
+          <rect x="0" y="0" width="800" height="340" fill="#f7f4ec"></rect>
+          <!-- 淡紫晕染 -->
+          <ellipse cx="150" cy="90" rx="230" ry="130" fill="#d8b4fe" opacity="0.16"></ellipse>
+          <ellipse cx="640" cy="250" rx="240" ry="120" fill="#d8b4fe" opacity="0.12"></ellipse>
+          <!-- 泥金圆日 -->
+          <circle cx="738" cy="62" r="30" fill="#d9b45b" opacity="0.55"></circle>
+          <circle cx="738" cy="62" r="30" fill="none" stroke="#b8860b" stroke-width="1.5" opacity="0.7"></circle>
+          <!-- 远山笔触 -->
+          <path d="M0 268 Q110 226 230 258 T470 250 T800 276" fill="none" stroke="#23212c" stroke-width="2" opacity="0.14"></path>
+          <path d="M0 292 Q160 258 320 286 T640 280 T800 300" fill="none" stroke="#23212c" stroke-width="1.4" opacity="0.10"></path>
+
+          <!-- 分层金字塔（左） -->
+          <g stroke="#23212c" stroke-width="1.6">
+            <polygon points="190,74 234,132 146,132" fill="#f3e8ff"></polygon>
+            <polygon points="146,132 234,132 278,190 102,190" fill="#e9d5ff"></polygon>
+            <polygon points="102,190 278,190 322,248 58,248" fill="#d8b4fe" opacity="0.85"></polygon>
+            <polygon points="58,248 322,248 366,306 14,306" fill="#c084fc" opacity="0.65"></polygon>
+          </g>
+          <polygon points="190,74 234,132 146,132" fill="none" stroke="#b8860b" stroke-width="2"></polygon>
+          <g font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#23212c" text-anchor="middle">
+            <text x="190" y="122">L3 人格</text>
+            <text x="190" y="167">L2 场景</text>
+            <text x="190" y="224">L1 原子</text>
+            <text x="190" y="283">L0 对话</text>
+          </g>
+
+          <!-- 证据下钻链（右） -->
+          <g font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#23212c">
+            <rect x="470" y="74" width="150" height="44" rx="10" fill="#ffffff" stroke="#b8860b" stroke-width="2"></rect>
+            <text x="545" y="101" text-anchor="middle">人格（画像文件）</text>
+            <rect x="470" y="146" width="150" height="44" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+            <text x="545" y="173" text-anchor="middle">场景（场景块）</text>
+            <rect x="470" y="218" width="150" height="44" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+            <text x="545" y="245" text-anchor="middle">原子（数据库）</text>
+            <rect x="470" y="290" width="150" height="44" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+            <text x="545" y="317" text-anchor="middle">对话（原始记录）</text>
+          </g>
+          <g stroke="#23212c" stroke-width="1.8" fill="none">
+            <line x1="545" y1="118" x2="545" y2="146"></line>
+            <line x1="545" y1="190" x2="545" y2="218"></line>
+            <line x1="545" y1="262" x2="545" y2="290"></line>
+          </g>
+          <g fill="#23212c">
+            <polygon points="545,152 540,142 550,142"></polygon>
+            <polygon points="545,224 540,214 550,214"></polygon>
+            <polygon points="545,296 540,286 550,286"></polygon>
+          </g>
+          <g font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b">
+            <text x="640" y="142">node_id 逐层下钻</text>
+            <text x="640" y="214">result_ref 索引</text>
+            <text x="640" y="286">读取原文证据</text>
+          </g>
+          <!-- 金字塔与链的连线 -->
+          <g stroke="#b8860b" stroke-width="1.3" stroke-dasharray="5 5" fill="none" opacity="0.85">
+            <path d="M366 104 L470 96"></path>
+            <path d="M322 224 L470 240"></path>
+          </g>
+
+          <!-- 题字 -->
+          <text x="470" y="52" font-family="'Noto Serif SC','SimSun',serif" font-size="27" font-weight="900"
+                letter-spacing="6" fill="#23212c">下层证据 · 上层结构</text>
+          <!-- 印章 -->
+          <rect x="742" y="256" width="42" height="42" rx="6" fill="#b8860b" opacity="0.9"></rect>
+          <text x="763" y="285" font-family="'Noto Serif SC','SimSun',serif" font-size="22" font-weight="900"
+                fill="#f7f4ec" text-anchor="middle">层</text>
+          <!-- 底部小注 -->
+          <text x="24" y="330" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#4a4657">
+            语义金字塔 L0→L3 × 证据下钻链 · 上层可读，下层可查
+          </text>
+        </svg>
+      </div>
+    </div>
+    <div class="hero-caption">封面自绘：左侧为四层语义金字塔，右侧为「人格 → 场景 → 原子 → 对话」的确定性下钻链。</div>
+
+    <div class="hero-stats">
+      <div class="stat"><b>L0→L3</b><span>四层语义金字塔</span></div>
+      <div class="stat"><b>−61.38%</b><span>WideSearch token · <span class="self-report">自报·未复现</span></span></div>
+      <div class="stat"><b>48%→76%</b><span>PersonaMem · <span class="self-report">自报·未复现</span></span></div>
+      <div class="stat"><b>MIT</b><span>Tencent 开源许可</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">向下滚动<span>↓</span></div>
+</header>
+
+<!-- ================= 导航条 ================= -->
+<nav class="navbar">
+  <span class="brand">OIA 读书会<i>·</i></span>
+  <a href="../index.html">首页</a>
+  <a href="01-tencentdb-memory.html" class="active">腾讯云记忆</a>
+  <a href="02-rolling-memory.html">rolling-memory</a>
+  <a href="03-hy-graphmemix.html">Hy×GraphMemix</a>
+  <a href="04-memorax-community.html">MemoraX×社区</a>
+  <a href="05-omni-papers.html">论文·主动性</a>
+  <a href="06-dsh-pi-oia.html">DSH×Pi×OIA</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ================= CHAPTER 01 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 01</div>
+  <h2 class="chapter-title">记忆为什么不能是「平的」</h2>
+
+  <p class="lead">TencentDB-Agent-Memory 的 README 用了一个很重的词来描述业界现状：传统记忆系统把数据切碎、
+  扔进一个<strong>扁平向量堆</strong>，于是「召回退化为在互不关联的碎片里做盲搜，没有任何宏观层面的引导」。
+  这不是修辞——它精确指出了向量检索的结构性缺陷：<strong>相似度只度量邻近，不携带结构</strong>。</p>
+
+  <h3>扁平堆的三宗罪</h3>
+  <ul>
+    <li><strong>碎片切断了上下文</strong>：一条事实被切块入库后，它属于哪次任务、哪个人格、哪个场景的元信息随之丢失；
+        命中了也不知道能不能用。</li>
+    <li><strong>检索退化为盲搜</strong>：每次查询都要在 |D| 个候选碎片上全量打分，没有「先看哪一层」的先验，
+        宏观问题（「我是个什么样的用户」）被迫用微观手段（向量近邻）去回答。</li>
+    <li><strong>压缩与取证互斥</strong>：要省 token 就摘要，摘要就丢证据；要保证据就全塞，上下文就爆。
+        扁平结构里这两者是零和的。</li>
+  </ul>
+
+  <h3>「上层结构、下层证据」的哲学</h3>
+  <p>该项目把<strong>形成（formation）与召回（recall）都做成层级化</strong>，并给出一句可作为设计宪法的话：
+  <strong>「下层保存证据，上层保存结构」（Lower layers preserve evidence; upper layers preserve structure）</strong>。
+  底层（事实、日志、轨迹）进数据库以获得可靠的全文检索；顶层（人格、场景、画布）存成人可读的 Markdown，
+  换取高信息密度与白盒可检视性。它同时明确拒绝两个极端：<strong>野蛮的历史堆砌</strong>与
+  <strong>不可逆的有损摘要</strong>——两者都被写进了 Overview。</p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>维度</th><th>扁平向量堆</th><th>分层语义金字塔</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>存储形态</td><td>同构碎片 + 单一向量索引</td><td>异构：底层数据库、顶层人可读 Markdown</td></tr>
+      <tr><td>检索方式</td><td>全量相似度盲搜</td><td>先定位层，再沿下钻链取证（渐进披露）</td></tr>
+      <tr><td>结构先验</td><td>无：相似 ≠ 相关</td><td>有：层级即「先看什么」的路由表</td></tr>
+      <tr><td>压缩可逆性</td><td>摘要即终点，丢证据不可恢复</td><td>抽象层必有损，但保有回到底层的确定性路径</td></tr>
+      <tr><td>上下文成本</td><td>要么全注入、要么赌命中</td><td>上层结构只占少量 token，细节按需下钻</td></tr>
+      <tr><td>调试方式</td><td>一串向量分数，无从定位错误</td><td>打开文件沿链走：白盒</td></tr>
+    </tbody>
+  </table>
+
+  <h3>替代方案对比：为什么不是纯 RAG、不是全量注入</h3>
+  <p><strong>纯 RAG（切块 + 向量检索）</strong>：写入成本最低，但只解决「找回相似片段」，不解决「这个片段属于哪个任务的哪一步」。
+  对长程工作负载，命中孤立片段的边际价值很低——你仍然要靠模型自己重新拼装语境。<br>
+  <strong>全量注入（不压缩）</strong>：证据最完备，但 README 指出长任务里最大的 token 消耗者恰恰是
+  <strong>冗长的中间日志（搜索结果、代码、错误堆栈）</strong>，全量注入等于把预算烧在噪声上。<br>
+  <strong>不可逆摘要</strong>：省 token，但一旦摘要出错或过时，原始证据不可恢复——该项目明确把「可恢复性」当硬约束，
+  要求从高层抽象到地面真值始终保持一条确定性路径。</p>
+
+  <span class="math">
+    C<sub>flat</sub> = Θ( |D| · c<sub>match</sub> )
+    <span class="op">，</span>
+    C<sub>layer</sub> = Θ( |S<sub>top</sub>| · c<sub>match</sub> + h · c<sub>ref</sub> )
+    <span class="op">，</span>
+    |S<sub>top</sub>| ≪ |D| <span class="op">且</span> h ≤ 3
+  </span>
+  <div class="math-note">直觉：扁平方案的探测成本随碎片数线性增长且无先验剪枝；分层方案先在极小的顶层结构上定位，
+    再走一条长度有界（金字塔只有四层）的下钻链取证——代价从「搜遍」变成「沿边行走」。</div>
+
+  <div class="insight-box">
+    <span class="tag-insight">深度洞察</span>
+    <h4>结构不是画给投资人看的架构图，而是检索的先验</h4>
+    <p>分层的真正收益不在于「数据被组织得好看」，而在于它把<strong>查询路由</strong>做成了免费的：
+    面对宏观问题先看 L3/L2，面对细节问题直接下钻 L1/L0，面对进行中的任务先看画布。
+    每一层都是一张为特定问题类型预建的索引——扁平堆里这张索引不存在，只能靠每次查询临时重建。</p>
+  </div>
+
+  <p><strong>批判评估：</strong>分层不是免费的。写入路径必须持续跑 LLM 抽取（token 成本 + 延迟），
+  层与层之间要维护一致性（persona 由哪些 scenario 生成、scenario 何时该合并）；而扁平堆唯一的优点正是
+  <strong>写入零成本</strong>。所以「分层是否划算」取决于一个不等式：读多写少、且错误召回代价高时分层占优。
+  该项目把 benchmark 全部压在<strong>连续长程会话</strong>上（例如 SWE-bench 每个 session 连续跑 50 个任务，
+  模拟真实长程 agent 的上下文积累压力——README 自述的测试设定 <span class="self-report">自报·未复现</span>），
+  正是为了让这个不等式在它的主场成立。换到短对话、高频写入的场景，结论未必一样。</p>
+</section>
+
+<!-- ================= CHAPTER 02 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 02</div>
+  <h2 class="chapter-title">L0→L3 语义金字塔与确定性下钻</h2>
+
+  <p class="lead">长期记忆侧的分层被具体化为一座<strong>语义金字塔</strong>：
+  <strong>L0 Conversation（原始对话）→ L1 Atom（原子事实）→ L2 Scenario（场景块）→ L3 Persona（用户画像）</strong>。
+  注意这不是四个数据库表的委婉说法，而是四种不同的信息形态：从「逐字记录」到「独立成句的事实」
+  到「有主题的情境块」到「跨情境稳定的画像」，每上一层，抽象度升高、体积缩小、可读性增强。</p>
+
+  <h3>金字塔同时管「知识」与「技能」</h3>
+  <p>README 把同一范式推广到动作层：底层是执行轨迹（Conversation），中层从中归纳出通用解法模式（Scenario），
+  顶层蒸馏为可复用的 Skill 或标准 SOP（Persona 层）。<strong>架构洞察：</strong>知识分层与技能分层共用同一条
+  「从证据到结构」的上升通道，意味着抽取管线、去重规则与下钻机制可以复用——这是把分层做成
+  <strong>统一架构范式（unified architectural paradigm）</strong>而非局部技巧的真正动机。</p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>问题类型</th><th>先看哪一层</th><th>下钻到哪一层</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>日常偏好、语气、长期目标</td><td>L3 Persona / L2 Scenario</td><td>需要事实时下钻 L1 Atom / L0 Conversation</td></tr>
+      <tr><td>具体事实、日期、项目细节</td><td>L1 Atom / L0 Conversation</td><td>结果稀疏时扩大时间范围，或回退语义召回</td></tr>
+      <tr><td>续接进行中的长任务</td><td>活跃 Mermaid 任务画布</td><td>摘要不够细看 JSONL，再进 refs/*.md 读原文</td></tr>
+      <tr><td>恢复历史任务</td><td>元数据任务入口</td><td>打开画布 → 定位 node_id → 追 result_ref</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.85rem;color:#787887;">（表转述自 README「Macro Personas + Micro Facts」的下钻表；refs/*.md、node_id、result_ref 为项目自有标识。）</p>
+
+  <h3>异构存储的 rationale：为什么底层进数据库、顶层存 Markdown</h3>
+  <p><strong>设计 rationale：</strong>底层（L0/L1）的访问模式是<strong>高频、条件化、大规模</strong>的——
+  按类型过滤、按时间范围扫、按关键词倒排、按向量近邻，这正是关系型 + 全文/向量索引的主场
+  （源码里是 <code>l1_records</code> 配 FTS5 虚表与 sqlite-vec 的 vec0 虚表，BM25 + 向量 + RRF 混合检索）。
+  顶层（L2/L3）的访问模式是<strong>低频、整读、人机共览</strong>的——画像和场景块是要被「打开看一眼」的，
+  Markdown 的信息密度、可 diff 性、可手工编辑性完胜数据库行。<br>
+  <strong>替代方案对比：</strong>全存数据库 → 人无法直接检视，白盒承诺落空；全存 Markdown →
+  L0/L1 规模上来后检索性能与条件过滤崩塌。<strong>每一层用对工具</strong>，才是「异构」二字的全部理由。</p>
+
+  <div class="insight-box">
+    <span class="tag-insight">深度洞察</span>
+    <h4>白盒调试 = 沿链行走，而不是在黑箱里捞分数</h4>
+    <p>README 对现状的批评很尖锐：多数记忆系统召回出错时，你看到的只有一串向量分数，无从判断错在哪一环。
+    这里把关键中间产物全部落成可读文件——L2 场景块是纯 Markdown、L3 画像住在 <code>persona.md</code>
+    并可回溯到生成它的场景、画布是 Mermaid、原始载荷/摘要/节点由 <code>result_ref</code> 与 <code>node_id</code> 串联。
+    调试因此变成一次确定性行走：<strong>Persona → Scenario → Atom → Conversation</strong>，
+    走到哪一层发现断裂，根因就在哪一层。所有分层产物都躺在 <code>~/.openclaw/memory-tdai/</code> 下，
+    项目甚至鼓励你直接打开目录逐层检查。</p>
+  </div>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 880 430" width="880" height="430" role="img" aria-label="语义金字塔与确定性下钻链示意图">
+        <rect x="0" y="0" width="880" height="430" fill="#ffffff"></rect>
+        <text x="30" y="36" font-family="'Noto Serif SC','SimSun',serif" font-size="17" font-weight="900" fill="#23212c">
+          分层：上层结构，下层证据
+        </text>
+        <text x="30" y="60" font-family="'Noto Serif SC','SimSun',serif" font-size="12.5" fill="#787887">
+          左侧为语义金字塔，右侧为同一份数据的确定性下钻链
+        </text>
+
+        <!-- 左：金字塔 -->
+        <g stroke="#23212c" stroke-width="1.8">
+          <polygon points="220,96 268,162 172,162" fill="#f3e8ff"></polygon>
+          <polygon points="172,162 268,162 316,228 124,228" fill="#e9d5ff"></polygon>
+          <polygon points="124,228 316,228 364,294 76,294" fill="#d8b4fe" opacity="0.9"></polygon>
+          <polygon points="76,294 364,294 412,360 28,360" fill="#c084fc" opacity="0.7"></polygon>
+        </g>
+        <polygon points="220,96 268,162 172,162" fill="none" stroke="#b8860b" stroke-width="2.4"></polygon>
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="14" fill="#23212c" text-anchor="middle" font-weight="700">
+          <text x="220" y="148">L3 人格</text>
+          <text x="220" y="200">L2 场景</text>
+          <text x="220" y="266">L1 原子</text>
+          <text x="220" y="332">L0 对话</text>
+        </g>
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#4a4657" text-anchor="middle">
+          <text x="220" y="166" font-size="10.5">画像文件</text>
+          <text x="345" y="196">Markdown 场景块</text>
+          <text x="404" y="262">数据库记录</text>
+          <text x="452" y="330">逐字原始消息</text>
+        </g>
+        <text x="220" y="392" font-family="'Noto Serif SC','SimSun',serif" font-size="12" fill="#b8860b" text-anchor="middle">
+          越往上越抽象、越可读
+        </text>
+
+        <!-- 右：下钻链 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="14" fill="#23212c">
+          <rect x="560" y="96" width="230" height="54" rx="12" fill="#ffffff" stroke="#b8860b" stroke-width="2.4"></rect>
+          <text x="675" y="129" text-anchor="middle" font-weight="700">人格层（谁、喜欢什么）</text>
+
+          <rect x="560" y="186" width="230" height="54" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="675" y="219" text-anchor="middle" font-weight="700">场景层（在做什么事）</text>
+
+          <rect x="560" y="276" width="230" height="54" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="675" y="309" text-anchor="middle" font-weight="700">原子层（具体事实）</text>
+
+          <rect x="560" y="366" width="230" height="54" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="675" y="399" text-anchor="middle" font-weight="700">对话层（原始消息）</text>
+        </g>
+        <g stroke="#23212c" stroke-width="2" fill="none">
+          <line x1="675" y1="150" x2="675" y2="186"></line>
+          <line x1="675" y1="240" x2="675" y2="276"></line>
+          <line x1="675" y1="330" x2="675" y2="366"></line>
+        </g>
+        <g fill="#23212c">
+          <polygon points="675,192 669,180 681,180"></polygon>
+          <polygon points="675,282 669,270 681,270"></polygon>
+          <polygon points="675,372 669,360 681,360"></polygon>
+        </g>
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b" text-anchor="end">
+          <text x="870" y="174">溯源：由哪些场景生成</text>
+          <text x="870" y="264">场景名索引定位</text>
+          <text x="870" y="354">来源消息编号回查</text>
+        </g>
+
+        <!-- 金字塔 → 链 的桥接 -->
+        <g stroke="#b8860b" stroke-width="1.4" stroke-dasharray="6 5" fill="none">
+          <path d="M412 130 L560 122"></path>
+          <path d="M412 326 L560 392"></path>
+        </g>
+        <text x="486" y="118" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b" text-anchor="middle">
+          同一份数据
+        </text>
+        <text x="486" y="374" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b" text-anchor="middle">
+          两种视角
+        </text>
+
+        <!-- 底注 -->
+        <text x="560" y="60" font-family="'Noto Serif SC','SimSun',serif" font-size="12" fill="#787887">
+          调试路径：人格 → 场景 → 原子 → 对话，逐层可打开阅读
+        </text>
+      </svg>
+    </div>
+    <figcaption><b>图 1</b> 语义金字塔与确定性下钻链：左为 L3→L0 四层抽象，右为「人格 → 场景 → 原子 → 对话」的可追溯行走路径，层间以溯源字段衔接。</figcaption>
+  </figure>
+
+  <span class="math">
+    H( E | A ) &gt; 0 <span class="op">（抽象必然有损：证据 E 相对抽象 A 有条件熵）</span>
+    <br>
+    保存映射 π : A → E <span class="op">，</span> 使 H( E | A, π ) = 0
+    <span class="op">（在可下钻意义上无损）</span>
+  </span>
+  <div class="math-note">压缩本身不可消除信息损失；可消除的是「损失的不可恢复性」——只要每一层抽象都携带一条回到底层证据的确定性映射，
+    摘要出错时就还有退路。这正是「拒绝不可逆有损摘要」的数学表述。</div>
+
+  <p><strong>跨文连接：</strong>这座金字塔的对立面是 rolling-memory 的<strong>「原文档案铁律」</strong>——
+  它拒绝任何 LLM 在入库时改写/摘要历史，理由是「用可能幻觉的模型去改写可能被误解的对话是错误复合」。
+  两个方案是同一根光谱的两端：<strong>一端允许蒸馏但强制保下钻链，另一端干脆不蒸馏</strong>。
+  OIA 的取法是中间路线——蒸馏照做，但额外要求被取代的旧措辞保留为 superseded 历史（MemoraX/续忆一系的要求），
+  即把「留痕」从链路级（本项目的下钻）细化到措辞级。</p>
+
+  <p><strong>批判评估：</strong>下钻链的可靠性完全取决于<strong>上游抽取质量</strong>：
+  如果 L1 原子事实本身就抽错了，L3 画像会把错误稳定化，而「白盒」只能让你更快地发现错误、不能阻止错误。
+  此外，链是单向构造的（由下往上蒸馏）而双向使用（由上往下取证）——每次下钻都是一次额外的读放大，
+  预算没有写明每层最多下钻几次、失败后如何降级（README 只给了「结果稀疏时扩大时间范围或回退语义召回」的策略）。</p>
+</section>
+
+<!-- ================= CHAPTER 03 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 03</div>
+  <h2 class="chapter-title">短期符号画布：offload → node_id → refs</h2>
+
+  <p class="lead">如果说长期记忆解决「跨会话记住你」，符号画布解决的是「本次任务别被日志淹死」。
+  README 的判断是：长任务里最大的 token 消耗者是<strong>冗长的中间日志</strong>（搜索结果、代码、错误堆栈）。
+  对策是三层卸载：<strong>底层把原始工具输出全文卸载到 <code>refs/*.md</code>；中层在 <code>offload.jsonl</code>
+  里留步骤级摘要；顶层把任务状态压成一张轻量的 Mermaid 符号图</strong>。上下文里只留顶层结构，
+  出错时凭 <code>node_id</code> 下钻取全文。</p>
+
+  <h3>数据形态：一条 offload 条目长什么样</h3>
+  <p>每条被卸载的工具调用在 <code>offload.jsonl</code> 里是一行 JSON：<code>timestamp</code>（继承自原始工具结果）、
+  <code>node_id</code>（L2 分配的 Mermaid 节点号，运行前为 null）、<code>tool_call</code>（命令简述）、
+  <code>summary</code>（LLM 生成的结果摘要）、<code>result_ref</code>（指向 <code>refs/*.md</code> 全文的相对路径）、
+  <code>tool_call_id</code>、<code>session_key</code>，以及一个值得注意的字段——
+  <code>score</code>（0–10 的<strong>可替代性评分</strong>：摘要多大程度上能替代原文，由 L1 的 LLM 打分）。
+  <strong>架构洞察：</strong>可替代性评分把「哪些日志可以先扔」从启发式变成了可排序的决策：
+  分数越高越先卸载——这与后续 mild/aggressive 两档压缩的分批策略是同一套思路。</p>
+
+  <h3>L2 触发：阈值 4、超时 300 秒与 wait 态</h3>
+  <p>L2（画布生成）<strong>不再由 L1 直接触发，而是独立运行</strong>，有两个触发条件（源码头注释原文）：
+  <strong>条件 A</strong>：offload.jsonl 中 <code>node_id=null</code> 的条目 <strong>≥ l2NullThreshold（默认 4）</strong>；
+  <strong>条件 B</strong>：距上次 L2 超过 <code>l2TimeoutSeconds</code>（默认 300 秒），且默认要求确实存在比上次 L2
+  更新的空节点行（避免对陈旧数据空转）。<br>
+  <strong>失败路径：</strong>如果 L2 解析/映射失败，条目会被留在 <code>node_id="wait"</code> 态，
+  至少等待 <code>l2WaitRetrySeconds</code>（默认 120 秒）后重试，另有 <code>backfillNodeIds</code> 负责回填。
+  <strong>设计 rationale：</strong>「4 条」是一个<strong>延迟与压缩率的折中常数</strong>——攒太少，
+  每次画布更新都太贵；攒太多，上下文里长期躺着过时的结构。这个数没有公开消融，属于经验值。</p>
+
+  <blockquote>
+    注入模板原文（<code>mmd-injector.ts</code>）：<br>
+    <strong>【当前活跃任务的mermaid流程图】</strong>这是你最近正在执行的任务的阶段性记录（此条下方的tool use未被汇总，进程可能有延迟，仅供参考）。<br>
+    <strong>节点索引:</strong> 可通过 node_id 在 offload.{sessionid}.jsonl 中查找对应的工具调用记录。
+    如需查看某个节点对应的原始工具调用与完整结果，请在 offload.{sessionid}.jsonl 中找到对应条目的 result_ref 并读取该文件。<br>
+    末尾还有状态语义：标记为 "doing" 的节点是近期焦点，"done" 的已完成——「请参考此保持方向感，避免重复已完成的工作」。
+  </blockquote>
+
+  <p><strong>设计 rationale：</strong>这段模板是「压缩不牺牲证据链」的落点：它不只注入图，
+  还<strong>把下钻协议一起注入</strong>——告诉模型 node_id → jsonl → result_ref → 原文这条查找路径，
+  等于每次注入都重申一次取证说明书。配套的 L2 提示词纪律同样严格：
+  「只记录已发生、未发生不写、每个节点标注 node_id 来源」，防止画布变成模型的臆测流程图。</p>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 880 330" width="880" height="330" role="img" aria-label="短期卸载管线示意图">
+        <rect x="0" y="0" width="880" height="330" fill="#ffffff"></rect>
+        <text x="24" y="34" font-family="'Noto Serif SC','SimSun',serif" font-size="17" font-weight="900" fill="#23212c">
+          短期符号画布管线：卸载 → 摘要 → 画布 → 注入 → 下钻
+        </text>
+
+        <!-- 五个环节 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#23212c" text-anchor="middle">
+          <rect x="24" y="76" width="140" height="78" rx="12" fill="#f3e8ff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="94" y="108">冗长工具日志</text>
+          <text x="94" y="132" font-size="11" fill="#4a4657">数十万 token</text>
+
+          <rect x="204" y="76" width="140" height="78" rx="12" fill="#faf8f5" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="274" y="108">全文卸载</text>
+          <text x="274" y="132" font-size="11" fill="#4a4657">refs/*.md 外部档案</text>
+
+          <rect x="384" y="76" width="140" height="78" rx="12" fill="#faf8f5" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="454" y="108">步骤摘要</text>
+          <text x="454" y="132" font-size="11" fill="#4a4657">jsonl · 待编目</text>
+
+          <rect x="564" y="76" width="140" height="78" rx="12" fill="#e9d5ff" stroke="#b8860b" stroke-width="2.4"></rect>
+          <text x="634" y="108" font-weight="700">Mermaid 画布</text>
+          <text x="634" y="132" font-size="11" fill="#4a4657">带 node_id 的符号图</text>
+
+          <rect x="744" y="76" width="116" height="78" rx="12" fill="#f3e8ff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="802" y="108">轻量注入</text>
+          <text x="802" y="132" font-size="11" fill="#4a4657">数百 token</text>
+        </g>
+
+        <!-- 主流向箭头 -->
+        <g stroke="#23212c" stroke-width="2" fill="none">
+          <line x1="164" y1="115" x2="204" y2="115"></line>
+          <line x1="344" y1="115" x2="384" y2="115"></line>
+          <line x1="524" y1="115" x2="564" y2="115"></line>
+          <line x1="704" y1="115" x2="744" y2="115"></line>
+        </g>
+        <g fill="#23212c">
+          <polygon points="204,115 194,109 194,121"></polygon>
+          <polygon points="384,115 374,109 374,121"></polygon>
+          <polygon points="564,115 554,109 554,121"></polygon>
+          <polygon points="744,115 734,109 734,121"></polygon>
+        </g>
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b" text-anchor="middle">
+          <text x="184" y="70">①卸载</text>
+          <text x="364" y="70">②摘要</text>
+          <text x="544" y="70">③汇总</text>
+          <text x="724" y="70">④注入</text>
+        </g>
+
+        <!-- L2 触发标注 -->
+        <rect x="384" y="186" width="320" height="52" rx="10" fill="#fffbeb" stroke="#f59e0b" stroke-width="2"></rect>
+        <text x="544" y="208" font-family="'Noto Serif SC','SimSun',serif" font-size="12.5" fill="#92400e" text-anchor="middle">
+          L2 独立触发：空节点条目 ≥ 4 条，或距上次超 300 秒
+        </text>
+        <text x="544" y="228" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#92400e" text-anchor="middle">
+          失败留「wait」态，120 秒后重试并回填 node_id
+        </text>
+        <g stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="5 4" fill="none">
+          <path d="M454 154 L454 186"></path>
+          <path d="M634 154 L634 186"></path>
+        </g>
+
+        <!-- 下钻回环 -->
+        <path d="M802 154 L802 286 L274 286 L274 158" fill="none" stroke="#b8860b" stroke-width="2.2" stroke-dasharray="7 5"></path>
+        <polygon points="274,154 268,166 280,166" fill="#b8860b"></polygon>
+        <text x="544" y="308" font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#b8860b" text-anchor="middle" font-weight="700">
+          ⑤ 凭 node_id 在 jsonl 定位条目 → 沿 result_ref 读取 refs/*.md 原文
+        </text>
+      </svg>
+    </div>
+    <figcaption><b>图 2</b> 短期卸载管线：工具日志全文卸载、摘要入 jsonl、L2 汇总为 Mermaid 画布后轻量注入；出错时凭 node_id 沿 result_ref 下钻回原文，形成闭环。</figcaption>
+  </figure>
+
+  <div class="insight-box">
+    <span class="tag-insight">深度洞察</span>
+    <h4>压缩不牺牲证据链</h4>
+    <p>画布不是摘要的美化版，而是<strong>带指针的索引</strong>：每个节点都挂着 node_id，每个 node_id 都能在
+    offload.jsonl 里换到 result_ref，每个 result_ref 都指向一份未被动过的原文。
+    压缩发生在「表示层」（日志 → 符号），不发生在「证据层」（refs 原文原样保留）。
+    这与「摘要即终点」的方案有本质区别：后者的错误不可撤销，前者的错误可以回滚到原文重新判断。
+    换句话说，<strong>token 省在表示上，责任不省在证据上</strong>。</p>
+  </div>
+
+  <span class="math">
+    R = <span class="frac"><span class="num">T<sub>画布</sub></span><span class="den">T<sub>日志</sub></span></span>
+    <span class="op">，</span>
+    T<sub>注入</sub> ≤ β · T<sub>上下文</sub>
+    <span class="op">，</span>
+    β = 0.2（mmdMaxTokenRatio 默认值）
+  </span>
+  <div class="math-note">README 自报：接入后 WideSearch 的 token 从 221.31M 降到 85.64M，降幅 61.38%
+    <span class="self-report">自报·未复现</span>——即上式 R 的一次经验取值；β=0.2 则是代码里写死的注入预算上界。</div>
+
+  <p><strong>批判评估：</strong>三条隐性代价。其一，<strong>阈值与超时都是经验常数</strong>
+  （4 条 / 300 秒 / 120 秒重试），README 与源码均未给出消融依据，不同任务节奏下是否最优未知。
+  其二，<strong>wait 态依赖重试的最终一致性</strong>：若 LLM 持续解析失败，条目会反复排队，
+  画布与真实日志之间出现窗口期的偏差——注入模板里「进程可能有延迟，仅供参考」这句免责，
+  某种程度上就是对这种偏差的官方承认。其三，画布自身也要对抗噪声：源码里专门过滤了
+  <code>HEARTBEAT.md</code> 心跳类条目（<code>isHeartbeatEntry</code>），说明<strong>符号层同样会被自己的高频日志污染</strong>，
+  分层并没有免除清洗工作，只是把清洗从「上下文预算」挪到了「画布生成」阶段。</p>
+</section>
+
+<!-- ================= CHAPTER 04 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 04</div>
+  <h2 class="chapter-title">记忆即负载：ACL 与 per-agent loadout</h2>
+
+  <p class="lead">前两章讲的是「怎么存、怎么压」，本章讲「给谁用」。report §4.1 把这套机制概括为
+  <strong>记忆即负载（loadout）</strong>：记忆资产不是全局广播的，而是按可见性分级、按 Agent 绑定装配的。</p>
+
+  <h3>四级可见性、双层角色与一等资产</h3>
+  <ul>
+    <li><strong>四级可见性 + ACL</strong>：私有（private）/ 团队（team）/ 受限（restricted）/ Agent（agent）
+        四级，配合 ACL 裁决谁能看到什么；同一份记忆对不同主体呈现不同的可见性。</li>
+    <li><strong>双层角色</strong>：Global System Admin（全局系统管理员）负责系统级治理，
+        Team-level roles（团队级角色）负责团队内的日常管理——治理权被切在两个尺度上，
+        避免所有权限都涌向单一全局管理员。</li>
+    <li><strong>per-agent loadout</strong>：按 Agent 绑定不同资产。这一步把「注入什么」的决策
+        从 prompt 层前移到了资产层——每个 Agent 出厂自带一份装备清单，而不是靠 system prompt 里堆说明。</li>
+    <li><strong>Skill 是一等资产</strong>：带<strong>版本、资源、触发边界、校验规则</strong>，
+        与记忆资产同级管理；知识侧的 LLM-Wiki 与 Code-Graph 则是<strong>工具化查询而非整体注入</strong>——
+        「不让 Agent 每次先读完整文件清单再干活」。</li>
+  </ul>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 880 350" width="880" height="350" role="img" aria-label="记忆负载与可见性裁决示意图">
+        <rect x="0" y="0" width="880" height="350" fill="#ffffff"></rect>
+        <text x="26" y="34" font-family="'Noto Serif SC','SimSun',serif" font-size="17" font-weight="900" fill="#23212c">
+          记忆即负载：角色 → 资产 → 可见性 → 装配
+        </text>
+
+        <!-- 角色层 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#23212c" text-anchor="middle">
+          <rect x="220" y="58" width="200" height="46" rx="10" fill="#f3e8ff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="320" y="86">全局系统管理员</text>
+          <rect x="460" y="58" width="200" height="46" rx="10" fill="#f3e8ff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="560" y="86">团队级角色</text>
+        </g>
+        <text x="800" y="86" font-family="'Noto Serif SC','SimSun',serif" font-size="12" fill="#b8860b" text-anchor="middle">治理双层</text>
+
+        <!-- 资产层 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="12.5" fill="#23212c" text-anchor="middle">
+          <rect x="40" y="146" width="180" height="50" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+          <text x="130" y="176">对话记忆</text>
+          <rect x="250" y="146" width="180" height="50" rx="10" fill="#ffffff" stroke="#b8860b" stroke-width="2.2"></rect>
+          <text x="340" y="168">Skill（带版本）</text>
+          <text x="340" y="186" font-size="10.5" fill="#b8860b">资源 · 触发边界 · 校验规则</text>
+          <rect x="460" y="146" width="180" height="50" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+          <text x="550" y="176">知识 Wiki</text>
+          <rect x="670" y="146" width="170" height="50" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"></rect>
+          <text x="755" y="176">代码图谱</text>
+        </g>
+
+        <!-- 可见性条 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="12.5" fill="#23212c" text-anchor="middle">
+          <rect x="40" y="226" width="800" height="46" rx="10" fill="#faf8f5" stroke="#b8860b" stroke-width="2"></rect>
+          <line x1="240" y1="226" x2="240" y2="272" stroke="#b8860b" stroke-width="1.4"></line>
+          <line x1="440" y1="226" x2="440" y2="272" stroke="#b8860b" stroke-width="1.4"></line>
+          <line x1="640" y1="226" x2="640" y2="272" stroke="#b8860b" stroke-width="1.4"></line>
+          <text x="140" y="254">私有</text>
+          <text x="340" y="254">团队</text>
+          <text x="540" y="254">受限</text>
+          <text x="740" y="254">Agent</text>
+        </g>
+        <text x="866" y="254" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#b8860b" text-anchor="end">ACL 裁决</text>
+
+        <!-- 装配 -->
+        <g font-family="'Noto Serif SC','SimSun',serif" font-size="13" fill="#23212c" text-anchor="middle">
+          <rect x="220" y="300" width="440" height="42" rx="10" fill="#e9d5ff" stroke="#23212c" stroke-width="1.8"></rect>
+          <text x="440" y="326">per-agent 负载清单 → 注入 / 工具化查询</text>
+        </g>
+
+        <!-- 箭头 -->
+        <g stroke="#23212c" stroke-width="1.8" fill="none">
+          <line x1="440" y1="104" x2="440" y2="146"></line>
+          <line x1="440" y1="196" x2="440" y2="226"></line>
+          <line x1="440" y1="272" x2="440" y2="300"></line>
+        </g>
+        <g fill="#23212c">
+          <polygon points="440,152 434,140 446,140"></polygon>
+          <polygon points="440,232 434,220 446,220"></polygon>
+          <polygon points="440,306 434,294 446,294"></polygon>
+        </g>
+        <text x="60" y="330" font-family="'Noto Serif SC','SimSun',serif" font-size="11.5" fill="#787887">
+          Wiki 与代码图谱按需查询，不整体注入
+        </text>
+      </svg>
+    </div>
+    <figcaption><b>图 3</b> 记忆即负载：双层角色治理四类资产，经私有/团队/受限/Agent 四级可见性裁决后，装配成每个 Agent 各自的负载清单。</figcaption>
+  </figure>
+
+  <h3>设计 rationale：为什么叫「负载」而不是「上下文」</h3>
+  <p><strong>架构洞察：</strong>loadout 这个军事/游戏隐喻选得很准——装备是<strong>有限格位</strong>的，
+  装了 A 就装不下 B，且不同角色带不同配置。把记忆类比为负载，等于承认三件事：
+  ① 注入预算是一种稀缺资源，必须分配而非填满；② 分配的单位是「资产」（带 ACL、带版本），
+  而不是散落的文本片段；③ 装配发生在运行前（按 Agent 绑定），而不是每轮对话中临时拼装。
+  对比纯 RAG「查询时再捞一批」的被动模式，loadout 是<strong>主动的预算前置分配</strong>。</p>
+
+  <h3>成本账：后台抽取不是免费的</h3>
+  <table class="tbl">
+    <thead>
+      <tr><th>旋钮</th><th>默认值</th><th>它在控制什么</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><code>pipeline.everyNConversations</code></td><td>5</td><td>每 5 轮触发一次 L1 抽取（抽取频率）</td></tr>
+      <tr><td><code>extraction.maxMemoriesPerSession</code></td><td>20</td><td>单次 L1 最多产出的记忆条数（单次成本上限）</td></tr>
+      <tr><td><code>persona.triggerEveryN</code></td><td>50</td><td>每新增 50 条记忆才重生成画像（高层成本最低频）</td></tr>
+      <tr><td><code>pipeline.l1IdleTimeoutSeconds</code></td><td>600</td><td>用户空闲该秒数后触发 L1（避开对话高峰）</td></tr>
+      <tr><td><code>pipeline.l2MinIntervalSeconds</code></td><td>900</td><td>同会话两次 L2 的最小间隔（画布刷新节流）</td></tr>
+      <tr><td><code>recall.timeoutMs</code></td><td>5000</td><td>召回超时则跳过注入、不阻塞对话（延迟兜底）</td></tr>
+    </tbody>
+  </table>
+  <p style="font-size:.85rem;color:#787887;">（数值取自 README 可配置参数表 Level 1/Level 2，属代码默认值而非评测数据。）</p>
+
+  <span class="math">
+    C<sub>总</sub> = C<sub>抽取</sub> + C<sub>注入</sub>
+    <span class="op">，</span>
+    摊销到每轮：c<sub>抽取</sub> ≈ <span class="frac"><span class="num">C<sub>抽取</sub></span><span class="den">N<sub>轮</sub></span></span>
+    <span class="op">，</span>
+    N<sub>轮</sub> ≥ 5（每 5 轮抽一次）
+  </span>
+  <div class="math-note">设计意图很清楚：抽取成本被摊薄到多轮、被空闲窗口错峰、被单次条数上限封顶、被召回超时兜底——
+    「后台持续抽取」被改造成一条可节流、可关断的管线，而不是无底洞。</div>
+
+  <div class="critique-box">
+    <span class="tag-insight">批判评估</span>
+    <h4>自报基准的复现风险与后台抽取的真实成本</h4>
+    <p>report §4.1 把「依赖 LLM 后台持续抽取（token 成本、延迟）」明确列为风险项。这笔账有两面：
+    上表的旋钮说明项目<strong>知道</strong>成本存在并做了节流，但节流的另一面是<strong>记忆的新鲜度延迟</strong>——
+    空闲 600 秒才抽、每 50 条才更新画像，意味着「刚说完的事」在画像层是缺席的。<br>
+    基准数字方面：<strong>PersonaMem 准确率 48%→76%</strong>（相对 +59%）、
+    <strong>WideSearch 通过率 33%→50%（相对 +51.52%）、token 221.31M→85.64M（−61.38%）</strong>、
+    SWE-bench token −33.09%、AA-LCR token −30.98%——
+    <span class="self-report">自报·未复现</span>，全部来自项目 README，本读书会未做复现实验；
+    其测试设定（连续长程 session、SWE-bench 每 session 50 个任务）同样是自述
+    <span class="self-report">自报·未复现</span>。读这套数字的正确姿势是「方向性参考」：
+    它证明了卸载与分层<strong>能带来数量级的 token 节省</strong>，但不能直接换算成你场景里的收益。</p>
+  </div>
+
+  <p><strong>替代方案对比：</strong>另一条路线是 rolling-memory 式的<strong>零后台 LLM</strong>——
+  不做任何抽取，纯词法检索 + 原文档案，检索约 30ms<span class="self-report">自报·未复现</span>、零抽取 token。
+  代价是它对自然语言的零重叠查询（昵称、省略主语）偏弱，而那恰是社区陪伴场景的主战场。
+  两条路线不是谁淘汰谁：<strong>抽取路线买的是「结构化先验」，零 LLM 路线买的是「零成本与零幻觉」</strong>，
+  OIA 的合理姿态是先建零成本基线，再在其上叠加可节流的蒸馏层。</p>
+</section>
+
+<!-- ================= CHAPTER 05 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 05</div>
+  <h2 class="chapter-title">移植落点与边界：OIA 拿什么、不拿什么</h2>
+
+  <p class="lead">走读的终点是决策。code-level-notes §2 已经把「可直接搬运」的内容逐文件列了清单，
+  本章把它放进取舍框架里看：<strong>哪些是结构（照搬）、哪些是提示词（改写）、哪些是服务（不接）</strong>。</p>
+
+  <table class="tbl">
+    <thead>
+      <tr><th>移植路线</th><th>拿什么</th><th>代价</th><th>结论</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>整套照搬</td>
+        <td>抽取 + 去重 + 画布 + schema + 治理面板全套</td>
+        <td>绑定其宿主 hook 与目录约定，改造成本后置爆发</td>
+        <td>不取</td>
+      </tr>
+      <tr>
+        <td>只搬 schema</td>
+        <td><code>l1_records</code>/l0 表 + FTS5 + vec0 索引列清单</td>
+        <td>拿到底座却没有产生结构化记忆的管线</td>
+        <td>部分取（FTS5 必选、vec0 可选）</td>
+      </tr>
+      <tr>
+        <td>结构 + 提示词改写</td>
+        <td>金字塔分层、画布三件套（node_id/result_ref/refs）、L1 抽取与去重提示词骨架</td>
+        <td>需按 OIA 语境重写提示词，并补 superseded 留痕</td>
+        <td><strong>主路线</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>三处具体的「改写点」</h3>
+  <ol>
+    <li><strong>抽取提示词</strong>：情境切分 + 三类记忆（persona / episodic / instruction）+ priority 分档
+        + 负面清单的骨架直接沿用，但 OIA 需要加一条「旧措辞保留为 superseded 历史」——
+        这是 MemoraX/续忆一系对「取代留痕」的要求，本项目只做覆盖与合并。</li>
+    <li><strong>去重动作集</strong>：<code>store / skip / update / merge</code> 四动作与
+        <code>target_ids</code> 多对多合并是现成骨架；同样要补留痕语义，否则 merge 会抹掉演化过程。</li>
+    <li><strong>画布组件</strong>：node_id/result_ref/refs 三层结构、阈值 4、wait 重试、注入模板
+        可以结构照搬并翻译成 OIA 文案；DSH 侧的对应物是 compaction 后端 + tool-result pruner 的配合。</li>
+  </ol>
+
+  <div class="insight-box">
+    <span class="tag-insight">深度洞察</span>
+    <h4>白盒不是文档，是可执行的调试路径</h4>
+    <p>很多系统也写「可观测性文档」，但只告诉你去哪看日志；这个项目的白盒是
+    <strong>数据结构本身保证的</strong>——因为层间以溯源字段（scene_name、source_message_ids、node_id、result_ref）
+    硬连接，「打开目录沿链走」才成为可能。给 OIA 的启示：治理面板的「召回透明页」不要做成事后埋点，
+    而要在写入时就把链路字段存全；<strong>可追溯性是 schema 的属性，不是 UI 的功能</strong>。</p>
+  </div>
+
+  <h3>边界：哪些东西不该拿</h3>
+  <ul>
+    <li><strong>云向量库后端</strong>（TCVDB）：本地 SQLite + sqlite-vec 已够用，与 OIA 本地优先相悖的部分不接。</li>
+    <li><strong>宿主侵入性</strong>：README 的 Quick Start 需要注册 <code>contextEngine</code> 槽位，
+        还要跑一次 <code>openclaw-after-tool-call-messages.patch.sh</code> 给宿主打补丁，
+        才能让 <code>after-tool-call</code> 消息被正确卸载与恢复。<strong>批判评估：</strong>
+        这说明它的短期压缩<strong>不是零侵入的插件能力，而是对宿主消息流的钩挂</strong>——
+        移植到 DSH 时必须先确认等价 hook 是否存在，否则整条画布管线落不了地。</li>
+    <li><strong>尚未完成的部分</strong>：Roadmap 里未勾选的三项——跨 Agent/框架/设备的便携迁移、
+        自动生成 Skill、可视化调试与记忆可观测面板——是项目自己承认的边界，
+        不应当作已有能力引用。</li>
+  </ul>
+
+  <p><strong>跨文连接：</strong>把本篇放回六篇系列：本篇提供<strong>结构范式</strong>（分层 + 画布 + 白盒），
+  rolling-memory 提供<strong>零成本检索基线</strong>（自信息权重、原文档案），
+  MemoraX 提供<strong>写入策略</strong>（意图式保存 + 取代留痕）——
+  OIA 的 <code>@omni/memory-distiller</code>、<code>@omni/memory-canvas</code> 与治理面板
+  正好是这三者的汇合处。读单篇的意义在于知道每个零件从哪来、为什么这么设计。</p>
+</section>
+
+<!-- ================= 代码附录 ================= -->
+<section class="chapter code-appendix">
+  <div class="chapter-no">CHAPTER 06</div>
+  <h2 class="chapter-title">代码附录：四处承重代码的原文与讲解</h2>
+  <p class="lead">下面四段是本篇所有代码级结论的凭据，全部取自本地存档
+  <code>docs/sources/repos/tencent-memory-main/</code>，依 MIT 许可引用。
+  它们分别对应抽取、去重、卸载与存储四个承重环节——改其中任何一段，上文的机制描述都要重写。</p>
+
+  <!-- 代码块 1 -->
+  <div class="code-explain">
+    <h4>① L1 抽取系统提示词：情境切分 + 三类记忆 + priority 分档</h4>
+    <p>一次 LLM 调用同时完成「判断情境切换」与「提取结构化记忆」，这是把两个高耦合任务合并的省调用设计。
+    值得抄的三处：<strong>情境命名有硬模板</strong>（「我（AI）在和xxx做xxx」、30–50 字、全局唯一），
+    让场景名可继承、可比对；<strong>priority 分档写死在提示词里</strong>（persona 80–100/50–70/丢弃、
+    episodic 80–100/60–70/丢弃、instruction −1 死命令/90–100/丢弃），把重要性判断变成可校验的区间；
+    <strong>负面清单明确</strong>（琐碎闲聊、一次性指令、AI 自身输出、纯主观感受），配合「宁缺毋滥、
+    独立完整、归纳合并」三原则约束抽取质量。背景消息只供理解、严禁从中提取——保证了证据来源的单一性。</p>
+    <div class="code-meta">
+      <span class="chip src">[源码原文]</span>
+      <span class="chip path">src/core/prompts/l1-extraction.ts</span>
+    </div>
+  </div>
+  <pre class="code-block"><span class="kw">export const</span> <span class="fn">EXTRACT_MEMORIES_SYSTEM_PROMPT</span> = <span class="st">`你是专业的"情境切分与记忆提取专家"。
+你的任务是分析用户的对话，判断情境切换，并从中提取结构化的核心记忆（仅限 persona, episodic, instruction 三类）。
+
+### 任务一：情境切分（Scene Segmentation）
+分析【待提取的新消息】，结合【上一个情境】，判断并输出当前对话的情境。
+- 继承：无明显切换，沿用上一个情境。
+- 切换条件：用户发出明确指令（如"换话题"）、意图转变、或提出独立新目标。
+- 命名规则："我（AI）在和xxx（用户身份）做xxx（目标活动）"（约 30-50 个字符或等价长度，单句，全局唯一）。
+
+【通用提取原则】
+1. 宁缺毋滥：过滤琐碎闲聊、临时性指令和一次性操作（如"这次、本单"）；剔除不可靠的边缘信息。
+2. 独立完整：记忆必须"跳出当前对话依然成立"，无上下文也能看懂。
+3. 归纳合并：强关联或因果关系的多条消息，必须合并为一条完整记忆，不可碎片化。
+
+【支持提取的三大类型】（必须严格遵守类型规则）
+
+1. 个性化记忆 (type: "persona")
+   - 定义：用户的稳定属性、偏好、技能、价值观、习惯（如住所、职业、饮食禁忌）。
+   - 提取句式："用户（[姓名]）喜欢/是/擅长..."
+   - 打分 (priority)：<span class="nu">80-100</span>（健康/禁忌/核心特质）；<span class="nu">50-70</span>（一般喜好/技能）；&lt;<span class="nu">50</span>（模糊次要，可丢弃）。
+
+2. 客观事件记忆 (type: "episodic")
+   - 定义：客观发生的动作、决定、计划或达成结果。绝不包含纯主观感受。
+   - 提取句式："用户（[姓名]）在 [最好是精确绝对时间] 于 [地点] [做了某事（可以包含起因、经过、结果）]"。
+   - 打分 (priority)：<span class="nu">80-100</span>（重要事件/计划）；<span class="nu">60-70</span>（一般完整活动）；&lt;<span class="nu">60</span>（琐碎事项，直接丢弃）。
+
+3. 全局指令记忆 (type: "instruction")
+   - 定义：用户对 AI 提出的长期行为规则、格式偏好、语气控制。
+   - 打分 (priority)：<span class="nu">-1</span>（极其严格的全局死命令）；<span class="nu">90-100</span>（核心行为规则）；<span class="nu">70-80</span>（重要要求）；&lt;<span class="nu">70</span>（临时要求，直接丢弃）。
+
+### 不应该提取的内容
+- 琐碎闲聊、问候；临时性的纯工具性请求（如"这次帮我翻译一下"）
+- 一次性操作指令（如"这次、本单"相关）
+- 重复的内容；AI助手自身的行为或输出
+- 不属于以上3类的信息
+- 纯主观感受（不带客观事件的情绪表达）`</span>;</pre>
+
+  <!-- 代码块 2 -->
+  <div class="code-explain">
+    <h4>② 冲突检测动作集：store / skip / update / merge 与 target_ids 多对多</h4>
+    <p>去重不是「相似就丢」，而是一个<strong>四动作决策问题</strong>：<code>store</code> 视为新信息新增、
+    <code>skip</code> 忽略无增量、<code>update</code> 以新记忆覆盖旧记忆（可保留旧记忆中仍正确的细节）、
+    <code>merge</code> 把互补且不矛盾的多条合并成一条。两个设计尤其精彩：
+    <strong>target_ids 是数组</strong>，一条新记忆可以同时替换候选池中的多条旧记忆（多对多合并），
+    且允许<strong>跨 type 合并</strong>（一条 episodic 事件与一条 persona 属性可以合成同一事实）；
+    <strong>merged_timestamps 取所有相关时间戳的并集</strong>，保证合并后事件的完整时间线不丢。
+    批量模式统一候选池 + 每条新记忆的相关候选 ID，一次调用全局去重，省轮次。</p>
+    <div class="code-meta">
+      <span class="chip src">[源码原文]</span>
+      <span class="chip path">src/core/prompts/l1-dedup.ts</span>
+    </div>
+  </div>
+  <pre class="code-block"><span class="kw">export const</span> <span class="fn">CONFLICT_DETECTION_SYSTEM_PROMPT</span> = <span class="st">`你是记忆冲突检测器。批量比较多条【新记忆】与【统一候选记忆池】中的已有记忆，逐条决定如何处理。
+
+## 核心规则
+
+- **跨 type 合并**：不同 type（persona / episodic / instruction）的记忆如果语义上描述同一事实/事件，**可以合并**。
+- **多对多合并**：一条新记忆可以同时替换/合并候选池中的**多条**已有记忆（通过 target_ids 数组指定）。
+- 合并后你必须判断新记忆的最佳 type（merged_type）。
+
+## 判断逻辑
+
+3. **选择动作**：
+   - "store"：视为新信息，新增当前记忆。
+   - "skip"：已有记忆更好，新记忆无增量或更模糊，忽略当前记忆。
+   - "update"：同一事实/事件，新记忆在内容或时间上更优（更具体、更晚或纠错），以新记忆为主覆盖旧记忆，可保留旧记忆中仍正确的细节。
+   - "merge"：同一事实或同一演化过程，多条记忆信息互补且不矛盾，合并成一条更完整记忆，信息尽量不冗余。
+
+5. **timestamp 处理**：
+   - merge / update 时，merged_timestamps 应包含**所有相关记忆的时间戳并集**（去重排序）
+   - 这样可以保留事件发生的完整时间线
+
+[
+  {
+    "record_id": "新记忆的 record_id",
+    "action": "store|update|skip|merge",
+    "target_ids": ["要删除的候选记忆 record_id 1", "record_id 2"],
+    "merged_content": "合并/更新后的记忆内容（merge/update 时必填）",
+    "merged_type": "合并后的最佳 type：persona|episodic|instruction（merge/update 时必填）",
+    "merged_priority": 85,
+    "merged_timestamps": ["合并后的时间戳数组，包含所有新旧记忆时间戳的并集（merge/update 时必填）"]
+  }
+]
+
+字段说明：
+- target_ids：要删除替换的旧记忆 ID **数组**（可以 1 条或多条）。store/skip 时省略或为空。
+- merged_priority：merge/update 后的新优先级（0-100 整数）。合并后信息更完整、更确定，通常应**酌情提升** priority。`</span>;</pre>
+
+  <!-- 代码块 3 -->
+  <div class="code-explain">
+    <h4>③ 卸载条目 schema 与 L2 阈值：node_id 的三种状态与 wait 重试</h4>
+    <p><code>OffloadEntry</code> 是整条画布管线的原子记录：注意 <code>node_id</code> 的类型是
+    <code>string | null</code>——而失败态 <code>"wait"</code> 正是通过复用这个字符串域表达的
+    （L2 解析/映射失败时写入，<code>l2WaitRetrySeconds</code> 后重试）。
+    阈值常量集中在 <code>PLUGIN_DEFAULTS</code>：<code>l2NullThreshold: 4</code> 是条件 A 的计数阈值，
+    <code>l2TimeoutSeconds: 300</code> 是条件 B 的时间阈值（定义见同文件 <code>PluginConfig</code>，
+    触发逻辑在 <code>src/offload/pipelines/l2-mermaid.ts</code> 的头注释）。
+    <code>score</code> 字段（0–10 可替代性）则决定了卸载的优先级排序。</p>
+    <div class="code-meta">
+      <span class="chip src">[源码原文]</span>
+      <span class="chip path">src/offload/types.ts</span>
+    </div>
+  </div>
+  <pre class="code-block"><span class="cm">/** A single offloaded tool call/result summary stored in offload.jsonl */</span>
+<span class="kw">export interface</span> <span class="fn">OffloadEntry</span> {
+  <span class="cm">/** ISO timestamp inherited from the original tool result */</span>
+  timestamp: <span class="kw">string</span>;
+  <span class="cm">/** Mermaid node ID assigned by L2, null until L2 runs */</span>
+  node_id: <span class="kw">string</span> | <span class="kw">null</span>;
+  <span class="cm">/** Short description of the tool call command */</span>
+  tool_call: <span class="kw">string</span>;
+  <span class="cm">/** LLM-generated summary of the tool result */</span>
+  summary: <span class="kw">string</span>;
+  <span class="cm">/** Relative path to the MD file containing the full tool result */</span>
+  result_ref: <span class="kw">string</span>;
+  <span class="cm">/** The original tool call ID from the provider */</span>
+  tool_call_id: <span class="kw">string</span>;
+  <span class="cm">/** Session key this entry belongs to */</span>
+  session_key?: <span class="kw">string</span>;
+  <span class="cm">/** Replaceability score (0-10). Higher = summary can better replace original. Assigned by L1 LLM. */</span>
+  score?: <span class="kw">number</span>;
+}
+
+<span class="cm">// …（PluginConfig 节选，同文件）…</span>
+  <span class="cm">/** Trigger L2 when offload.jsonl has &gt;= this many node_id=null entries. Default: <span class="nu">4</span> */</span>
+  l2NullThreshold?: <span class="kw">number</span>;
+  <span class="cm">/** Trigger L2 if it hasn't run for this many seconds. Default: <span class="nu">300</span> (5 minutes) */</span>
+  l2TimeoutSeconds?: <span class="kw">number</span>;
+  <span class="cm">/**
+   * If L2 leaves entries in `node_id="wait"` (e.g. parse/mapping failure),
+   * those entries will be retried after waiting for at least this many seconds.
+   * Default: <span class="nu">120</span>
+   */</span>
+  l2WaitRetrySeconds?: <span class="kw">number</span>;
+
+<span class="cm">// …（PLUGIN_DEFAULTS 节选，同文件）…</span>
+<span class="kw">export const</span> <span class="fn">PLUGIN_DEFAULTS</span> = {
+  temperature: <span class="nu">0.2</span>,
+  forceTriggerThreshold: <span class="nu">4</span>,
+  defaultContextWindow: <span class="nu">200_000</span>,
+  maxPairsPerBatch: <span class="nu">20</span>,
+  l2NullThreshold: <span class="nu">4</span>,
+  <span class="cm">/** If L2 leaves entries in node_id="wait", retry after this many seconds */</span>
+  l2WaitRetrySeconds: <span class="nu">120</span>,
+  mildOffloadRatio: <span class="nu">0.5</span>,
+  aggressiveCompressRatio: <span class="nu">0.85</span>,
+  mmdMaxTokenRatio: <span class="nu">0.2</span>,
+  defaultSystemOverheadRatio: <span class="nu">0.12</span>,
+} <span class="kw">as const</span>;</pre>
+
+  <!-- 代码块 4 -->
+  <div class="code-explain">
+    <h4>④ 存储 schema：l1_records 主表 + FTS5 倒排 + vec0 向量双索引</h4>
+    <p>这是「底层进数据库」的具体形态：<code>l1_records</code> 是元数据主表，
+    <code>type / priority / scene_name / session_key / timestamp_start / timestamp_end</code>
+    全部是可索引列——<strong>分层的元信息就存在列里，而不是靠向量猜</strong>。
+    检索侧是双索引：FTS5 虚表（<code>content</code> 存 jieba 分词后的文本用于索引，
+    <code>content_original</code> 不建索引、存原文用于展示——分词索引与人读原文分离）+
+    sqlite-vec 的 vec0 虚表（<code>embedding float[维度] distance_metric=cosine</code>，
+    维度由配置决定，code-level-notes §2.4 记为 768）。
+    工程细节同样值得学：FTS5 是 best-effort 创建（编译未带 fts5 时优雅降级），
+    vec0 不支持 ON CONFLICT（upsert = delete + insert），且 <code>provider="none"</code> 时
+    vec0 表延迟创建。BM25 + 向量 + RRF 的混合检索就架在这两张虚表上。</p>
+    <div class="code-meta">
+      <span class="chip src">[源码原文]</span>
+      <span class="chip path">src/core/store/sqlite.ts</span>
+    </div>
+  </div>
+  <pre class="code-block"><span class="cm">// ── L1 schema ──</span>
+<span class="cm">// Metadata table</span>
+<span class="fn">CREATE TABLE IF NOT EXISTS</span> l1_records (
+  record_id <span class="kw">TEXT</span> <span class="kw">PRIMARY KEY</span>,
+  content <span class="kw">TEXT NOT NULL</span>,
+  type <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  priority <span class="kw">INTEGER DEFAULT</span> <span class="nu">50</span>,
+  scene_name <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  session_key <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  session_id <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  timestamp_str <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  timestamp_start <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  timestamp_end <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  created_time <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  updated_time <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>,
+  metadata_json <span class="kw">TEXT DEFAULT</span> <span class="st">'{}'</span>
+)
+
+<span class="cm">// Indexes for common queries</span>
+<span class="fn">CREATE INDEX IF NOT EXISTS</span> idx_l1_type <span class="kw">ON</span> l1_records(type);
+<span class="fn">CREATE INDEX IF NOT EXISTS</span> idx_l1_scene <span class="kw">ON</span> l1_records(scene_name);
+<span class="fn">CREATE INDEX IF NOT EXISTS</span> idx_l1_ts_start <span class="kw">ON</span> l1_records(timestamp_start);
+<span class="cm">// Composite index: session_key exact match + updated_time range scan (for pipeline cursor queries)</span>
+<span class="fn">CREATE INDEX IF NOT EXISTS</span> idx_l1_sessionkey_updated <span class="kw">ON</span> l1_records(session_key, updated_time);
+
+<span class="cm">// Vector virtual table (cosine distance) — only created when dimensions &gt; 0.</span>
+<span class="fn">CREATE VIRTUAL TABLE IF NOT EXISTS</span> l1_vec <span class="kw">USING</span> vec0(
+  record_id <span class="kw">TEXT PRIMARY KEY</span>,
+  embedding <span class="kw">float</span>[${this.dimensions}] distance_metric=cosine,
+  updated_time <span class="kw">TEXT DEFAULT</span> <span class="st">''</span>
+)
+
+<span class="cm">// ── FTS5 tables (best-effort — gracefully degrade if fts5 is not compiled in) ──</span>
+<span class="cm">// Schema v2: `content` column stores jieba-segmented text (for indexing),</span>
+<span class="cm">// `content_original` (UNINDEXED) stores the raw text (for display).</span>
+<span class="fn">CREATE VIRTUAL TABLE IF NOT EXISTS</span> l1_fts <span class="kw">USING</span> fts5(
+  content,
+  content_original <span class="kw">UNINDEXED</span>,
+  record_id <span class="kw">UNINDEXED</span>,
+  type <span class="kw">UNINDEXED</span>,
+  priority <span class="kw">UNINDEXED</span>,
+  scene_name <span class="kw">UNINDEXED</span>,
+  session_key <span class="kw">UNINDEXED</span>,
+  session_id <span class="kw">UNINDEXED</span>,
+  timestamp_str <span class="kw">UNINDEXED</span>,
+  timestamp_start <span class="kw">UNINDEXED</span>,
+  timestamp_end <span class="kw">UNINDEXED</span>,
+  metadata_json <span class="kw">UNINDEXED</span>
+)</pre>
+</section>
+
+<!-- ================= 延伸问题 ================= -->
+<section class="chapter">
+  <div class="chapter-no">CHAPTER 07</div>
+  <h2 class="chapter-title">延伸问题与研究方向</h2>
+
+  <div class="research-question">
+    <span class="tag-q">延伸问题 Q1</span>
+    <h4>语义金字塔各层的 token 预算，如何按查询类型联合优化？</h4>
+    <p><span class="rq-label">理论分析：</span>把问题形式化为一个受预算约束的选择问题。
+    设层 ℓ ∈ {L0, L1, L2, L3}，每层的注入成本为 c<sub>ℓ</sub>、对查询类型 q 的检索价值为
+    w<sub>ℓ</sub>(q)，注入指示变量为 x<sub>ℓ</sub> ∈ {0,1}，则</p>
+    <span class="math">
+      max<sub>x</sub> U(q) = Σ<sub>ℓ</sub> w<sub>ℓ</sub>(q) · v<sub>ℓ</sub>
+      <span class="op">−</span> λ · Σ<sub>ℓ</sub> c<sub>ℓ</sub> · x<sub>ℓ</sub>
+      <span class="op">，</span>
+      s.t. Σ<sub>ℓ</sub> c<sub>ℓ</sub> · x<sub>ℓ</sub> ≤ B
+    </span>
+    <p>其中第一项是注入后的期望效用，第二项是注入成本（λ 为成本敏感度），B 为上下文预算。
+    同时，未注入的层并非零损失——它们以「需要下钻时才付读放大」的形式留存，
+    总代价可写成信息损失与读放大的加权：</p>
+    <span class="math">
+      L(x) = Σ<sub>ℓ</sub> (1 − x<sub>ℓ</sub>) · H( E<sub>ℓ</sub> | S<sub>ℓ</sub> )
+      <span class="op">＋</span> μ · Σ<sub>ℓ</sub> (1 − x<sub>ℓ</sub>) · r<sub>ℓ</sub>(q)
+    </span>
+    <p>这里 H(E<sub>ℓ</sub> | S<sub>ℓ</sub>) 是该层证据相对其上层结构的条件熵（抽象损失），
+    r<sub>ℓ</sub>(q) 是查询类型 q 触发该层下钻的预期次数（读放大）。
+    本项目的 β=0.2（画布注入上限）、maxResults=5、maxCharsPerMemory/maxTotalRecallChars=0（默认不设防）
+    实际上是在这条曲线上取了一个<strong>固定点</strong>——而非按查询类型自适应：
+    「查偏好」与「查日期」共用同一套预算，这正是可优化的空隙。</p>
+    <p><span class="rq-label">研究方向：</span>① <strong>查询类型感知的预算分配</strong>：
+    先用轻量分类器（或利用抽取阶段已有的 type 字段）判定 q 的类型，再按
+    w<sub>ℓ</sub>(q) 的排序动态装填 loadout——偏好型查询多给 L3/L2，事实型查询直下 L1/L0，
+    进行中任务给画布留足 β；② <strong>下钻代价的在线估计</strong>：
+    用 r<sub>ℓ</sub>(q) 的历史观测（node_id 下钻成功率、result_ref 打开次数）
+    反馈校准 λ 与 μ，把「白盒可下钻」从承诺变成带延迟指标的服务等级；
+    ③ <strong>基准设计</strong>：现有自报数字
+    <span class="self-report">自报·未复现</span>只报告了端到端收益，缺少「哪层贡献了多少」的消融——
+    按查询类型分桶、逐层开关的消融实验，是检验「分层确实必要」而非「分层恰好没坏」的关键证据。</p>
+  </div>
+
+  <div class="research-question">
+    <span class="tag-q">延伸问题 Q2</span>
+    <h4>「wait」态与固定阈值 4，能否换成自适应触发？</h4>
+    <p><span class="rq-label">理论分析：</span>固定阈值把画布刷新的<strong>延迟</strong>与<strong>压缩率</strong>锁死在一组经验常数上
+    （4 条 / 300 秒 / 120 秒重试）。若把每次 L2 的收益记为节省的 token、成本记为一次 LLM 调用，
+    则最优触发点满足「边际节省 = 边际调用成本」，而这个等式随任务节奏（工具调用密度）与模型价格实时漂移——
+    常数解只能在某个工作点附近最优。</p>
+    <p><span class="rq-label">研究方向：</span>以 offload.jsonl 的到达过程为输入（点过程或滑窗密度），
+    在线估计下一次画布生成的期望净收益；wait 态则可引入失败率反馈——
+    连续失败时指数退避而非固定 120 秒，并把「画布与原文的偏差时长」纳入可观测指标，
+    让「进程可能有延迟」这句免责变成可测量、可告警的量。</p>
+  </div>
+</section>
+
+</div><!-- /.wrap -->
+
+<!-- ================= 页脚 ================= -->
+<footer class="site">
+  <div class="inner">
+    <h4>OIA 读书会 · 六篇系列导航</h4>
+    <div class="post-nav">
+      <a href="../index.html"><span class="no">INDEX</span><span class="t">首页 · 系列总览</span><span class="d">六篇文章的主题地图与阅读顺序。</span></a>
+      <a href="01-tencentdb-memory.html"><span class="no">01 / 6 · MIT</span><span class="t">腾讯云记忆</span><span class="d">分层金字塔 × 符号画布：「下层证据，上层结构」。</span></a>
+      <a href="02-rolling-memory.html"><span class="no">02 / 6</span><span class="t">rolling-memory</span><span class="d">原文档案铁律与零成本词法检索内核。</span></a>
+      <a href="03-hy-graphmemix.html"><span class="no">03 / 6</span><span class="t">Hy×GraphMemix</span><span class="d">双过程记忆、diff-chain 与图结构融合。</span></a>
+      <a href="04-memorax-community.html"><span class="no">04 / 6</span><span class="t">MemoraX×社区</span><span class="d">意图式保存、语义去重与社区人审机制。</span></a>
+      <a href="05-omni-papers.html"><span class="no">05 / 6</span><span class="t">论文·主动性</span><span class="d">主动性、干预策略与相关论文脉络。</span></a>
+      <a href="06-dsh-pi-oia.html"><span class="no">06 / 6</span><span class="t">DSH×Pi×OIA</span><span class="d">从插件生态到 OIA 组件的落地路径。</span></a>
+    </div>
+    <div class="fine">
+      诚实声明：本页所有性能与基准数字（WideSearch token −61.38%、通过率 +51.52%、PersonaMem 48%→76%、
+      SWE-bench −33.09%、AA-LCR −30.98% 等）均为项目 README 自报，未经本读书会复现，已在正文以
+      「自报·未复现」标注；配置类默认值（阈值 4、300/120 秒、β=0.2 等）取自源码，属代码事实而非评测数据。
+      代码片段出自 TencentDB-Agent-Memory 本地存档（docs/sources/repos/tencent-memory-main/），
+      依 MIT 许可引用，仅供学习与分析；rolling-memory 相关对照仅引用其思路，其 PolyForm 非商用许可约束下的代码不并入。
+      本页为离线单文件页面，无任何外部请求（CDN、外链字体、外链图片）。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

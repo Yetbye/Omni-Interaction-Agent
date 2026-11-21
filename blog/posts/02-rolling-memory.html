@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>rolling-memory：零成本词法检索 —— 信息量即权重，原文即证据 · OIA 读书会 第 2 篇</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- ============ HERO（模板 A） ============ -->
+<header class="hero">
+  <div class="hero-wrap">
+    <div class="hero-badge">OIA 读书会 · 第 2 篇 / 6 · PolyForm NC（教学摘录）</div>
+    <h1>rolling-memory：零成本词法检索</h1>
+    <p class="hero-tagline">verbatim 铁律 × 自信息权重 × 突发折叠 × 召回采纳审计</p>
+    <p class="hero-desc">信息量即权重，原文即证据。本页实读 rolling-memory 的 entropy.go、cluster_state_aggregates.go、unit_relations.go、pipeline.go 四份源码与 README 快照，拆解它的三层主张：不改写的原文铁律、以自信息 bit 为权重与预算单位的评分内核、以 1/e 逐跳衰减的扩散预算——最后用它自报的 24 小时采纳账本，检视「省轮次」这笔账的另一面。</p>
+
+    <div class="hero-art">
+      <div class="cover-frame">
+        <svg viewBox="0 0 800 340" width="800" height="340" role="img" aria-label="水墨封面：日志洪流被折叠成薄薄几行，稀有词在墨色中发光">
+          <defs>
+            <linearGradient id="h-xuan" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#faf7f0"/>
+              <stop offset="1" stop-color="#efe8da"/>
+            </linearGradient>
+            <radialGradient id="h-purple" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#c084fc" stop-opacity="0.34"/>
+              <stop offset="1" stop-color="#c084fc" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="h-gold" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#d9b45b" stop-opacity="0.40"/>
+              <stop offset="1" stop-color="#d9b45b" stop-opacity="0"/>
+            </radialGradient>
+            <filter id="h-glow" x="-60%" y="-60%" width="220%" height="220%">
+              <feGaussianBlur stdDeviation="5" result="b"/>
+              <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <rect width="800" height="340" fill="url(#h-xuan)"/>
+          <ellipse cx="150" cy="268" rx="185" ry="86" fill="url(#h-purple)"/>
+          <ellipse cx="648" cy="76" rx="205" ry="96" fill="url(#h-gold)"/>
+
+          <!-- 写意笔触 -->
+          <path d="M36 46 C 110 24, 176 66, 246 36" stroke="#23212c" stroke-opacity="0.22" stroke-width="3.4" fill="none" stroke-linecap="round"/>
+          <path d="M44 306 C 130 326, 214 292, 286 314" stroke="#9333ea" stroke-opacity="0.28" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <circle cx="742" cy="296" r="26" fill="none" stroke="#b8860b" stroke-opacity="0.45" stroke-width="2"/>
+
+          <!-- 题字 -->
+          <text x="56" y="132" font-family="Noto Serif SC, Source Han Serif SC, serif" font-size="46" font-weight="900" fill="#23212c">信息量</text>
+          <text x="56" y="188" font-family="Noto Serif SC, Source Han Serif SC, serif" font-size="46" font-weight="900" fill="#23212c">即权重</text>
+          <text x="58" y="230" font-family="Noto Serif SC, serif" font-size="19" letter-spacing="7" fill="#b8860b">原文即证据</text>
+          <text x="58" y="260" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#787887">零成本词法检索 · 本地 SQLite · 无向量无后台 LLM</text>
+          <rect x="58" y="278" width="44" height="44" rx="5" fill="#b8860b"/>
+          <text x="80" y="310" font-family="Noto Serif SC, serif" font-size="24" font-weight="900" fill="#faf7f0" text-anchor="middle">熵</text>
+
+          <!-- 日志洪流 -->
+          <g fill="#4a4657">
+            <rect x="316" y="74"  width="252" height="7" rx="3.5" opacity="0.62"/>
+            <rect x="336" y="96"  width="214" height="7" rx="3.5" opacity="0.48"/>
+            <rect x="316" y="118" width="268" height="7" rx="3.5" opacity="0.66"/>
+            <rect x="348" y="140" width="196" height="7" rx="3.5" opacity="0.42"/>
+            <rect x="316" y="162" width="244" height="7" rx="3.5" opacity="0.60"/>
+            <rect x="330" y="184" width="262" height="7" rx="3.5" opacity="0.52"/>
+            <rect x="348" y="206" width="188" height="7" rx="3.5" opacity="0.44"/>
+            <rect x="316" y="228" width="256" height="7" rx="3.5" opacity="0.58"/>
+            <rect x="336" y="250" width="226" height="7" rx="3.5" opacity="0.46"/>
+            <rect x="316" y="272" width="248" height="7" rx="3.5" opacity="0.40"/>
+          </g>
+          <text x="316" y="60" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#787887">日志洪流 · 同款行反复刷屏</text>
+
+          <!-- 折叠漏斗 -->
+          <path d="M602 66 L 660 146 M602 282 L 660 202" stroke="#23212c" stroke-opacity="0.55" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+          <path d="M614 66 L 668 146 M614 282 L 668 202" stroke="#9333ea" stroke-opacity="0.35" stroke-width="1.6" fill="none" stroke-linecap="round"/>
+
+          <!-- 折叠后的证据 -->
+          <rect x="682" y="146" width="88" height="9" rx="4.5" fill="#23212c"/>
+          <rect x="682" y="164" width="66" height="9" rx="4.5" fill="#4a4657"/>
+          <rect x="682" y="182" width="78" height="9" rx="4.5" fill="#4a4657" opacity="0.62"/>
+          <text x="682" y="214" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#787887">折叠后证据</text>
+          <text x="600" y="306" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#9333ea">突发折叠 · 熵低者不稀释稀有词</text>
+
+          <!-- 稀有词发光 -->
+          <g filter="url(#h-glow)">
+            <rect x="322" y="22" width="168" height="26" rx="13" fill="#ffffff" stroke="#9333ea" stroke-width="1.6"/>
+            <text x="406" y="40" font-family="Cascadia Code, Consolas, monospace" font-size="12.5" fill="#7e22ce" text-anchor="middle">err_code_4012</text>
+            <rect x="512" y="22" width="120" height="26" rx="13" fill="#ffffff" stroke="#b8860b" stroke-width="1.6"/>
+            <text x="572" y="40" font-family="Cascadia Code, Consolas, monospace" font-size="12.5" fill="#b8860b" text-anchor="middle">端口 8008</text>
+          </g>
+          <text x="648" y="40" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#b8860b">稀有词发光</text>
+        </svg>
+      </div>
+      <div class="hero-caption">自绘水墨封面：日志洪流被突发折叠压成薄薄几行，稀有标识符在墨色里发光——信息量即权重，原文即证据。</div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat"><b>10 bit</b><span>汉字单字自信息 I(r)</span></div>
+      <div class="stat"><b>1/e ≈ 0.368</b><span>每跳透射率 transmissionPerHop</span></div>
+      <div class="stat"><b>3 次</b><span>事件内免费突发配额</span></div>
+      <div class="stat"><b>82.85%</b><span>ATM Main Recall@10（自报）</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">向下滚动<span>▼</span></div>
+</header>
+
+<!-- ============ 导航条 ============ -->
+<nav class="navbar">
+  <span class="brand">OIA 读书会<i>·</i></span>
+  <a href="../index.html">首页</a>
+  <a href="01-tencentdb-memory.html">腾讯云记忆</a>
+  <a href="02-rolling-memory.html" class="active">rolling-memory</a>
+  <a href="03-hy-graphmemix.html">Hy×GraphMemix</a>
+  <a href="04-memorax-community.html">MemoraX×社区</a>
+  <a href="05-omni-papers.html">论文·主动性</a>
+  <a href="06-dsh-pi-oia.html">DSH×Pi×OIA</a>
+</nav>
+
+<div class="wrap">
+
+  <!-- ============ 第一章 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">CHAPTER 01</span>
+    <h2 class="chapter-title">verbatim 铁律：历史发生即记录</h2>
+
+    <p class="lead">rolling-memory 的入库路径只做一件事——<strong>确定性清理</strong>：剥离协议外壳、去掉 <code>&lt;thinking&gt;</code> 块、去掉重复日志行。零 LLM、零向量、零网络请求（README §3 步骤 1/2）。它的全部激进性都藏在这个「不」字里：<em>不改写、不压缩、不润色</em>。</p>
+
+    <h3>论证链：为什么「用模型改写对话」是错误复合</h3>
+    <ol>
+      <li><strong>前提</strong>：能误解上下文的 agent，负责摘要的 LLM 同样会误读上下文——摘要不是「蒸馏」，而是一次新的解读。</li>
+      <li><strong>复合</strong>：用一个可能幻觉的模型，去改写一段可能已被误解的对话，等于把两层不确定性叠乘在<strong>写入时</strong>发生，且方向不可逆（README §2.1 原文称之为 <em>error compounding</em>）。</li>
+      <li><strong>不可恢复</strong>：一旦原对话被「摘要后丢弃」，真相永久丢失——后续任何修正都只能在二手转述上进行。</li>
+      <li><strong>修正悖论</strong>：某些系统主张「代价高昂的显式迭代记忆修正」，但 README 立即反问：你怎么检测到错误？又怎么保证错误记忆在被你抓住之前不污染后续推理？</li>
+      <li><strong>结论（铁律）</strong>：<em>history happened as it happened</em>——今天召回的段落与明年召回的段落逐字相同，证据链不可动摇。</li>
+    </ol>
+
+    <h3>经济学：读时省几百 token，写时赔一整轮</h3>
+    <p>README §2.2 把账算得很直白：LLM 摘要唯一明显的好处，是抽取出来的笔记在<strong>读取时</strong>短几十到几百 token；而相对 <span class="self-report">自报·未复现</span> 长上下文 harness 单轮 <strong>100k–400k token</strong> 的活跃上下文，这点收益微不足道。写入端却要先付「LLM 理解成本」：要么活动 agent 中途多跑一轮 100k–400k 的「保存记忆」工具调用，要么一个 sidecar LLM 把全上下文读一遍。而 host 模型本来就坐在那里、本来就擅长读、还知道当前问题是什么——所以零成本的确定性清理 + 按需交付原文，才是更便宜的工程选择。</p>
+
+    <h3>符号论证与分工论证</h3>
+    <p>工程查回的大多是<strong>字面锚</strong>：项目代号、函数名、配置键、错误串、端口、版本标签、日期、文件路径。README §2.3 指出密集向量靠把文本平滑进连续语义空间来桥接宽松同义词，代价是近乎相同的符号变得难以区分——<code>err_code_4012</code> vs <code>err_code_4013</code>、端口 <code>8008</code> vs <code>1828</code>、<code>v0.0.1</code> vs <code>v0.0.2</code>、<code>2026-05-12</code> vs <code>2026-05-19</code> 之间的 cosine 相似度 <code>&gt;0.98</code>（README 论断）；静态 embedding 词表还难以容纳新造标识符，回填数万条历史轮次要下载模型或让 CPU 风扇狂转数分钟。更重要的是 coding harness 的语言环境：同一个模型、同一个代码库，输出结构良好、用词一致、少省略主语少歧义指代——这正好是词法-统计架构最舒服的主场（README §2.3 第 3 点）。</p>
+    <p>分工上（README §2.4）：前沿 LLM 已经在你面前，本地记忆工具不必再养一个后台小模型猜语义，它的职责是<strong>几十毫秒内交出高信息量的原文证据，把 100% 的语义推理留给 host agent</strong>。团队自陈曾用重量级 LLM 抽取 + 向量 + 知识图谱架构在 LoCoMo 拿到 <strong>92.79</strong> 分 <span class="self-report">自报·未复现</span>——正是因为跑过重管线，才对它隐藏的 token 账单与入库延迟有切肤之痛。</p>
+
+    <table class="tbl">
+      <tr><th>维度</th><th>入库时 LLM 摘要 / 改写路线</th><th>verbatim + 确定性清理（rolling-memory）</th></tr>
+      <tr><td>写入成本</td><td>先付 LLM 理解成本：中途一轮 100k–400k 的保存调用，或 sidecar 读全上下文</td><td>零 LLM：只去协议外壳、<code>&lt;thinking&gt;</code> 块、重复日志行</td></tr>
+      <tr><td>读取收益</td><td>每次省几十~几百 token</td><td>按需取原文，交由 host agent 现读（其阅读能力已在场）</td></tr>
+      <tr><td>错误模型</td><td>可能幻觉的模型改写可能被误解的对话 → 错误复合，写入期不可逆</td><td>不改写即不引入新错误；错误留在可回查的原文里</td></tr>
+      <tr><td>证据链</td><td>摘要即终态；原对话丢弃后真相永久丢失</td><td>今天召回 = 明年召回，返回附来源坐标（provenance）</td></tr>
+      <tr><td>符号精度</td><td>摘要易把近似符号归一化；向量路线对微差符号近乎不可分（README §2.3 论断）</td><td>字面保留，<code>err_code_4012</code> 与 <code>4013</code> 天然可分</td></tr>
+      <tr><td>语义桥接</td><td>摘要与向量天然桥接同义改写</td><td><strong>弱项</strong>：零重叠查询直接 miss（见第五章批判）</td></tr>
+    </table>
+
+    <div class="insight-box">
+      <span class="tag-insight">洞察 INSIGHT</span>
+      <h4>「错误复合」的可证伪表述</h4>
+      <p>两条路线的差别不在摘要质量，而在<strong>错误是否可追溯</strong>：摘要把错误固化进唯一事实源（single source of truth 变成 single source of error），verbatim 把错误留在可回查、可比对、可追加的原文里。这是一条可以直接做对照实验的命题——同一批对话分别走「摘要入库」与「原文入库 + 事后检索」，统计下游推理被错误记忆污染的次数。</p>
+      <p class="cite">跨文连接：本系列第 1 篇腾讯云 L1 抽取同样规定「背景消息仅用于理解、严禁从中提取」——两者都在防写入期信息损失，一个靠提示词纪律，一个靠根本不改写。</p>
+    </div>
+
+    <div class="critique-box">
+      <span class="tag-insight">批判 CRITIQUE</span>
+      <h4>verbatim 的代价：存储/索引成本与零重叠查询</h4>
+      <p><strong>其一，成本只是被挪走了。</strong>原文全量入库意味着存储与索引规模随会话近似线性增长。README 的缓解手段是挂载本地文件只记录路径与字节偏移、按需就地读取（不把仓库复制进库），外加「任何时刻可从 vault 重建索引」的本地索引设计；但对话本体仍要全量落 SQLite，README §5 自陈<strong>百万级流式负载尚未测试</strong>。对个人开发者这通常不是问题，对它是。</p>
+      <p><strong>其二，零重叠是结构性的。</strong>昵称 vs 正式名、省略主语、模糊指代——词法检索对这类查询无解，且不是调参能救的（量化见第五章）。<strong>替代方案</strong>：LLM 摘要路线（本系列第 1 篇）与 dense vector 路线都能提供语义桥；rolling 的立场是先把 verbatim 基线做牢，桥是第二步——这是一个刻意的工程取舍，而非对桥的否认。</p>
+    </div>
+  </section>
+
+  <!-- ============ 第二章 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">CHAPTER 02</span>
+    <h2 class="chapter-title">自信息权重：信息量即权重</h2>
+
+    <p class="lead">评分内核的第一块砖是 <code>RuneShannonBits(r)</code>：按 Unicode 文块给单个码点一个<strong>先验香农信息量</strong> H<sub>0</sub>(r)（源码注释：<em>based on the effective symbol capacity of its Unicode script block</em>）。没有词表、没有 IDF 统计、没有模型——只有分档常数。</p>
+
+    <table class="tbl">
+      <tr><th>符号类</th><th>I(r)（bit）</th><th>源码分支（entropy.go）</th></tr>
+      <tr><td>汉字 Han</td><td><strong>10.0</strong></td><td><code>unicode.Is(unicode.Han, r)</code></td></tr>
+      <tr><td>谚文 Hangul</td><td>7.0</td><td><code>unicode.Is(unicode.Hangul, r)</code></td></tr>
+      <tr><td>假名 / 泰 / 老挝 / 高棉 / 缅 / 藏</td><td>4.2</td><td>Hiragana、Katakana、Thai、Lao、Khmer、Myanmar、Tibetan 分支</td></tr>
+      <tr><td>数字</td><td>3.32</td><td>ASCII <code>'0'–'9'</code> 与 <code>unicode.IsDigit(r)</code></td></tr>
+      <tr><td>字母</td><td>2.0</td><td>ASCII <code>a–z / A–Z</code> 与 <code>unicode.IsLetter(r)</code></td></tr>
+      <tr><td>ASCII 标点 / 其他</td><td>1.0</td><td>ASCII 分支 <code>return 1.0</code> 与 <code>default</code></td></tr>
+      <tr><td>组合符 Mn / Mc / Me</td><td>0.5</td><td><code>unicode.Is(unicode.Mn/Mc/Me, r)</code></td></tr>
+      <tr><td>空白 / 控制 / 格式符 Cf</td><td>0.0</td><td><code>unicode.IsSpace / IsControl / unicode.Cf</code></td></tr>
+    </table>
+
+    <div class="math">
+      I(r) = 10.0（汉字）<span class="op">，</span>7.0（谚文）<span class="op">，</span>4.2（假名等）<span class="op">，</span>3.32（数字）<span class="op">，</span>2.0（字母）<span class="op">，</span>1.0（ASCII 标点）<span class="op">，</span>0.5（组合符）<span class="op">，</span>0.0（空白/控制/Cf）
+    </div>
+
+    <h3>数学直觉：分档值在说什么</h3>
+    <ul>
+      <li><strong>10 bit ≈ 5 个英文字母</strong>：10 ÷ 2 = 5——一个汉字承载的信息量约等于五个拉丁字母。中文日志天然比英文日志「每字符更贵」，这在跨语言语料里直接放大稀有词的相对权重。</li>
+      <li><strong>3.32 = log<sub>2</sub>(10)</strong>：一个十进制数字位的自信息，恰好是 2<sup>3.32</sup> ≈ 10 个等概率符号——分档值与信息论定义自洽。</li>
+      <li><strong>空白 = 0</strong>：分隔符不携带内容，缩进、换行、制表符刷屏不会稀释真正的内容词——这正是「抗日志重复刷屏」的第一道闸。</li>
+      <li><strong>ASCII 标点 = 1.0</strong>：源码注释特意声明本函数是通用字符串熵原语，<code>^</code>、<code>$</code> 等标点各计 1.0 bit，不为已退役的检索通道留特例。</li>
+    </ul>
+    <p>文件头还有三个语义阈值常数：<code>AtomicConceptEntropyBits = 8.0</code>、<code>SingleAlternationMaxBits = 4.5</code>、<code>OverStemmingDivergenceMaxBits = 11.5</code>——后续折叠逻辑会把退化串压到 8.0 bit（原子概念）以下。</p>
+
+    <h3>StringShannonBits：四种抑制</h3>
+    <p>字符串自信息 = Σ 字符 bit，再叠加四种<strong>抑制</strong>（源码函数注释逐字列出）：</p>
+    <ol>
+      <li><strong>无载体清零</strong>：字符串中没有字母/数字 → 直接返回 0（<code>if !hasAlnum { return 0 }</code>）。纯符号噪声串不产生任何权重。</li>
+      <li><strong>一阶马尔可夫重复阻尼</strong>：同一字符连续游程长度 k ≥ 3 时，游程第 k 位的贡献乘 <code>0.25^(k-2)</code>（由 <code>powQuarter</code> 位移快查，避免 <code>math.Pow</code> 开销）。前两位全额，第三位起按四分之一衰减。</li>
+      <li><strong>滑窗串联重复折叠</strong>：对无空格的紧凑单 token（n ≥ 4），在周期 p ∈ 1..4 上检测 tandem 重复（<code>stepStreamingTandem</code>：命中 <code>pMatch[p] == 2p</code> 即锁定），重复占比 ≥ 0.60 时整体乘阻尼因子。</li>
+      <li><strong>跨空格洪泛折叠</strong>：有空格、n ≥ 16 且 <code>4·tandemTotal ≥ 3n</code>（≥75% 载体字符被周期 1..4 的循环锁死，如 <code>"a a a …"</code>、<code>"ab ab ab …"</code>）时乘洪泛阻尼，把整串压到原子概念阈值 8.0 bit 以下，而正常多词自然语言句子不受影响（源码注释原话）。</li>
+    </ol>
+
+    <div class="math">
+      H(s) <span class="op">=</span> 0<span class="op">，若 s 中无字母/数字；否则</span> H(s) <span class="op">=</span> [ Σ<sub>r∈s</sub> I(r) · 0.25<sup>max(0, k<sub>r</sub>−2)</sup> ] <span class="op">·</span> D(s)
+      <div class="math-note">k<sub>r</sub> 为该字符在其连续游程中的位置序号；k &lt; 3 时指数取 0（不衰减）。D(s) 为下述串联/洪泛折叠因子。</div>
+    </div>
+
+    <div class="math">
+      H("aaaa") <span class="op">=</span> 2.0 <span class="op">+</span> 2.0 <span class="op">+</span> 2.0·0.25 <span class="op">+</span> 2.0·0.25<sup>2</sup> <span class="op">=</span> 4.625 bit <span class="op">（对照无重复 "abcd" = 8.0 bit）</span>
+    </div>
+
+    <div class="math">
+      D<sub>flood</sub>(s) <span class="op">=</span> max(0.05, 1−ρ)<sup>2</sup> <span class="op">·</span> 0.25 <span class="op">·</span> min(1, <span class="frac"><span class="num">16</span><span class="den">n</span></span>)<span class="op">，其中</span> ρ <span class="op">=</span> <span class="frac"><span class="num">tandemTotal</span><span class="den">n</span></span><span class="op">；单 token 情形</span> ρ ≥ 0.60 <span class="op">时</span> D <span class="op">=</span> max(0.05, 1−ρ)<sup>2</sup> · 0.25
+      <div class="math-note">下限 0.05 保证阻尼永不归零；n &gt; 64 的流式长串另有 0.04·(64/n) 的额外下压（与前者取 min）。</div>
+    </div>
+
+    <figure class="svg-figure">
+      <div class="svg-card">
+        <svg viewBox="0 0 800 420" width="800" height="420" role="img" aria-label="信息量标尺：单字符先验 I(r) 分档条形图与连续重复阻尼条形图">
+          <rect width="800" height="420" fill="#ffffff"/>
+          <text x="40" y="34" font-family="Noto Serif SC, serif" font-size="15" font-weight="900" fill="#23212c">A · 单字符先验 I(r)（bit）</text>
+          <text x="500" y="34" font-family="Noto Serif SC, serif" font-size="15" font-weight="900" fill="#23212c">B · 连续重复阻尼（"aaaa"）</text>
+
+          <!-- 面板 A：横向条形，36 px/bit，起点 x=150 -->
+          <g font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#4a4657">
+            <text x="142" y="66"  text-anchor="end">汉字 Han</text>
+            <rect x="150" y="54"  width="360" height="18" rx="4" fill="#9333ea"/><text x="518" y="68" fill="#7e22ce" font-weight="700">10.0</text>
+            <text x="142" y="106" text-anchor="end">谚文 Hangul</text>
+            <rect x="150" y="94"  width="252" height="18" rx="4" fill="#a855f7"/><text x="410" y="108" fill="#7e22ce">7.0</text>
+            <text x="142" y="146" text-anchor="end">假名 / 泰文等</text>
+            <rect x="150" y="134" width="151" height="18" rx="4" fill="#c084fc"/><text x="309" y="148" fill="#7e22ce">4.2</text>
+            <text x="142" y="186" text-anchor="end">数字</text>
+            <rect x="150" y="174" width="120" height="18" rx="4" fill="#fb7185"/><text x="278" y="188" fill="#be123c">3.32</text>
+            <text x="142" y="226" text-anchor="end">字母</text>
+            <rect x="150" y="214" width="72"  height="18" rx="4" fill="#fb7185"/><text x="230" y="228" fill="#be123c">2.0</text>
+            <text x="142" y="266" text-anchor="end">ASCII 标点</text>
+            <rect x="150" y="254" width="36"  height="18" rx="4" fill="#f59e0b"/><text x="194" y="268" fill="#b45309">1.0</text>
+            <text x="142" y="306" text-anchor="end">组合符</text>
+            <rect x="150" y="294" width="18"  height="18" rx="4" fill="#fde68a"/><text x="176" y="308" fill="#b45309">0.5</text>
+            <text x="142" y="346" text-anchor="end">空白 / 控制</text>
+            <rect x="150" y="334" width="2"   height="18" rx="1" fill="#a7a2b8"/><text x="160" y="348" fill="#787887">0.0</text>
+          </g>
+          <line x1="150" y1="376" x2="510" y2="376" stroke="#ddd7ec" stroke-width="1.5"/>
+          <g font-family="Noto Sans SC, sans-serif" font-size="11" fill="#787887">
+            <text x="150" y="394">0</text><text x="258" y="394">3</text><text x="366" y="394">6</text><text x="474" y="394">9 bit</text>
+          </g>
+
+          <!-- 面板 B：游程阻尼，80 px/bit，起点 x=560 -->
+          <g font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#4a4657">
+            <text x="552" y="96"  text-anchor="end">第 1 位</text>
+            <rect x="560" y="84"  width="160" height="18" rx="4" fill="#34d399"/><text x="728" y="98" fill="#065f46" font-weight="700">2.00</text>
+            <text x="552" y="146" text-anchor="end">第 2 位</text>
+            <rect x="560" y="134" width="160" height="18" rx="4" fill="#34d399"/><text x="728" y="148" fill="#065f46">2.00</text>
+            <text x="552" y="196" text-anchor="end">第 3 位 ×0.25</text>
+            <rect x="560" y="184" width="40"  height="18" rx="4" fill="#6ee7b7"/><text x="608" y="198" fill="#065f46">0.50</text>
+            <text x="552" y="246" text-anchor="end">第 4 位 ×0.25²</text>
+            <rect x="560" y="234" width="10"  height="18" rx="4" fill="#a7f3d0"/><text x="578" y="248" fill="#065f46">0.125</text>
+          </g>
+          <line x1="560" y1="276" x2="740" y2="276" stroke="#ddd7ec" stroke-width="1.5"/>
+          <g font-family="Noto Sans SC, sans-serif" font-size="11" fill="#787887">
+            <text x="560" y="294">0</text><text x="640" y="294">1</text><text x="720" y="294">2 bit</text>
+          </g>
+          <text x="500" y="330" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#4a4657">同字符连续 k ≥ 3 起，第 k 位贡献 × 0.25^(k−2)</text>
+          <text x="500" y="356" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#4a4657">"aaaa" 合计 4.625 bit &lt; "abcd" 8.0 bit</text>
+          <text x="500" y="382" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#9333ea">无载体串（无字母/数字）直接归 0</text>
+        </svg>
+      </div>
+      <figcaption><b>图 1</b> 信息量标尺：左为 <code>RuneShannonBits</code> 的 Unicode 文块分档（汉字 10 bit 居首），右为 <code>StringShannonBits</code> 的一阶马尔可夫重复阻尼对 "aaaa" 的逐位削减。数据逐项对应 entropy.go 源码常量。</figcaption>
+    </figure>
+
+    <div class="insight-box">
+      <span class="tag-insight">洞察 INSIGHT</span>
+      <h4>权重不依赖冻结词表——这是「零成本」的真正含义</h4>
+      <p>TF-IDF 需要分词器 + 全局文档频统计；静态 embedding 需要下载模型 + 回填历史。这里只有<strong>字符分档先验 + 局部重复阻尼</strong>，权重直接随当前 vault 的实际分布自适应（README §3 步骤 2a：<em>adaptive self-information &amp; burst-clone folding</em>）。<code>docs/code-level-notes.md</code> §1.1 记录的借鉴要点正是：用「信息 bit 数」做检索权重与<strong>预算单位</strong>（query coverage 以 nats 计），比 TF-IDF 更抗日志重复刷屏——评分单位与预算单位同源，才能直接相加、直接比较。</p>
+    </div>
+
+    <div class="critique-box">
+      <span class="tag-insight">批判 CRITIQUE</span>
+      <h4>分档常数是先验，不是推导</h4>
+      <p>10 / 7 / 4.2 / 3.32 / 2.0 / 1.0 / 0.5 这组数值在源码注释中只被解释为「Unicode 文块的有效符号容量」，<strong>未见推导</strong>；阻尼阈值（k ≥ 3、p ≤ 1..4、串联占比 0.60、洪泛占比 0.75、n ≥ 16、下限 0.05）同样是工程阈值。README §5.4 自陈当前评测集中于英文个人档案与长对话（约 10<sup>4</sup> 量级记录），其他语言、重度 code-switching、百万级流式负载仍待测试 <span class="self-report">自报·未复现</span>——在中文语料上「汉字 10 : 字母 2」这个 5:1 的比例是否最优，属于<strong>替代方案</strong>层面的开放问题：可做按语种缩放的分档表 + 配对消融来验证，而不是默认照搬。</p>
+    </div>
+  </section>
+
+  <!-- ============ 第三章 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">CHAPTER 03</span>
+    <h2 class="chapter-title">突发折叠与族权重：出现分布，而非出现次数</h2>
+
+    <p class="lead">单字符 bit 解决「这个词多稀有」，还没解决「这个搭配被刷了多少次」。同一段日志在同一天被贴 100 遍，TF 会把它顶到榜首、淹掉稀有词。rolling 的解法是给每个词族（word family）算一个<strong>有效权重</strong>，其核心思想一句话：<em>按出现分布打分，不按出现次数打分</em>。</p>
+
+    <div class="math">
+      effDF <span class="op">=</span> 1 <span class="op">+</span> (df − 1) <span class="op">·</span> <span class="frac"><span class="num">clusters − 1</span><span class="den">df − 1</span></span><sup>1/e</sup> <span class="op">·</span> disp
+    </div>
+    <div class="math">
+      weight <span class="op">=</span> ln<span class="op">(</span>1 <span class="op">+</span> <span class="frac"><span class="num">clusterN + 1</span><span class="den">effDF + 1</span></span><span class="op">)</span><span class="op">，</span>disp <span class="op">=</span> min<span class="op">(</span>1, <span class="frac"><span class="num">H</span><span class="den">ln(df)</span></span><span class="op">)</span><span class="op">，其中</span> H <span class="op">=</span> − Σ<sub>i</sub> p<sub>i</sub> · ln p<sub>i</sub>
+      <div class="math-note">df &lt; 2 时 disp = 0；df = 1 时 effDF 恒为 1。H 由 familyEntropy 以自然对数（nats）求和，p<sub>i</sub> = 伙伴计数 / 总计数。</div>
+    </div>
+
+    <h3>数学直觉：三个量各管一件事</h3>
+    <ul>
+      <li><strong>effDF（有效文档频）= 1 + 独立性折扣。</strong>基线是 1；(df−1) 是「若每次出现都独立」的上限贡献；<code>((clusters − 1)/(df − 1))<sup>1/e</sup></code> 是<strong>独立性插值</strong>——<em>clusters = 1</em>（全部出现聚在同一时间簇，即同日突发）时该项为 0 → effDF = 1，权重不被 df 稀释；<em>clusters = df</em>（每个文档各自独立成簇）时该项为 1 → effDF = df，按独立事件全额衰减。指数取 1/e 而非 1，意味着聚簇早期（clusters 刚离开 1）折扣爬升很慢——<strong>轻微聚集几乎不扣分，完全聚集完全保值</strong>。</li>
+      <li><strong>disp（伙伴离散度）= 熵占比。</strong>familyDispersion 的注释写得清楚：一个词族在 df 个文档里各自搭配<strong>不同</strong>伙伴时 H = ln(df)，disp 达到 1（独立事件极限）；伙伴计数超过 df 饱和于 1，因为「任何词族携带的有效事件数不可能多于它的文档数」。</li>
+      <li><strong>weight = 对数压缩后的有效密度。</strong>effDF = 1 时取得最大值 ln(1 + (clusterN+1)/2)；effDF 增大则按 ln 衰减——对数既压住长尾刷屏，又保证权重恒为正、可加。</li>
+    </ul>
+
+    <p>于是同一个公式的两侧行为截然相反：<strong>同日重复日志（burst）→ clusters 不涨 → effDF 卡在 1 → 权重保值；分散出现（dispersed）→ disp → 1、clusters → df → 按独立事件对数衰减</strong>。这正是 README §3 步骤 2a 所说「同一天反复粘贴的近重复日志被对数折叠，从而永不稀释稀有词」的公式化实现。</p>
+
+    <h3>事件内饱和：burstFreeQuota = 3</h3>
+    <p>词族层面之外，<code>unit_relations.go</code> 在事件内（intra-event）另给了一道饱和闸：<code>burstFreeQuota = 3.0</code>——同一事件内重复出现的前 3 次免费，之后按指数衰减：</p>
+    <div class="math">
+      satDecay <span class="op">=</span> exp<span class="op">(</span> − max(0, microOcc − 3) <span class="op">·</span> e <span class="op">)</span>
+      <div class="math-note">microOcc 为事件内微出现次数（由时间亲和度累加）；超过配额第 1 次即乘 exp(−e) ≈ 0.066，是断崖式硬饱和而非线性打折。</div>
+    </div>
+    <p><code>docs/code-level-notes.md</code> §1.2 把这组常数总结为可移植的初版参数：<strong>常数 3 与 e</strong>——「前 3 次免费，第 4 次只剩 6.6%」。它的直觉是：<em>重复第三次以内是证据的互相印证（endorsement），第四次起就是刷屏</em>。</p>
+
+    <figure class="svg-figure">
+      <div class="svg-card">
+        <svg viewBox="0 0 800 400" width="800" height="400" role="img" aria-label="突发与分散两种情形下族有效权重随 df 变化的示意曲线">
+          <rect width="800" height="400" fill="#ffffff"/>
+          <!-- 坐标轴 -->
+          <line x1="90" y1="330" x2="750" y2="330" stroke="#4a4657" stroke-width="1.8"/>
+          <line x1="90" y1="46"  x2="90"  y2="330" stroke="#4a4657" stroke-width="1.8"/>
+          <g font-family="Noto Sans SC, sans-serif" font-size="11.5" fill="#787887">
+            <text x="78" y="334" text-anchor="end">0</text>
+            <text x="78" y="269" text-anchor="end">1.0</text>
+            <text x="78" y="204" text-anchor="end">2.0</text>
+            <text x="78" y="139" text-anchor="end">3.0</text>
+            <text x="78" y="74"  text-anchor="end">4.0</text>
+            <text x="90"  y="352" text-anchor="middle">1</text>
+            <text x="188" y="352" text-anchor="middle">2</text>
+            <text x="286" y="352" text-anchor="middle">4</text>
+            <text x="384" y="352" text-anchor="middle">8</text>
+            <text x="481" y="352" text-anchor="middle">16</text>
+            <text x="579" y="352" text-anchor="middle">32</text>
+            <text x="677" y="352" text-anchor="middle">64</text>
+            <text x="740" y="352" text-anchor="middle">100</text>
+            <text x="420" y="384" text-anchor="middle" font-size="12.5" fill="#4a4657">df（词族文档频，log 刻度）</text>
+            <text x="24" y="196" font-size="12.5" fill="#4a4657" transform="rotate(-90 24 196)" text-anchor="middle">weight</text>
+          </g>
+
+          <!-- 突发线：effDF=1，weight=ln(1+100/2)=3.93 → y=68 -->
+          <line x1="90" y1="68" x2="745" y2="68" stroke="#9333ea" stroke-width="3"/>
+          <circle cx="481" cy="68" r="5" fill="#9333ea"/>
+          <text x="102" y="58" font-family="Noto Sans SC, sans-serif" font-size="12.5" font-weight="700" fill="#7e22ce">突发 clusters = 1 → effDF = 1，权重恒为 ln(1 + (clusterN+1)/2) ≈ 3.93</text>
+
+          <!-- 分散曲线：effDF=df -->
+          <polyline points="90,68 188,94 286,127 384,164 481,201 579,237 677,268 740,284"
+                    fill="none" stroke="#fb7185" stroke-width="3"/>
+          <g fill="#fb7185">
+            <circle cx="90" cy="68" r="4.5"/><circle cx="188" cy="94" r="4.5"/><circle cx="286" cy="127" r="4.5"/>
+            <circle cx="384" cy="164" r="4.5"/><circle cx="481" cy="201" r="4.5"/><circle cx="579" cy="237" r="4.5"/>
+            <circle cx="677" cy="268" r="4.5"/><circle cx="740" cy="284" r="4.5"/>
+          </g>
+          <text x="410" y="234" font-family="Noto Sans SC, sans-serif" font-size="12.5" font-weight="700" fill="#be123c">分散 clusters = df、disp = 1 → effDF = df</text>
+          <text x="410" y="254" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#be123c">weight = ln(1 + S/(df+1))，按 ln(df) 衰减</text>
+
+          <!-- 标注 -->
+          <path d="M640 96 L 700 140" stroke="#b8860b" stroke-width="1.6" stroke-dasharray="5 4"/>
+          <text x="560" y="118" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#b8860b">同一族：突发保值 vs 分散衰减</text>
+          <text x="90" y="30" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#787887">示意参数：clusterN + 1 = 100，disp 取各自极值（源码公式逐项代入）</text>
+        </svg>
+      </div>
+      <figcaption><b>图 2</b> burst vs dispersed 的有效权重曲线：突发（紫，clusters = 1）权重不随 df 稀释，分散（珊瑚，clusters = df、disp = 1）按 ln(df) 衰减——两线同起点、随 df 拉开，直观呈现「出现分布而非次数」的打分哲学。</figcaption>
+    </figure>
+
+    <div class="insight-box">
+      <span class="tag-insight">洞察 INSIGHT</span>
+      <h4>为什么这套公式值得整体移植</h4>
+      <p>BM25 的 idf 与饱和 tf 只有一个轴（次数），TF-IDF 也没有「时间簇」和「伙伴熵」这两个分布轴。<code>familyEffectiveWeight</code> 用 <strong>df × clusters × 伙伴熵</strong> 三个量把「刷屏」与「多次独立印证」区分开：刷屏保值（不进分母）、独立印证衰减（进分母）。<code>docs/code-level-notes.md</code> §1.2/§8 的结论是：OIA 的 <code>@omni/memory-recall</code> T0 层<strong>直接采用此权重模型，公式自实现、不搬代码</strong>——因为 rolling-memory 是 PolyForm Noncommercial。</p>
+      <p class="cite">跨文连接：与琥珀之心的「人审状态机」（第 4 篇）互补——那里用流程治理重复，这里用数学治理重复。</p>
+    </div>
+
+    <div class="critique-box">
+      <span class="tag-insight">批判 CRITIQUE</span>
+      <h4>结构常数与校准值的边界，要看源码注释怎么说</h4>
+      <p>pipeline.go 对 <code>transmissionPerHop = 1/e</code> 明确标注 <em>universal constant, not a calibrated threshold</em>，但对 <code>anchorConcentrationFloor</code>（≈ e<sup>−1</sup>）、<code>shellScatterFloor</code>、<code>cloneDampingKernel</code>（≈ e<sup>−2</sup>）三个常数一律标注 <code>[calibrated]</code>，并写明「换成零假设噪声带的方案实测反而回退（composite 73.67→72.94）」。<strong>数值上都与 e 的幂重合，语义上却一个是推导、一个是拟合</strong>——移植者必须逐个查注释，不能因为长得像数学常数就当定理用。<code>familyEffectiveWeight</code> 里的 1/e 指数与 <code>burstFreeQuota = 3.0</code> 在所读片段中未见推导注释，应视作<strong>可调超参</strong>并做配对消融（README §5.3 自陈的调参纪律同样适用于此）。</p>
+    </div>
+  </section>
+
+  <!-- ============ 第四章 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">CHAPTER 04</span>
+    <h2 class="chapter-title">两跳扩散预算：1/e 透射率与注意力的经济学</h2>
+
+    <p class="lead">直接命中只是种子。为了把「同实体 / 同事件」的邻接证据也捞出来，引擎从种子向外<strong>扩散</strong>：一跳（Hop1）、再一跳（Hop2），每跳都要交透射税，并受显式预算约束。这套设计的全部目的，<code>docs/code-level-notes.md</code> §1.4 说得干脆：<strong>防止相关但无用的证据淹没注入窗口</strong>。</p>
+
+    <div class="math">
+      transmissionPerHop <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den">e</span></span> ≈ 0.3679<span class="op">，</span>T<sub>hop2</sub> <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den">e</span></span><sup>2</sup> ≈ 0.1353<span class="op">，</span>E(v) <span class="op">=</span> <span class="frac"><span class="num">T · E(seed) · m(b)</span><span class="den">min(H(seed), H(v))</span></span>
+      <div class="math-note">源码注释：每跳 1 nat 惊异是投递包络的单位可通约公理（paper Theorem 4），局部槽核 exp(−(d−1)/e) 是它的几何级数，其和 Z<sub>local</sub> = 1/(1 − e<sup>−1/e</sup>)；扩散对多路径取 MAX 而非求和。</div>
+    </div>
+
+    <div class="math">
+      compBound <span class="op">=</span> (1/e)<sup>2</sup> <span class="op">·</span> lex <span class="op">·</span> ( 1 − exp<span class="op">(</span> − <span class="frac"><span class="num">lex</span><span class="den">total</span></span> )<span class="op">)</span>
+      <div class="math-note">pipeline_select.go L346：结构补偿上界，与 base + structBound 一起构成 stage2 的剪枝判据（下界不够高即跳过该候选）。</div>
+    </div>
+
+    <h3>架构洞察：预算是注意力预算，不是随便设的数</h3>
+    <ul>
+      <li><strong>两跳即截断。</strong>Hop1 透射 1/e ≈ 0.368，Hop2 透射 1/e² ≈ 0.135，Hop3 将只剩 ≈ 0.05——边际信息已低于「把它塞进上下文并重发一整轮」的成本。<strong>1/e 的几何衰减给了自然截断点，两跳是经济学选择而非拍脑袋常数。</strong></li>
+      <li><strong>预算是软上限。</strong><code>DefaultHop1Expansions = 1024</code>、<code>DefaultHop2Expansions = 512</code>，且源码注释明确：等能量种子组跨过预算边界时<strong>整组完整展开</strong>，因此预算是软上限；时间上界由被选种子的所有桥的倒排遍历工作量决定。</li>
+      <li><strong>MAX 而非求和。</strong>多种子-桥路径到达同一邻居取最大能量——避免「多个弱路径叠加出一个假强候选」，这是与 RRF/求和式融合截然不同的取值哲学。</li>
+      <li><strong>能量与预算同单位。</strong>直接命中能量 <code>EnergyMutualInfo</code>：E(u) = I(u)，候选与查询共享原子的自信息和，以 <strong>nats</strong> 计（pipeline.go L71–72 注释）——与 entropy.go 的 bit 口径差一个 ln2 常数因子，不改排序。<em>评分单位 = 预算单位 = 扩散能量单位</em>，整条管线因此可以逐层比较。</li>
+    </ul>
+
+    <figure class="svg-figure">
+      <div class="svg-card">
+        <svg viewBox="0 0 800 340" width="800" height="340" role="img" aria-label="两跳扩散示意：种子经 1/e 与 1/e 平方两跳透射，预算分别为 1024 与 512">
+          <rect width="800" height="340" fill="#ffffff"/>
+
+          <text x="400" y="34" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="13" fill="#787887">每跳衰减 1 nat 惊异（transmissionPerHop = 1/e，源码注释：universal constant）</text>
+
+          <!-- 种子 -->
+          <rect x="34" y="130" width="136" height="76" rx="12" fill="#f3e8ff" stroke="#9333ea" stroke-width="2"/>
+          <text x="102" y="160" text-anchor="middle" font-family="Noto Serif SC, serif" font-size="14" font-weight="900" fill="#7e22ce">种子 · 直接命中</text>
+          <text x="102" y="184" text-anchor="middle" font-family="Cascadia Code, Consolas, monospace" font-size="12.5" fill="#7e22ce">E₀ = I(u) nats</text>
+
+          <!-- 箭头1 -->
+          <line x1="176" y1="168" x2="236" y2="168" stroke="#4a4657" stroke-width="2.4"/>
+          <path d="M236 168 L 226 162 L 226 174 Z" fill="#4a4657"/>
+          <text x="206" y="152" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#b8860b">T = 1/e</text>
+
+          <!-- Hop1 -->
+          <rect x="242" y="124" width="168" height="88" rx="12" fill="#faf5ff" stroke="#c084fc" stroke-width="2"/>
+          <text x="326" y="152" text-anchor="middle" font-family="Noto Serif SC, serif" font-size="14" font-weight="900" fill="#7e22ce">Hop 1 扩散</text>
+          <text x="326" y="176" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#4a4657">能量 ≈ 0.368 E₀</text>
+          <text x="326" y="198" text-anchor="middle" font-family="Cascadia Code, Consolas, monospace" font-size="12" fill="#9333ea">预算 1024（软）</text>
+
+          <!-- 箭头2 -->
+          <line x1="416" y1="168" x2="476" y2="168" stroke="#4a4657" stroke-width="2.4"/>
+          <path d="M476 168 L 466 162 L 466 174 Z" fill="#4a4657"/>
+          <text x="446" y="152" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#b8860b">T = 1/e²</text>
+
+          <!-- Hop2 -->
+          <rect x="482" y="124" width="168" height="88" rx="12" fill="#faf5ff" stroke="#c084fc" stroke-width="2"/>
+          <text x="566" y="152" text-anchor="middle" font-family="Noto Serif SC, serif" font-size="14" font-weight="900" fill="#7e22ce">Hop 2 扩散</text>
+          <text x="566" y="176" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="12" fill="#4a4657">能量 ≈ 0.135 E₀</text>
+          <text x="566" y="198" text-anchor="middle" font-family="Cascadia Code, Consolas, monospace" font-size="12" fill="#9333ea">预算 512（软）</text>
+
+          <!-- 箭头3 -->
+          <line x1="656" y1="168" x2="708" y2="168" stroke="#4a4657" stroke-width="2.4"/>
+          <path d="M708 168 L 698 162 L 698 174 Z" fill="#4a4657"/>
+
+          <!-- 候选池 -->
+          <rect x="712" y="130" width="60" height="76" rx="12" fill="#d1fae5" stroke="#10b981" stroke-width="2"/>
+          <text x="742" y="162" text-anchor="middle" font-family="Noto Serif SC, serif" font-size="13" font-weight="900" fill="#065f46">候选</text>
+          <text x="742" y="184" text-anchor="middle" font-family="Noto Sans SC, sans-serif" font-size="11.5" fill="#065f46">MAX 取值</text>
+
+          <!-- 底部注释 -->
+          <rect x="34" y="240" width="356" height="66" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="50" y="266" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#92400e">软预算：等能量种子组跨边界整组展开，</text>
+          <text x="50" y="288" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#92400e">最坏耗时 = 被选种子全部桥的倒排遍历量。</text>
+
+          <rect x="410" y="240" width="362" height="66" rx="10" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="426" y="266" font-family="Noto Sans SC, sans-serif" font-size="12.5" fill="#92400e">stage2 剪枝：base + structBound &lt; seedFloor 即跳过；</text>
+          <text x="426" y="288" font-family="Cascadia Code, Consolas, monospace" font-size="12" fill="#92400e">compBound = (1/e)²·lex·(1−e^(−lex/total))</text>
+        </svg>
+      </div>
+      <figcaption><b>图 3</b> 两跳扩散预算示意：种子以 1/e、1/e² 逐跳透射（1024 / 512 软预算），扩散取 MAX 不求和，compBound 作为 stage2 剪枝上界——每跳都在花未来注入窗口的 token，所以跳数必须有预算。</figcaption>
+    </figure>
+
+    <div class="insight-box">
+      <span class="tag-insight">洞察 INSIGHT</span>
+      <h4>省轮次的机制，其实是「少注入垃圾」</h4>
+      <p>扩散预算与 turn-elimination 是同一枚硬币的两面：预算挡住「相关但无用」的证据 → 注入窗口里只有高信息量原文 → 一次 recall 就能让 agent 定位坐标、不再盲搜 → 省掉一整轮 100k–400k 的上下文重发。<strong>信息量即权重</strong>（第二、三章）与<strong>跳数即预算</strong>（本章）共享同一个 nats 单位，才能闭环。</p>
+    </div>
+
+    <div class="critique-box">
+      <span class="tag-insight">批判 CRITIQUE</span>
+      <h4>上界不紧就会错杀，软预算就会超支</h4>
+      <p><code>compBound</code> 是<strong>上界</strong>而非真值：当 bound 不紧时，<code>base + structBound &lt; seedFloor</code> 的剪枝可能跳过本该入选的候选（宁可错剪换速度）。同理，软预算意味着等能量组跨边界时会超出 1024/512——吞吐的最坏情形并不被常数封死。两者都是「速度优先」的取舍，移植到 OIA 时应把 seedFloor 与预算做成配置项并配对消融，而不是照抄默认值。</p>
+    </div>
+  </section>
+
+  <!-- ============ 第五章 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">CHAPTER 05</span>
+    <h2 class="chapter-title">turn-elimination 经济学与采纳审计：这笔账的另一面</h2>
+
+    <p class="lead">README 把「省 token」写成了可证伪的算术，而不是含糊的宣传。先把机制摆清楚：长会话中活跃上下文典型在 <strong>100k–400k token</strong>，每多一轮工具调用，客户端就要把<strong>整个上下文作为计费输入重发一遍</strong>，你还得再等一轮模型推理与工具执行；没有记忆时，agent 常要 3–5 轮 <code>grep</code> / <code>find</code> / <code>Read</code> 试错。于是：命中 → 消除哪怕一轮 = 省 100k–400k 重发。</p>
+
+    <h3>24 小时自报账本</h3>
+    <ul>
+      <li><strong>33 张</strong>去重复盘卡：<strong>6 张（18.2%）</strong>诚实报 0 轮（2 次召回超时、4 轮无需查询）；<strong>27 张（81.8%）</strong>定位到精确文件坐标或过去修复，合计省 <strong>116 轮</strong>盲搜（≈4.3 轮/命中）<span class="self-report">自报·未复现</span>。</li>
+      <li><strong>采纳审计</strong>（模型无关的确定性事后核对）：24h 内结算的 <strong>46</strong> 次 recall 结果中 <strong>41 次（89.1%）</strong>被后续工具调用或回复实际采用（38 次直接文件/符号坐标 + 3 次上下文事实），对照更长账本口径为 61.1%<span class="self-report">自报·未复现</span>。</li>
+      <li><strong>量级</strong>：7 天 <strong>110,340</strong> 次 LLM 请求、平均 <strong>272.0k</strong> 输入 token/次，末 24h 平均 <strong>320.1k</strong><span class="self-report">自报·未复现</span>；按此节奏 ×7 外推 <strong>812</strong> 轮/周 → <strong>162.4M</strong> 毛省 / <strong>158.2M</strong> 实用净 / <strong>154.0M</strong> 最严净 token/周（按 200k/轮），折合 <strong>$74.7–$885/周</strong>（85% prompt-cache 读比率）或 <strong>$325–$3,248/周</strong>（标准未命中缓存价）<span class="self-report">自报·未复现</span>。</li>
+    </ul>
+
+    <h3>公开基准（全部自报，JSONL 可复算，本会话未复现）</h3>
+    <table class="tbl">
+      <tr><th>指标</th><th>ATM-Bench Main（1,013 题）</th><th>ATM-Bench Hard（31 题）</th><th>LoCoMo（1,540 题）</th></tr>
+      <tr><td>官方 Recall@10</td><td><strong>82.85%</strong> <span class="self-report">自报·未复现</span></td><td><strong>52.43%</strong> <span class="self-report">自报·未复现</span></td><td>—</td></tr>
+      <tr><td>Recall@25 / @50</td><td>86.41% / 90.11%</td><td>60.14% / 70.62%</td><td>—</td></tr>
+      <tr><td>端到端 judge 准确率</td><td>—</td><td>—</td><td><strong>85.26%</strong>（1313/1540）<span class="self-report">自报·未复现</span></td></tr>
+      <tr><td>查询延迟 mean / P95</td><td>68.6 ms / 108.3 ms</td><td>107.9 ms / 651 ms</td><td>371 ms（mean）</td></tr>
+    </table>
+    <p>综合分 0.70 × Main + 0.30 × Hard = <strong>73.72</strong> <span class="self-report">自报·未复现</span>；同协议参考基线（README 声明<strong>非官方榜单提交、不主张名次</strong>）：Main 上 MemPalace 76.40%、ATM-RAG 68.70%、HippoRAG2 66.40%、Mem0 61.90%；Hard 上 MemoryOS 32.70%、HippoRAG2 31.90%、ATM-RAG 30.40%、Mem0 23.70%。</p>
+
+    <div class="critique-box">
+      <span class="tag-insight">批判 CRITIQUE</span>
+      <h4>四条必须写在旁边的边界</h4>
+      <p><strong>① miss 时反亏一轮。</strong>README 自己承认：recall 返回无用内容时，那一轮是<strong>净亏损</strong>（token 反而多花）。81.8% 是「命中卡」的口径，不是「每次调用」的口径——18.2% 的卡报 0 轮，其中还含超时。</p>
+      <p><strong>② 分数是在基准上调出来的。</strong>README §5.3 自陈：权重规则与启发式经过 ATM-Bench 与 LoCoMo 上<strong>多轮误差分析迭代</strong>，「不应读作对未见数据集的盲零样本泛化」。这句自陈比任何分数都重要。</p>
+      <p><strong>③ 零重叠是结构性短板。</strong>ATM Main 1013 题中 <strong>148 题（14.61%）</strong> Top-10 无 gold、<strong>86 题</strong> Top-50 无 <span class="self-report">自报·未复现</span>；复盘主要是问题与记录之间<strong>零词法重叠</strong>——昵称 vs 正式名（「老张」vs「张三」）、省略主语、模糊指代（「那个项目…那个人…搞定了」）。受控融合测试同样敏感：本地 all-MiniLM-L6-v2 单独跑为 Main 67.35% / Hard 29.58%，w<sub>vec</sub> = 0.15 时 Main 升到 78.42%（+1.70pp，+17 题）、Hard 42.96–43.20%，而 w<sub>vec</sub> = 1.00 时 Hard 反而掉到 38.68%（−3.25pp）<span class="self-report">自报·未复现</span>。</p>
+      <p><strong>④ 跨文连接（预告第 4 篇）。</strong>琥珀之心的 <code>ThreeRouteSearch</code>（关键词 / 向量 / 图谱三路粗排 + stats 贯穿）正是为这类零重叠 miss 准备的补路；OIA Recall 的 T1 分层照此设计（<code>docs/code-level-notes.md</code> §4.1）。<strong>词法是零成本的 T0，不是全部。</strong></p>
+    </div>
+
+    <div class="insight-box">
+      <span class="tag-insight">洞察 INSIGHT</span>
+      <h4>最值得抄作业的是采纳审计，而不是任何分数</h4>
+      <p>「确定性事后采纳审计」（模型无关地核对 recall 结果是否真的进入后续工具调用/回复）+ <code>internal/efficacy/</code> 采纳账本 + <code>internal/eval/</code> 题集 pin SHA-256、逐题 JSONL 可复算——这套<strong>评测方法论</strong>与具体检索算法解耦，任何记忆系统都能直接移植（<code>docs/code-level-notes.md</code> §1.5 原话：「评测方法论直接抄作业」）。分数会过期，可复算的账本不会。</p>
+    </div>
+  </section>
+
+  <!-- ============ 代码附录 ============ -->
+  <div class="code-appendix">
+    <span class="chapter-no">APPENDIX</span>
+    <h2 class="chapter-title">代码附录：四段源码原文 + 一段扩散原文</h2>
+    <p class="lead">以下代码块均为本地存档仓库 <code>docs/sources/repos/rolling-memory/</code> 的<strong>逐字教学摘录</strong>（有省略处已在说明中标注）。该项目采用 <strong>PolyForm Noncommercial License 1.0.0</strong>——本页仅作教学摘录与思路学习，<strong>任何集成或商用需自行核查许可</strong>。</p>
+
+    <!-- 代码块 1 -->
+    <div class="code-explain">
+      <h4>① RuneShannonBits：按 Unicode 文块给单字符分档</h4>
+      <p>整个权重体系的地基。ASCII 快路径先判字母/数字/空白，非 ASCII 再判组合符、空白与文块分支（本节选省略假名/泰文等 4.2 分支的完整 case 列表）。返回值即该字符的先验自信息 H<sub>0</sub>(r)，单位 bit。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">internal/text/entropy.go · L17–55（节选）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">// RuneShannonBits returns the intrinsic prior Shannon information content H_0(r) (in bits)</span>
+<span class="cm">// of a single Unicode code point r based on the effective symbol capacity of its Unicode script block.</span>
+<span class="kw">func</span> <span class="fn">RuneShannonBits</span>(r rune) float64 {
+	<span class="kw">if</span> r &lt; <span class="nu">0x80</span> {
+		<span class="kw">if</span> (r &gt;= <span class="st">'a'</span> &amp;&amp; r &lt;= <span class="st">'z'</span>) || (r &gt;= <span class="st">'A'</span> &amp;&amp; r &lt;= <span class="st">'Z'</span>) {
+			<span class="kw">return</span> <span class="nu">2.0</span>
+		}
+		<span class="kw">if</span> r &gt;= <span class="st">'0'</span> &amp;&amp; r &lt;= <span class="st">'9'</span> {
+			<span class="kw">return</span> <span class="nu">3.32</span>
+		}
+		<span class="kw">if</span> unicode.<span class="fn">IsSpace</span>(r) || unicode.<span class="fn">IsControl</span>(r) {
+			<span class="kw">return</span> <span class="nu">0.0</span>
+		}
+		<span class="kw">return</span> <span class="nu">1.0</span>
+	}
+	<span class="kw">if</span> unicode.<span class="fn">Is</span>(unicode.Mn, r) || unicode.<span class="fn">Is</span>(unicode.Mc, r) || unicode.<span class="fn">Is</span>(unicode.Me, r) {
+		<span class="kw">return</span> <span class="nu">0.5</span>
+	}
+	<span class="kw">if</span> unicode.<span class="fn">IsSpace</span>(r) || unicode.<span class="fn">IsControl</span>(r) || unicode.<span class="fn">Is</span>(unicode.Cf, r) {
+		<span class="kw">return</span> <span class="nu">0.0</span>
+	}
+	<span class="kw">switch</span> {
+	<span class="kw">case</span> unicode.<span class="fn">Is</span>(unicode.Han, r):
+		<span class="kw">return</span> <span class="nu">10.0</span>
+	<span class="kw">case</span> unicode.<span class="fn">Is</span>(unicode.Hangul, r):
+		<span class="kw">return</span> <span class="nu">7.0</span>
+	<span class="cm">// …（节选省略：Hiragana/Katakana/Thai/Lao/Khmer/Myanmar/Tibetan 分支 → 4.2）</span>
+	<span class="kw">case</span> unicode.<span class="fn">IsDigit</span>(r):
+		<span class="kw">return</span> <span class="nu">3.32</span>
+	<span class="kw">case</span> unicode.<span class="fn">IsLetter</span>(r):
+		<span class="kw">return</span> <span class="nu">2.0</span>
+	<span class="kw">default</span>:
+		<span class="kw">return</span> <span class="nu">1.0</span>
+	}
+}</code></pre>
+
+    <!-- 代码块 2 -->
+    <div class="code-explain">
+      <h4>② StringShannonBits：四种抑制的函数注释与主循环</h4>
+      <p>注释即规格说明：无载体清零、一阶马尔可夫重复阻尼 0.25<sup>(k−2)</sup>、滑窗周期 p∈1..4 串联折叠、跨空格洪泛折叠。主循环里 <code>runLen ≥ 3 &amp;&amp; rb &gt; 0</code> 那三行是阻尼的全部实现；末尾两个分支决定用哪个折叠因子。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">internal/text/entropy.go · L107–163（节选）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">// StringShannonBits computes the total prior Shannon self-information (in bits) of a string,</span>
+<span class="cm">// enforcing non-carrier zeroing (0.0 bits when no letter/digit is present), 1st-order Markov repetition</span>
+<span class="cm">// damping (0.25^(k-2) for identical rune runs of length k &gt;= 3), sliding-window period-p (p in 1..4)</span>
+<span class="cm">// tandem-repeat collapse on compact single-token strings, and cross-space periodic flood collapse on</span>
+<span class="cm">// long space-delimited repetition floods.</span>
+<span class="kw">func</span> <span class="fn">StringShannonBits</span>(s <span class="kw">string</span>) float64 {
+	<span class="kw">var</span> bits float64
+	hasAlnum, hasSpace := <span class="kw">false</span>, <span class="kw">false</span>
+	<span class="kw">var</span> prevRune rune
+	runLen := <span class="nu">0</span>
+	<span class="cm">// …（节选省略：buf/ring/pMatch/tandem 等串联检测状态声明）</span>
+	<span class="kw">for</span> _, r := <span class="kw">range</span> s {
+		skipCf, isSp, isAlnum, lowR, rb := <span class="fn">classifyRuneShannonFast</span>(r)
+		<span class="kw">if</span> skipCf {
+			<span class="kw">continue</span>
+		}
+		<span class="kw">if</span> isSp {
+			hasSpace = <span class="kw">true</span>
+		}
+		<span class="kw">if</span> isAlnum {
+			hasAlnum = <span class="kw">true</span>
+			<span class="cm">// …（节选省略：写入 buf 并推进 stepStreamingTandem）</span>
+		}
+		<span class="kw">if</span> lowR == prevRune {
+			runLen++
+		} <span class="kw">else</span> {
+			prevRune, runLen = lowR, <span class="nu">1</span>
+		}
+		<span class="kw">if</span> runLen &gt;= <span class="nu">3</span> &amp;&amp; rb &gt; <span class="nu">0</span> {
+			rb *= <span class="fn">powQuarter</span>(runLen - <span class="nu">2</span>)   <span class="cm">// 0.25^(k-2)</span>
+		}
+		bits += rb
+	}
+	<span class="kw">if</span> !hasAlnum {
+		<span class="kw">return</span> <span class="nu">0</span>                             <span class="cm">// 抑制①：无载体清零</span>
+	}
+	<span class="kw">if</span> !hasSpace &amp;&amp; n &gt;= <span class="nu">4</span> {
+		bits *= <span class="fn">fullStringTandemDamping</span>(&amp;buf, n, tandemTotal)     <span class="cm">// 抑制③：单 token 串联折叠</span>
+	} <span class="kw">else</span> <span class="kw">if</span> hasSpace &amp;&amp; n &gt;= <span class="nu">16</span> &amp;&amp; tandemTotal*<span class="nu">4</span> &gt;= n*<span class="nu">3</span> {
+		bits *= <span class="fn">spacedPeriodicFloodDamping</span>(n, tandemTotal)         <span class="cm">// 抑制④：跨空格洪泛折叠</span>
+	}
+	<span class="kw">return</span> bits
+}</code></pre>
+
+    <!-- 代码块 3 -->
+    <div class="code-explain">
+      <h4>③ familyEffectiveWeight + familyDispersion + familyEntropy</h4>
+      <p>突发折叠的核心三件套：有效文档频 effDF、伙伴离散度 disp、以及以自然对数求和的族熵 H。注意 <code>indep := math.Pow((clusters-1)/d, 1/eulerNumber)</code> 中的指数就是 <strong>1/e</strong>，与第四章的透射率共用同一个 <code>eulerNumber</code> 常量。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">internal/core/cluster_state_aggregates.go · L50–102</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="kw">func</span> <span class="fn">familyEffectiveWeight</span>(df, multiDocCount, clusters <span class="kw">int</span>, total, entropy <span class="kw">float64</span>, clusterN <span class="kw">int</span>) <span class="kw">float64</span> {
+	effDF := <span class="nu">1.0</span>
+	<span class="kw">if</span> df &gt; <span class="nu">1</span> {
+		<span class="kw">if</span> clusters &lt; <span class="nu">1</span> {
+			clusters = <span class="nu">1</span>
+		}
+		<span class="kw">if</span> clusters &gt; df {
+			clusters = df
+		}
+		d := <span class="kw">float64</span>(df - <span class="nu">1</span>)
+		indep := math.<span class="fn">Pow</span>(<span class="kw">float64</span>(clusters-<span class="nu">1</span>)/d, <span class="nu">1</span>/eulerNumber)   <span class="cm">// 独立性插值，指数 = 1/e</span>
+		disp := <span class="nu">1.0</span>
+		<span class="kw">if</span> total &gt; <span class="nu">0</span> || multiDocCount &gt; <span class="nu">0</span> {
+			disp = <span class="fn">familyDispersion</span>(df, entropy)
+		}
+		effDF = <span class="nu">1</span> + d*indep*disp
+	}
+	<span class="kw">return</span> math.<span class="fn">Log1p</span>((<span class="kw">float64</span>(clusterN) + <span class="nu">1</span>) / (effDF + <span class="nu">1</span>))        <span class="cm">// ln(1 + (clusterN+1)/(effDF+1))</span>
+}
+
+<span class="cm">// familyDispersion is the partner-entropy share H/ln(df) of one family, referenced</span>
+<span class="cm">// to its document count: a family whose df documents each name a different partner</span>
+<span class="cm">// has H = ln(df) and reaches 1, the independent-event limit. Partner counts beyond</span>
+<span class="cm">// df saturate at 1, since no family can carry more effective events than documents.</span>
+<span class="cm">// A family with fewer than two documents carries no dispersion.</span>
+<span class="kw">func</span> <span class="fn">familyDispersion</span>(df <span class="kw">int</span>, entropy <span class="kw">float64</span>) <span class="kw">float64</span> {
+	<span class="kw">if</span> df &lt; <span class="nu">2</span> {
+		<span class="kw">return</span> <span class="nu">0</span>
+	}
+	<span class="kw">return</span> math.<span class="fn">Min</span>(<span class="nu">1</span>, math.<span class="fn">Max</span>(<span class="nu">0</span>, entropy/math.<span class="fn">Log</span>(<span class="kw">float64</span>(df))))
+}
+
+<span class="kw">func</span> <span class="fn">familyEntropy</span>(keys []<span class="kw">uint64</span>, counts []<span class="kw">int32</span>) (total, entropy <span class="kw">float64</span>) {
+	<span class="kw">for</span> _, c := <span class="kw">range</span> counts {
+		total += <span class="kw">float64</span>(c)
+	}
+	<span class="kw">if</span> total &lt;= <span class="nu">0</span> {
+		<span class="kw">return</span> <span class="nu">0</span>, <span class="nu">0</span>
+	}
+	<span class="kw">for</span> i := <span class="kw">range</span> keys {
+		p := <span class="kw">float64</span>(counts[i]) / total
+		entropy -= p * math.<span class="fn">Log</span>(p)                    <span class="cm">// H = −Σ p·ln p（nats）</span>
+	}
+	<span class="kw">return</span> total, entropy
+}</code></pre>
+
+    <!-- 代码块 4 -->
+    <div class="code-explain">
+      <h4>④ burstFreeQuota 与 satDecay：事件内重复的前 3 次免费</h4>
+      <p>饱和闸的常量声明与唯一使用点（同一函数内 <code>microOcc</code> 累加自时间亲和度）。<code>unit_relations.go</code> 中另有一份同款局部常量（L1472–1473），两处数值一致：<code>burstFreeQuota = 3.0</code>，衰减底为 <code>eulerNumber</code>。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">internal/core/unit_relations.go · L1246–1250、L1339–1340（另见 L1472–1473）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">// A non-trivial multi-record event cluster requires the seed plus at least 2 peers (&gt;= 3 units total).</span>
+<span class="kw">const</span> (
+	minClusterPeers = <span class="nu">2</span>
+	burstFreeQuota  = <span class="nu">3.0</span>                 <span class="cm">// 事件内重复出现前 3 次免费</span>
+)
+<span class="cm">// …（节选省略：activeSet 由 temporalAffinity ≥ transmissionPerHop 招募）</span>
+
+	<span class="cm">// —— L1339–1340：饱和衰减的唯一计算 ——</span>
+	microOcc := eventUnits[i].microOcc
+	satDecay := math.<span class="fn">Exp</span>(-math.<span class="fn">Max</span>(<span class="nu">0</span>, microOcc-burstFreeQuota) * eulerNumber)
+	<span class="cm">// satDecay = exp(−max(0, microOcc − 3) · e)</span>
+	<span class="cm">// microOcc = 4 → exp(−e) ≈ 0.066；随后被用作 endorsement 增益的乘子：</span>
+	<span class="cm">//   trans := satDecay * eventRatio * aff * harmCov * sqrt(rel.SubjectCosine) *</span>
+	<span class="cm">//           (transmissionPerHop + (1−transmissionPerHop)*expAdv)</span></code></pre>
+
+    <!-- 代码块 5 -->
+    <div class="code-explain">
+      <h4>⑤ transmissionPerHop = 1/e 与两跳扩散调用</h4>
+      <p>透射率的定义注释（每跳 1 nat 惊异、几何级数、universal constant）+ 软预算默认值 + 两处 <code>spread</code> 调用点（Hop2 用 <code>transmissionPerHop * transmissionPerHop</code> 即 1/e²）。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">internal/core/pipeline.go · L16–21、L61–65、L948、L960</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">// transmissionPerHop is the per-hop echo transmission 1/e: one nat of surprisal</span>
+<span class="cm">// per hop is the unit-commensurability axiom of the delivery envelope (paper</span>
+<span class="cm">// Theorem 4), so the local slot kernel exp(-(d-1)/e) is its geometric series and</span>
+<span class="cm">// Z_local = 1/(1-e^{-1/e}) is that series' sum. It is a universal constant, not a</span>
+<span class="cm">// calibrated threshold; every other file refers to it by name.</span>
+<span class="kw">const</span> transmissionPerHop = <span class="nu">1.0</span> / math.E
+
+<span class="cm">// 跨过预算边界的等能量组完整展开，因此预算是软上限。</span>
+<span class="kw">const</span> (
+	DefaultHop1Expansions = <span class="nu">1024</span>
+	DefaultHop2Expansions = <span class="nu">512</span>
+)
+
+<span class="cm">// —— 两跳调用（L948 / L960）——</span>
+hop1 := e.<span class="fn">spread</span>(directUnits, direct, qTerms, transmissionPerHop, e.Hop1Budget, timeTau)
+hop2 := e.<span class="fn">spread</span>(hop1Only, hop1, qTerms, transmissionPerHop*transmissionPerHop, e.Hop2Budget, timeTau)
+<span class="cm">// spread 能量：T · E(seed) · m(b) / min(H(seed), H(v))，多路径取 MAX 不求和</span></code></pre>
+  </div>
+
+  <!-- ============ 延伸问题 ============ -->
+  <section class="chapter">
+    <span class="chapter-no">OPEN QUESTION</span>
+    <h2 class="chapter-title">延伸问题</h2>
+    <div class="research-question">
+      <span class="tag-q">延伸问题 Q1</span>
+      <h4>词法-向量混合权重 w<sub>vec</sub> 是否存在依赖查询语言 / 标识符密度的最优值？</h4>
+      <p><span class="rq-label">理论分析：</span>滚动记忆自报的融合实验给出一对看似矛盾的读数：w<sub>vec</sub> = 0.15 时 Main R@10 提升（76.72% → 78.42%，+1.70pp），而 w<sub>vec</sub> = 1.00 时 Hard 集反而受伤（41.93% → 38.68%，−3.25pp）<span class="self-report">自报·未复现</span>。它说明两路分数<strong>分布不可比</strong>：词法分建立在自信息能量（nats）之上，向量分是余弦相似度，量纲、动态范围与方差都不同，线性混合的最优 w 本质上取决于两路分数的尺度比与方差比；而尺度比随语料的<strong>标识符密度</strong>（错误串、端口、版本号的出现频率）与<strong>语言</strong>（汉字 10 bit vs 字母 2 bit 的先验差）变化——因此不存在全局常数 w 的理论保证；Hard 集本身的官方 R@10 只有 52.43%，等权融合等于把词法分的权重全部让位给量纲不同的向量分，先在这里受伤并不奇怪。</p>
+      <p><span class="rq-label">研究方向：</span>做<strong>按查询自信息熵自适应加权</strong>：高熵查询（含稀有标识符 / 错误串 / 精确日期）信词法——这正是「信息量即权重」先验的用武之地；低熵查询（口语化、零重叠风险高，如昵称与省略主语）提高向量权重。可把 w 写成查询熵的单调映射 w = f(H(query))，用<strong>配对消融</strong>（README §5 的调参纪律 + <code>docs/code-level-notes.md</code> §1.5 的题集 pin SHA-256、逐题 JSONL 复算）验证其相对固定 w 的增益；观测接口可直接复用第 4 篇琥珀之心三路召回的 stats 贯穿设计，逐查询记录路由决策与采纳结果。</p>
+    </div>
+  </section>
+
+</div><!-- /.wrap -->
+
+<!-- ============ 页脚 ============ -->
+<footer class="site">
+  <div class="inner">
+    <h4>OIA 读书会 · 系列导航（第 2 篇 / 6）</h4>
+    <div class="post-nav">
+      <a href="../index.html"><span class="no">PORTAL</span><span class="t">首页 · 系列总览</span><span class="d">八项目 × 三社区 × 五论文的调研地图与阅读路线。</span></a>
+      <a href="01-tencentdb-memory.html"><span class="no">第 01 篇</span><span class="t">腾讯云记忆：分层金字塔 × 符号画布</span><span class="d">L1 抽取提示词、去重动作集、SQLite FTS5 schema。</span></a>
+      <a href="02-rolling-memory.html"><span class="no">第 02 篇</span><span class="t">rolling-memory：零成本词法检索</span><span class="d">自信息权重、突发折叠、1/e 两跳扩散与采纳审计。</span></a>
+      <a href="03-hy-graphmemix.html"><span class="no">第 03 篇</span><span class="t">Hy × GraphMemix：双过程 × diff-chain</span><span class="d">System1/System2 节律、thread/round 版本链与证据森林。</span></a>
+      <a href="04-memorax-community.html"><span class="no">第 04 篇</span><span class="t">MemoraX × 社区：边界 × 人审 × 主权</span><span class="d">四类记忆边界、48h 人审状态机、三路召回链。</span></a>
+      <a href="05-omni-papers.html"><span class="no">第 05 篇</span><span class="t">论文 · 主动性：何时出声、何时沉默</span><span class="d">响应/沉默/追问三态机与表达规划分层。</span></a>
+      <a href="06-dsh-pi-oia.html"><span class="no">第 06 篇</span><span class="t">DSH × Pi × OIA：基座与总体设计</span><span class="d">能力 seam 架构、双 DSH 隔离红线与 @omni/* 打包模板。</span></a>
+    </div>
+    <div class="fine">
+      诚实声明：本页所有基准与效能数字（ATM-Bench / LoCoMo 分数、24h 与 7 天 token 账本、采纳率、延迟、融合增益）均为 rolling-memory 项目 README 自报口径，本会话<strong>未复现</strong>，已逐处标注「自报·未复现」；README §5.3 自陈其权重规则在 ATM-Bench 与 LoCoMo 上经多轮误差分析迭代，不应读作对未见数据集的盲零样本泛化。源码结论来自本地存档浅克隆快照（<code>docs/sources/repos/rolling-memory/</code>），行号以该快照为准，公式已与 entropy.go / cluster_state_aggregates.go / unit_relations.go / pipeline.go 原文逐系数核对。<br>
+      许可：rolling-memory 采用 <strong>PolyForm Noncommercial License 1.0.0</strong>（SPDX: <code>PolyForm-Noncommercial-1.0.0</code>）——本页代码块仅作<strong>教学摘录</strong>并逐块注明出处路径，任何集成、分发或商用需自行核查许可并另行取得商业授权；OIA 侧仅按「公式自实现、不搬代码」的方式借鉴（见 docs/code-level-notes.md §1）。<br>
+      本页为单文件 HTML：仅引用 <code>../assets/css/style.css</code>，无 CDN、无外链图片、无网络请求，可用 <code>file://</code> 直接离线打开。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

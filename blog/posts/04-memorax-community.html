@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MemoraX × 社区三件套：四类记忆边界 · 人审治理 · 用户主权 — OIA 读书会 第 4 篇</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- ============ HERO（模板 A） ============ -->
+<div class="hero">
+  <div class="hero-wrap">
+    <div class="hero-badge">OIA 读书会 · 第 4 篇 / 6 · MIT</div>
+    <h1>MemoraX × 社区三件套</h1>
+    <div class="hero-tagline">四类记忆边界 × 待审核状态机 × 纠正/抑制/召回透明</div>
+    <p class="hero-desc">本篇精读 MemoraX Code 的四类记忆边界，并串讲三个社区项目的治理面：续忆的 DSH 插件形态与用户主权接口、琥珀之心的三路召回与人审状态机、Anima Brain 的可解释打分与证据链。</p>
+
+    <div class="hero-art">
+      <div class="cover-frame">
+        <svg viewBox="0 0 800 340" width="800" height="340" role="img" aria-label="水墨封面：案头四张记忆卡片被放大镜审视，盖有待审印章，题字记忆四界待审之匣">
+          <defs>
+            <linearGradient id="cvBg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#faf7f0"/>
+              <stop offset="1" stop-color="#efe8da"/>
+            </linearGradient>
+            <radialGradient id="cvLav" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#c084fc" stop-opacity="0.30"/>
+              <stop offset="1" stop-color="#c084fc" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="cvGold" cx="50%" cy="50%" r="50%">
+              <stop offset="0" stop-color="#d9b45b" stop-opacity="0.34"/>
+              <stop offset="1" stop-color="#d9b45b" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <rect width="800" height="340" fill="url(#cvBg)"/>
+          <ellipse cx="150" cy="70" rx="230" ry="150" fill="url(#cvLav)"/>
+          <ellipse cx="650" cy="290" rx="240" ry="150" fill="url(#cvGold)"/>
+
+          <!-- 远山墨线 -->
+          <path d="M0,302 C 120,274 200,320 330,294 C 450,270 540,314 660,290 C 720,278 770,298 800,288" fill="none" stroke="#23212c" stroke-opacity="0.22" stroke-width="2"/>
+          <path d="M0,320 C 150,302 260,334 420,312 C 560,294 680,328 800,308" fill="none" stroke="#23212c" stroke-opacity="0.12" stroke-width="1.4"/>
+          <circle cx="60" cy="40" r="5" fill="#b8860b" opacity="0.7"/>
+          <circle cx="770" cy="60" r="4" fill="#9333ea" opacity="0.5"/>
+
+          <!-- 四张记忆卡片 -->
+          <g transform="translate(58,62) rotate(-2)">
+            <rect width="152" height="86" rx="10" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.5"/>
+            <rect x="1" y="1" width="150" height="26" rx="9" fill="#f3e8ff"/>
+            <text x="13" y="19" font-size="13.5" font-weight="700" fill="#7e22ce" font-family="'Noto Serif SC','SimSun',serif">仓库地图</text>
+            <text x="13" y="49" font-size="12" fill="#4a4657">Repo Memory</text>
+            <text x="13" y="70" font-size="11" fill="#787887">任务级 · 事实</text>
+          </g>
+          <g transform="translate(242,58) rotate(1.5)">
+            <rect width="152" height="86" rx="10" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.5"/>
+            <rect x="1" y="1" width="150" height="26" rx="9" fill="#f3e8ff"/>
+            <text x="13" y="19" font-size="13.5" font-weight="700" fill="#7e22ce" font-family="'Noto Serif SC','SimSun',serif">沟通偏好</text>
+            <text x="13" y="49" font-size="12" fill="#4a4657">User Profile</text>
+            <text x="13" y="70" font-size="11" fill="#787887">用户级 · 事实</text>
+          </g>
+          <g transform="translate(58,172) rotate(1)">
+            <rect width="152" height="86" rx="10" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.5"/>
+            <rect x="1" y="1" width="150" height="26" rx="9" fill="#fde68a"/>
+            <text x="13" y="19" font-size="13.5" font-weight="700" fill="#92400e" font-family="'Noto Serif SC','SimSun',serif">工程教训</text>
+            <text x="13" y="49" font-size="12" fill="#4a4657">Coding Memory</text>
+            <text x="13" y="70" font-size="11" fill="#787887">任务级 · 方法</text>
+          </g>
+          <g transform="translate(242,176) rotate(-1.5)">
+            <rect width="152" height="86" rx="10" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.5"/>
+            <rect x="1" y="1" width="150" height="26" rx="9" fill="#d1fae5"/>
+            <text x="13" y="19" font-size="13.5" font-weight="700" fill="#065f46" font-family="'Noto Serif SC','SimSun',serif">任务步骤</text>
+            <text x="13" y="49" font-size="12" fill="#4a4657">Procedure Memory</text>
+            <text x="13" y="70" font-size="11" fill="#787887">用户级 · 方法</text>
+          </g>
+
+          <!-- 放大镜审视 -->
+          <circle cx="318" cy="216" r="52" fill="#ffffff" fill-opacity="0.20" stroke="#23212c" stroke-width="5"/>
+          <circle cx="318" cy="216" r="52" fill="none" stroke="#9333ea" stroke-opacity="0.35" stroke-width="1.5"/>
+          <line x1="356" y1="254" x2="404" y2="302" stroke="#23212c" stroke-width="9" stroke-linecap="round"/>
+
+          <!-- 待审印章 -->
+          <g transform="translate(432,224) rotate(-7)">
+            <rect width="86" height="86" rx="8" fill="#b8860b" opacity="0.92"/>
+            <rect x="6" y="6" width="74" height="74" rx="5" fill="none" stroke="#fdf6e3" stroke-width="2.5"/>
+            <text x="43" y="55" font-size="30" font-weight="900" fill="#fff8e7" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif" letter-spacing="4">待审</text>
+          </g>
+
+          <!-- 题字 -->
+          <text x="540" y="118" font-size="48" font-weight="900" fill="#23212c" letter-spacing="10" font-family="'Noto Serif SC','SimSun',serif">记忆四界</text>
+          <text x="540" y="178" font-size="48" font-weight="900" fill="#7e22ce" letter-spacing="10" font-family="'Noto Serif SC','SimSun',serif">待审之匣</text>
+          <line x1="542" y1="196" x2="762" y2="196" stroke="#b8860b" stroke-width="3"/>
+          <text x="542" y="224" font-size="13" fill="#4a4657" letter-spacing="2" font-family="'Noto Serif SC','SimSun',serif">MemoraX · 续忆 · 琥珀之心 · Anima</text>
+          <text x="542" y="250" font-size="12" fill="#787887" letter-spacing="1">四类边界 / 人审状态机 / 用户主权</text>
+        </svg>
+      </div>
+    </div>
+    <div class="hero-caption">封面：案头四张记忆卡片，一镜审之、一印定之——自绘水墨 SVG（淡紫 / 墨黑 / 泥金）</div>
+
+    <div class="hero-stats">
+      <div class="stat"><b>4</b><span>类记忆边界</span></div>
+      <div class="stat"><b>6</b><span>种待审状态</span></div>
+      <div class="stat"><b>48h</b><span>自动收录等待</span></div>
+      <div class="stat"><b>0.6/0.25/0.15</b><span>打分权重</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">向下<span>↓</span></div>
+</div>
+
+<!-- ============ 导航条 ============ -->
+<nav class="navbar">
+  <span class="brand">OIA 读书会<i>·</i></span>
+  <a href="../index.html">首页</a>
+  <a href="01-tencentdb-memory.html">腾讯云记忆</a>
+  <a href="02-rolling-memory.html">rolling-memory</a>
+  <a href="03-hy-graphmemix.html">Hy×GraphMemix</a>
+  <a href="04-memorax-community.html" class="active">MemoraX×社区</a>
+  <a href="05-omni-papers.html">论文·主动性</a>
+  <a href="06-dsh-pi-oia.html">DSH×Pi×OIA</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ============ 第一章 ============ -->
+<section class="chapter" id="ch1">
+  <span class="chapter-no">第一章 · 四类记忆边界</span>
+  <h2 class="chapter-title">MemoraX 的四类边界：按「谁的、多久有效」切记忆</h2>
+
+  <p class="lead">MemoraX Code 的 README 没有给一个笼统的「记忆库」，而是把记忆切成四类，每类各自回答一个问题。边界不是分类学练习——它决定了这段记忆存在哪里、什么时候注入、什么时候失效。</p>
+
+  <table class="tbl">
+    <tr><th>记忆类型</th><th>它回答的问题</th><th>README 给的例子</th></tr>
+    <tr><td><strong>Coding Memory</strong>（工程教训）</td><td>哪些工程教训该带进下一个任务？</td><td>已验证的修复、失败的尝试、设计理由、坑、回归检查</td></tr>
+    <tr><td><strong>Repo Memory</strong>（仓库架构）</td><td>智能体该知道这个仓库的什么？</td><td>架构地图、模块归属、入口点、commit/PR/MR/issue 证据</td></tr>
+    <tr><td><strong>Personal Memory</strong>（User Profile 沟通偏好）</td><td>该怎么和你沟通协作？</td><td>语言、语气、解释深度、结果格式</td></tr>
+    <tr><td><strong>Procedure Memory</strong>（任务步骤）</td><td>这类任务该怎么执行？</td><td>可复用步骤、清单、前置条件、例外、验证闸门</td></tr>
+  </table>
+
+  <h3>作用域：为什么是 2×2，而不是四张清单</h3>
+  <p>源码级笔记与 README 给出了作用域的硬证据：<strong>Personal 与 Procedure 全局于用户</strong>，存放在 <code>$MEMORAX_CODE_HOME/personal-memory/</code>（默认 <code>~/.memorax-code/personal-memory/</code>）下——User Profile 用 <code>user-profile/preferences.md</code>，每个 Procedure 主题各占一个文件；README 明确「适用性可以提到某个仓库、工具或工作流，但仓库里不存在 personal-memory 层」，且已有的 <code>.repo_memory</code> 个人记忆文件会被忽略、不迁移。<strong>Coding 与 Repo 则跟随仓库或工作区</strong>。</p>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 860 448" role="img" aria-label="四象限图：横轴为作用域任务级到用户级，纵轴为内容事实到方法，四类记忆各占一格">
+        <!-- 坐标轴 -->
+        <line x1="60" y1="225" x2="812" y2="225" stroke="#4a4657" stroke-width="2" marker-end="url(#qArrow)"/>
+        <line x1="812" y1="225" x2="60" y2="225" stroke="#4a4657" stroke-width="2" marker-end="url(#qArrow)"/>
+        <line x1="430" y1="36" x2="430" y2="424" stroke="#4a4657" stroke-width="2" marker-end="url(#qArrow)"/>
+        <line x1="430" y1="424" x2="430" y2="36" stroke="#4a4657" stroke-width="2" marker-end="url(#qArrow)"/>
+        <defs>
+          <marker id="qArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 Z" fill="#4a4657"/>
+          </marker>
+        </defs>
+        <text x="66" y="218" font-size="12.5" font-weight="700" fill="#4a4657">◀ 任务级（跟随仓库 / 工作区）</text>
+        <text x="806" y="218" font-size="12.5" font-weight="700" fill="#4a4657" text-anchor="end">用户级（全局 personal-memory）▶</text>
+        <text x="430" y="28" font-size="12.5" font-weight="700" fill="#4a4657" text-anchor="middle">▲ 事实（讲的是什么）</text>
+        <text x="430" y="443" font-size="12.5" font-weight="700" fill="#4a4657" text-anchor="middle">▼ 方法（该怎么行动）</text>
+
+        <!-- 左上：Repo -->
+        <g>
+          <rect x="90" y="55" width="330" height="140" rx="14" fill="#ffffff" stroke="#d8b4fe" stroke-width="2"/>
+          <rect x="90" y="55" width="330" height="8" rx="4" fill="#c084fc"/>
+          <text x="112" y="92" font-size="17" font-weight="700" fill="#7e22ce" font-family="'Noto Serif SC','SimSun',serif">Repo Memory · 仓库记忆</text>
+          <text x="112" y="120" font-size="12.5" fill="#4a4657">架构地图 · 模块归属 · 入口点</text>
+          <text x="112" y="143" font-size="12.5" fill="#4a4657">commit / PR / MR / issue 证据</text>
+          <text x="112" y="172" font-size="12" fill="#787887">回答「这个仓库该知道什么」</text>
+        </g>
+        <!-- 右上：Profile -->
+        <g>
+          <rect x="440" y="55" width="330" height="140" rx="14" fill="#ffffff" stroke="#d8b4fe" stroke-width="2"/>
+          <rect x="440" y="55" width="330" height="8" rx="4" fill="#fb7185"/>
+          <text x="462" y="92" font-size="17" font-weight="700" fill="#be123c" font-family="'Noto Serif SC','SimSun',serif">User Profile · 沟通偏好</text>
+          <text x="462" y="120" font-size="12.5" fill="#4a4657">语言 · 语气 · 解释深度 · 结果格式</text>
+          <text x="462" y="143" font-size="12.5" fill="#4a4657">全局 preferences.md，仓库内无此层</text>
+          <text x="462" y="172" font-size="12" fill="#787887">回答「该怎么和你协作」</text>
+        </g>
+        <!-- 左下：Coding -->
+        <g>
+          <rect x="90" y="255" width="330" height="140" rx="14" fill="#ffffff" stroke="#d8b4fe" stroke-width="2"/>
+          <rect x="90" y="255" width="330" height="8" rx="4" fill="#f59e0b"/>
+          <text x="112" y="292" font-size="17" font-weight="700" fill="#92400e" font-family="'Noto Serif SC','SimSun',serif">Coding Memory · 工程教训</text>
+          <text x="112" y="320" font-size="12.5" fill="#4a4657">已验证修复 · 失败路径 · 设计理由</text>
+          <text x="112" y="343" font-size="12.5" fill="#4a4657">坑位与回归检查</text>
+          <text x="112" y="372" font-size="12" fill="#787887">回答「下个任务带什么教训」</text>
+        </g>
+        <!-- 右下：Procedure -->
+        <g>
+          <rect x="440" y="255" width="330" height="140" rx="14" fill="#ffffff" stroke="#d8b4fe" stroke-width="2"/>
+          <rect x="440" y="255" width="330" height="8" rx="4" fill="#10b981"/>
+          <text x="462" y="292" font-size="17" font-weight="700" fill="#065f46" font-family="'Noto Serif SC','SimSun',serif">Procedure · 任务步骤</text>
+          <text x="462" y="320" font-size="12.5" fill="#4a4657">步骤 · 清单 · 前置条件 · 例外</text>
+          <text x="462" y="343" font-size="12.5" fill="#4a4657">验证闸门；全局每主题一文件</text>
+          <text x="462" y="372" font-size="12" fill="#787887">回答「这类任务怎么做」</text>
+        </g>
+        <text x="430" y="418" font-size="11.5" fill="#787887" text-anchor="middle" font-style="italic">象限为本文据 README 的「回答什么问题」表 + 全局路径规则整理</text>
+      </svg>
+    </div>
+    <figcaption><b>图 1</b> MemoraX 四类记忆边界的 2×2 象限：横轴＝作用域（任务级 ↔ 用户级），纵轴＝内容（事实 ↔ 方法）。</figcaption>
+  </figure>
+
+  <p><strong>为什么这样切：</strong>作用域决定注入时机与失效条件——用户级记忆跨会话、跨仓库永续，任务级记忆随仓库生命周期走。若混在一个池子里，作用域只能靠标签猜，猜错的代价是「换了个仓库还在念叨上个仓库的规矩」。<strong>代价</strong>是四类记忆要有四套路由与四套存储约定，写入侧多一次分类判断；README 让「怎么干活」进 Procedure、「怎么沟通呈现」进 Profile，本身就是一次路由提示。</p>
+  <p><strong>替代方案：</strong>第 1 篇腾讯云记忆走的是另一条路——persona / episodic / instruction 三类打在同一批 <code>l1_records</code> 上，用 priority 区分轻重，作用域靠 session_key 表达。两种切法互补：MemoraX 按「谁的、多久有效」切<strong>边界</strong>，TencentDB 按「内容是什么」切<strong>类型</strong>；OIA 的 Vault 可以两者叠加——边界决定生命周期，类型决定抽取提示词。</p>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>意图式保存：把触发词从「记住」换成「长期有效」</h4>
+    <p>README 的表述很克制：你说出一条<em>打算长期生效</em>的工作规则或偏好时，Agent 不等「记住」二字就存，并告诉你它存了什么；意图不明先问，一次性任务指令不改已存记忆。这把记忆写入的触发条件从<strong>显式命令</strong>移到了<strong>意图判定</strong>——用户的心智负担从「管理记忆」退回「正常提要求」。</p>
+    <p class="cite">出处：docs/sources/memorax-code.md「Four Clear Memory Boundaries」一节。</p>
+  </div>
+
+  <h3>语义去重四动作与「取代留痕」</h3>
+  <p>存之前先比对意义，README 给了四个动作：<strong>等价请求 → 不改</strong>；<strong>持久细化或冲突 → 更新匹配条目并移除被取代的措辞</strong>；<strong>作用域写错 → 纠正</strong>；<strong>只有整体过时 → 才删除</strong>。显式 forget 只删被点名的那条偏好 / 主题 / 章节 / 步骤，无关记忆不动。</p>
+  <p><strong>跨文连接（第 1 篇）：</strong>这四个动作与腾讯云记忆的 <code>store | skip | update | merge</code> + <code>target_ids</code> 多对多合并、<code>merged_timestamps</code> 时间线并集是同一族设计；<code>docs/code-level-notes.md</code> §2.2 明说这就是 OIA「意图式保存 + 语义去重 + 取代留痕」的现成提示词骨架。</p>
+  <p><strong>批判与代价：</strong>三者对「被取代的旧值」态度不同——MemoraX 是<strong>移除</strong>被取代的措辞（库里不留旧话），TencentDB 是 merge 进时间线（<code>merged_timestamps</code> 并集），续忆是<strong>小字留存</strong>（第 3 章）。OIA 要的「取代留痕」其实兼采两家：学 MemoraX 的意图判定与写前比对，但把 superseded 旧措辞保留为历史——否则「用户改过口」这件事在库里是不可审计的。</p>
+
+  <h3>节奏注入：1 / 6 / 11 之后每 5 轮</h3>
+  <p>源码级笔记记录的注入节奏：<strong>User Profile 在首个可用轮次注入</strong>；<strong>Procedure 默认在第 1、6、11 轮提醒，之后每 5 轮一次</strong>。compaction 之后还有一条恢复规则：一次被记录的 compaction 在原生数据库里得到验证后，下一个非空、注册过的 prompt 恢复 Profile 与个人提醒，Procedure 保持正常节奏；证据缺失就跳过恢复，同一条进行中的任务内不保证恢复。</p>
+  <span class="math">Procedure 提醒轮次集合 <i>T</i> <span class="op">=</span> {1, 6, 11} ∪ {11 + 5<i>k</i> ∣ <i>k</i> ≥ 1}</span>
+  <p class="math-note">Profile 另计：首个可用轮次一次。</p>
+  <p><strong>为什么（rationale）：</strong>compaction 是长上下文的有损压缩，用户级记忆一旦被压出窗口就等于「忘了」。节奏注入把「拉回来」变成一个<strong>定时器</strong>，不依赖任何检索命中——这是它与检索式召回最本质的区别。<strong>代价</strong>是固定节奏必然两头不讨好：不需要时也注入（空转），第 3 轮就需要却要等到第 6 轮（迟到）。<strong>替代方案</strong>是按需检索：琥珀之心的三路召回就是「拉」模式（第二章），MemoraX 是「推」模式。OIA 的取舍应是推拉结合——推保底（Profile/Procedure 永不漏），拉救急（任务相关记忆随叫随到）。compaction 本身是 DSH 的上下文机制，这条恢复规则也是与第 6 篇基座的连接点。</p>
+
+  <h3>影响披露：答复尾注里的透明度</h3>
+  <p>MemoraX 的「Visible memory impact」能力：当显式执行了 Coding Memory Search，或 Repo / Procedure / Profile 记忆<strong>实质引导了本轮任务</strong>时，它会在最终答复上打开一句简短的自然语言说明，覆盖 Codex、Claude Code、CodeBuddy CLI、WorkBuddy、DeepSeek Harness、OpenCode、Trae、Cursor、Qoder。配套的最小化原则同样值得注意：自动写回上传时会<strong>先去掉这条尾注</strong>，再把用户指令与最终答复送出去提取记忆。</p>
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>三种「记忆影响了回答」的披露粒度</h4>
+    <p>MemoraX 给一句<strong>尾注</strong>（有无）；琥珀之心把 <strong>stats 全程流转</strong>到召回透明页（分几段、每段多少候选）；Anima Brain 让<strong>分数随结果返回</strong>（每条为什么排这里）。可审计性是递增的：尾注只能回答「用没用」，stats 回答「怎么找的」，分数回答「凭什么选它」。</p>
+    <p class="cite">出处：memorax-code.md「Product Capabilities」；code-level-notes.md §4.1、§6。</p>
+  </div>
+  <p><strong>代价：</strong>尾注只在「实质引导」时出现，而「什么算实质」是实现内部的判断——用户无法区分「没用到记忆」与「用了但不算实质」。<strong>替代方案</strong>是召回列表全量披露（琥珀的召回页把聊天原话、工具调用、每轮召回的记忆都摆出来），透明但噪声大；尾注安静但不可验证。这条权衡会一直跟到 OIA 的召回透明页设计。</p>
+</section>
+
+<!-- ============ 第二章 ============ -->
+<section class="chapter" id="ch2">
+  <span class="chapter-no">第二章 · 琥珀之心</span>
+  <h2 class="chapter-title">三路召回 + 人审状态机：把信任折叠进 48 小时</h2>
+
+  <p class="lead">琥珀之心（Amber Heart）是为 AI 伴侣设计的长期记忆系统，按稳定程度分三层：固定记忆（人设与核心记忆，每次稳定注入）、短期记忆（书签、及时摘要、接力棒、最近 3 天日记）、长期记忆（结构化卡片 + 三路召回 + 两级精排 + 养护）。本章只拆两件事：<strong>召回链怎么保持透明</strong>，以及<strong>卡片入库前的那道人审闸门</strong>。</p>
+
+  <h3>三路召回与五段管线</h3>
+  <table class="tbl">
+    <tr><th>召回方式</th><th>README 给它分的工</th></tr>
+    <tr><td>关键词召回</td><td>明确的词、人名、事件名、健康词、专有名词——保准确</td></tr>
+    <tr><td>向量召回</td><td>语义相近的记忆，解决「没说原词但意思接近」——保泛化</td></tr>
+    <tr><td>图谱召回</td><td>沿人物、事件、主题和关系扩展相关记忆——保联想</td></tr>
+  </table>
+  <p>源码级笔记对 <code>memory_core/recall/recall.py</code> 的实读给出了五段链：<code>ThreeRouteSearch</code>（三路粗排）→ <code>replace_parents</code>（父卡替换）→ <code>add_rerank_evidence</code>（证据补充）→ <code>order_candidates</code>（精排模型）→ <code>select_candidates</code>（LLM 细选），外加 <code>TailContext</code>（全列表模式）。三个 <code>stats</code> 诊断对象——<code>retrieval_stats</code> / <code>ordering_stats</code> / <code>selection_stats</code>——随管线一路流转，这就是「召回透明页」的数据源。</p>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 880 300" role="img" aria-label="五段召回链：三路粗排、父卡替换、证据补充、精排模型、LLM 细选，下方为 stats 流转条">
+        <defs>
+          <marker id="rArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 Z" fill="#4a4657"/>
+          </marker>
+        </defs>
+        <text x="20" y="34" font-size="12.5" font-weight="700" fill="#4a4657">你的原话 → 关键词整理</text>
+
+        <!-- 五段 -->
+        <g>
+          <rect x="20" y="56" width="150" height="92" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2"/>
+          <text x="95" y="84" font-size="13.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">① 三路粗排</text>
+          <text x="95" y="107" font-size="11.5" fill="#4a4657" text-anchor="middle">关键词 / 向量 / 图谱</text>
+          <text x="95" y="130" font-size="10.5" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">ThreeRouteSearch</text>
+        </g>
+        <line x1="172" y1="102" x2="190" y2="102" stroke="#4a4657" stroke-width="2" marker-end="url(#rArrow)"/>
+        <g>
+          <rect x="192" y="56" width="150" height="92" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2"/>
+          <text x="267" y="84" font-size="13.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">② 父卡替换</text>
+          <text x="267" y="107" font-size="11.5" fill="#4a4657" text-anchor="middle">子卡换回父卡</text>
+          <text x="267" y="130" font-size="10.5" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">replace_parents</text>
+        </g>
+        <line x1="344" y1="102" x2="362" y2="102" stroke="#4a4657" stroke-width="2" marker-end="url(#rArrow)"/>
+        <g>
+          <rect x="364" y="56" width="150" height="92" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2"/>
+          <text x="439" y="84" font-size="13.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">③ 证据补充</text>
+          <text x="439" y="107" font-size="11.5" fill="#4a4657" text-anchor="middle">给候选挂证据</text>
+          <text x="439" y="130" font-size="10.5" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">add_rerank_evidence</text>
+        </g>
+        <line x1="516" y1="102" x2="534" y2="102" stroke="#4a4657" stroke-width="2" marker-end="url(#rArrow)"/>
+        <g>
+          <rect x="536" y="56" width="150" height="92" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2"/>
+          <text x="611" y="84" font-size="13.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">④ 精排模型</text>
+          <text x="611" y="107" font-size="11.5" fill="#4a4657" text-anchor="middle">模型粗筛排序</text>
+          <text x="611" y="130" font-size="10.5" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">order_candidates</text>
+        </g>
+        <line x1="688" y1="102" x2="706" y2="102" stroke="#4a4657" stroke-width="2" marker-end="url(#rArrow)"/>
+        <g>
+          <rect x="708" y="56" width="152" height="92" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2"/>
+          <text x="784" y="84" font-size="13.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">⑤ LLM 细选</text>
+          <text x="784" y="107" font-size="11.5" fill="#4a4657" text-anchor="middle">对照这一句挑卡</text>
+          <text x="784" y="130" font-size="10.5" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">select_candidates</text>
+        </g>
+        <text x="880" y="172" font-size="12" fill="#787887" text-anchor="end" font-style="italic">→ 注入最相关的几张卡片</text>
+
+        <!-- stats 条 -->
+        <rect x="20" y="188" width="840" height="78" rx="12" fill="#faf5ff" stroke="#9333ea" stroke-width="1.5" stroke-dasharray="6 5"/>
+        <text x="40" y="216" font-size="13" font-weight="700" fill="#7e22ce" font-family="'Noto Serif SC','SimSun',serif">stats 全程流转（召回透明页的数据源）</text>
+        <text x="40" y="240" font-size="12" fill="#4a4657">retrieval_stats → ordering_stats → selection_stats，另含 check_revision(policy_revision) 与每段 checkpoint 的候选快照</text>
+        <text x="40" y="260" font-size="12" fill="#4a4657">源码里的降级常数：关精排＝取候选前 5 ｜ 精排正常＝前 10 ｜ 精排失败＝回退候选前 15（全列表模式取全部）</text>
+      </svg>
+    </div>
+    <figcaption><b>图 2</b> 琥珀之心的五段召回链：三路粗排 → 父卡替换 → 证据补充 → 精排 → LLM 细选，stats 对象随管线全程流转。</figcaption>
+  </figure>
+
+  <p><strong>为什么（rationale）：</strong>单路向量的两个老问题——「明确的词找不到」和「联想串不起来」——分别被关键词路和图谱路兜住；README 自己也说它「不是单纯的向量库」。<strong>跨文连接</strong>：关键词路正是第 2 篇 rolling-memory 自信息权重的用武之地（code-level-notes 已把 OIA 的 recall-T0 定为「自信息权重 + 突发折叠」）。<strong>代价</strong>是每次召回要跑三路检索 + 合并去重 + 两次模型调用（精排与 LLM 细选），延迟与 API 成本都上去了；而且琥珀在「已知限制」里坦白：<strong>召回效果还没有公开的评测数字</strong>，评测工具和合成数据集在准备中——链路漂亮不等于链路有效。</p>
+
+  <h3>待审核状态机与三重 CAS</h3>
+  <p>长期记忆不是每句话都存：后台模型每晚扫描当天聊天，只提取承诺规则边界、偏好、健康事件与生活变化、深度讨论、你明确要求记住的事；卡片先进「待审核」页，你只需判断「这张写得对不对」——可修改、可拒绝，拒绝过的还能翻出来再看；<strong>没空处理的，48 小时后自动收录</strong>。</p>
+  <p><code>pending_memories</code> 表上的状态集合（实读 <code>docs/code-level-notes.md</code> §4.2）：<code>pending</code> / <code>structure_pending</code> / <code>structure_failed</code> / <code>approved</code> / <code>rejected</code> / <code>deleted</code>，共六态；并发控制是三重 CAS——<code>version</code>（版本号）、<code>review_key</code>（防重复审批）、<code>policy_revision</code>（策略变更后重审）。<code>policy_revision</code> 不只用在审批上，<code>recall.py</code> 的召回路径里也有 <code>self.store.check_revision(stats['policy_revision'])</code>：策略改了，正在跑的召回也要对账。</p>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 880 440" role="img" aria-label="待审核状态机：待审核到已收录或已拒绝，结构处理中与结构失败可重试，48小时超时自动收录，归档进入已删除">
+        <defs>
+          <marker id="sArrow" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <path d="M0,0 L10,4 L0,8 Z" fill="#4a4657"/>
+          </marker>
+        </defs>
+
+        <text x="40" y="30" font-size="12.5" font-weight="700" fill="#4a4657">每晚抽取 →</text>
+        <line x1="128" y1="36" x2="128" y2="52" stroke="#4a4657" stroke-width="2" marker-end="url(#sArrow)"/>
+
+        <!-- CAS 徽标 -->
+        <rect x="318" y="6" width="252" height="26" rx="13" fill="#f3e8ff" stroke="#c084fc" stroke-width="1.5"/>
+        <text x="444" y="24" font-size="11.5" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="Consolas,monospace">三重 CAS：version · review_key · policy_revision</text>
+
+        <!-- pending -->
+        <rect x="40" y="54" width="176" height="60" rx="12" fill="#ffffff" stroke="#fb7185" stroke-width="2.5"/>
+        <text x="128" y="80" font-size="15" font-weight="700" fill="#be123c" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">待审核</text>
+        <text x="128" y="102" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">pending</text>
+
+        <!-- approved -->
+        <rect x="652" y="54" width="176" height="60" rx="12" fill="#ffffff" stroke="#10b981" stroke-width="2.5"/>
+        <text x="740" y="80" font-size="15" font-weight="700" fill="#065f46" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">已收录</text>
+        <text x="740" y="102" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">approved</text>
+
+        <!-- rejected -->
+        <rect x="652" y="204" width="176" height="60" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
+        <text x="740" y="230" font-size="15" font-weight="700" fill="#475569" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">已拒绝</text>
+        <text x="740" y="252" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">rejected</text>
+
+        <!-- structure_pending -->
+        <rect x="40" y="214" width="176" height="60" rx="12" fill="#ffffff" stroke="#c084fc" stroke-width="2.5"/>
+        <text x="128" y="240" font-size="14" font-weight="700" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">结构处理中</text>
+        <text x="128" y="262" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">structure_pending</text>
+
+        <!-- structure_failed -->
+        <rect x="40" y="342" width="176" height="60" rx="12" fill="#ffffff" stroke="#f59e0b" stroke-width="2.5"/>
+        <text x="128" y="368" font-size="14" font-weight="700" fill="#92400e" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">结构失败</text>
+        <text x="128" y="390" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">structure_failed</text>
+
+        <!-- deleted -->
+        <rect x="652" y="342" width="176" height="60" rx="12" fill="#ffffff" stroke="#94a3b8" stroke-width="2.5"/>
+        <text x="740" y="368" font-size="15" font-weight="700" fill="#475569" text-anchor="middle" font-family="'Noto Serif SC','SimSun',serif">已删除</text>
+        <text x="740" y="390" font-size="11" fill="#787887" text-anchor="middle" font-family="Consolas,monospace">deleted</text>
+
+        <!-- pending → approved（人审通过） -->
+        <path d="M216,68 C 400,46 520,46 652,68" fill="none" stroke="#10b981" stroke-width="2.5" marker-end="url(#sArrow)"/>
+        <text x="434" y="70" font-size="12.5" font-weight="700" fill="#065f46" text-anchor="middle">人审通过（review_key 防重复审批）</text>
+
+        <!-- pending → approved（48h 自动） -->
+        <path d="M216,96 C 400,128 520,128 652,96" fill="none" stroke="#b8860b" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#sArrow)"/>
+        <text x="434" y="146" font-size="12.5" font-weight="700" fill="#92400e" text-anchor="middle">48h 超时自动收录（按业务日折算）</text>
+
+        <!-- pending → rejected -->
+        <path d="M188,114 C 320,168 520,190 652,214" fill="none" stroke="#64748b" stroke-width="2.2" marker-end="url(#sArrow)"/>
+        <text x="440" y="184" font-size="12.5" font-weight="700" fill="#475569" text-anchor="middle">人审拒绝（拒绝过的可翻出再看）</text>
+
+        <!-- pending → structure_pending -->
+        <line x1="128" y1="114" x2="128" y2="212" stroke="#4a4657" stroke-width="2" marker-end="url(#sArrow)"/>
+        <text x="140" y="170" font-size="12" fill="#4a4657">交结构化处理</text>
+
+        <!-- structure_pending → structure_failed -->
+        <line x1="128" y1="274" x2="128" y2="340" stroke="#4a4657" stroke-width="2" marker-end="url(#sArrow)"/>
+        <text x="140" y="312" font-size="12" fill="#4a4657">结构失败</text>
+
+        <!-- retry -->
+        <path d="M216,368 C 258,344 258,300 216,278" fill="none" stroke="#9333ea" stroke-width="2.2" marker-end="url(#sArrow)"/>
+        <text x="266" y="330" font-size="12" font-weight="700" fill="#7e22ce">重试</text>
+
+        <!-- approved → deleted -->
+        <path d="M626,114 C 618,220 618,292 656,340" fill="none" stroke="#64748b" stroke-width="2.2" marker-end="url(#sArrow)"/>
+        <text x="608" y="240" font-size="12" fill="#475569" text-anchor="end">归档 / 删除</text>
+
+        <!-- manual_review 注解 -->
+        <rect x="300" y="292" width="322" height="96" rx="12" fill="#fef3c7" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="6 5"/>
+        <text x="318" y="318" font-size="12.5" font-weight="700" fill="#92400e" font-family="Consolas,monospace">error_code = manual_review_required</text>
+        <text x="318" y="342" font-size="12" fill="#78350f">设置或当日来源在抽取后变化 → 自动收录停止</text>
+        <text x="318" y="366" font-size="12" fill="#78350f">在待审核页保存这份草稿即清除该标记</text>
+      </svg>
+    </div>
+    <figcaption><b>图 3</b> 待审核状态机（六态）：人审通过 / 人审拒绝 / 48 小时超时自动收录 / 结构失败重试；橙色虚框为停止自动收录的手动兜底标记。</figcaption>
+  </figure>
+
+  <h3>48 小时：读 review_policy.py 才知道它不是定时器</h3>
+  <p><code>memory_core/cards/review_policy.py</code> 实读给出的关键事实：<code>ApprovalSettings.delay_hours</code> 默认 <strong>48</strong>，可用环境变量 <code>MEMORY_AUTO_APPROVE_AFTER_HOURS</code> 覆盖，且必须是正整数；真正参与调度的是它折算出的<strong>业务日</strong>：</p>
+  <span class="math">delay_days <span class="op">=</span> max(1, ⌈delay_hours / 24⌉)</span>
+  <p class="math-note">源码写作 <code>-(-delay_hours // 24)</code>；注释说明：按营业日计，免得晚几分钟才抽出的草稿被整体推后一整天。</p>
+  <p><code>ready_before()</code> / <code>is_due()</code> / <code>scheduled_at()</code> 把到期判定挂到<strong>每晚的批量任务</strong>上（README：每晚任务默认在你所在时区的凌晨 3 点多运行）；<code>overview()</code> 则为待审核页吐出 <code>enabled / delay_hours / ready_count / manual_count / next_run_at / overdue / last_error_code</code> 这组仪表。<code>MANUAL_REVIEW = "manual_review_required"</code> 的注释解释了它的语义：抽取之后设置或当天来源变了，自动收录就停下，人工在审核页保存草稿即清除。</p>
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>48h 不是 48 小时的定时器，而是「两个业务日之后的那晚」</h4>
+    <p>等待期被折算成业务日、再挂到既有的夜间批量作业上——<strong>为审核单开一个调度器的工程代价被省掉了</strong>。副作用是实际等待落在 48–72 小时的量级上，取决于抽取时刻与夜间任务时刻；而「超时自动收录」意味着没人看的卡也会入库，这是把<strong>查全兜底</strong>放在了查准之前。</p>
+    <p class="cite">出处：memory_core/cards/review_policy.py 全文实读（68 行）；amber-heart.md「长期记忆如何入库」。</p>
+  </div>
+
+  <h3>人审漏斗 vs 全自动：信任的三种开法</h3>
+  <p><strong>全自动</strong>查全最高，但错卡直接进长期记忆、且会被每月的主题总结向上聚合——错误会「沉淀」成更难发现的长期理解；<strong>纯手动</strong>查准最高，但必然积压，<code>ready_count</code> 与 <code>overdue</code> 这两个字段就是为积压准备的仪表；<strong>48h 折中</strong>的代价很具体：按 README 的流程（聊天记录 → 每晚提取 → 待审核 → 确认或到期自动收录 → 入库），等待期内的卡片不在长期记忆库里，<strong>新事实在这两天内的查全是 0</strong>，换回的是「入库的卡大概率写对了」。</p>
+  <p><strong>替代方案：</strong>按记忆类型分档等待。琥珀自己的归档规则已经这么干了——规则/约定/边界与高情感记忆约 1 年、里程碑至少 1 年、稳定事实与反思约半年、普通事件约 4 个月、极少数特殊记忆永不归档。同一套「按类型给参数」的思想搬到审核等待期，就是本页第六章的延伸问题。</p>
+  <p><strong>诚实声明：</strong>琥珀 README 自报「1 GB 服务器实测：约 2000 张卡片、9000 多条历史消息的规模下，一晚补完 30 天积压的每晚任务」——<span class="self-report">自报·未复现</span>，本系列未做独立复测；召回效果则连自报数字都还没有。</p>
+</section>
+
+<!-- ============ 第三章 ============ -->
+<section class="chapter" id="ch3">
+  <span class="chapter-no">第三章 · 续忆</span>
+  <h2 class="chapter-title">续忆：一个现成 DSH 记忆插件的用户主权接口</h2>
+
+  <p class="lead">续忆是一个 DeepSeek Harness 插件，给 QQ 陪伴助手加长期记忆和日记本。它对本系列的价值有两层：形态上，它是第 6 篇 DSH 基座的<strong>现成范本</strong>；治理上，它把「纠正 / 抑制 / 时间限定」三件用户主权事做成了可点的按钮。</p>
+
+  <h3>打包形态：package.json 里的 dsh 字段</h3>
+  <p>实读 <code>dsh-adapter/package.json</code>：<code>"name": "dsh-xuyi-memory"</code>、<code>"type": "module"</code>、<code>"main": "./index.js"</code>，<code>exports</code> 暴露 <code>.</code> / <code>./client</code> / <code>./locale/*.json</code>，<code>license: "MIT"</code>、<code>engines.node &gt;= 20</code>，核心是那段 <code>dsh</code> 字段——<code>bundle.patch</code> 指向 <code>./cordis.patch.yml</code>（补丁里 insert 一条 <code>id: xuyi-memory</code>），<code>client.platform = "web"</code>、<code>immediately = true</code>。<code>files</code> 清单同时说明了分工：<code>index.js</code>（Host 侧插件入口）/ <code>client.js</code>（Web 客户端面板）/ <code>logic.js</code>（业务，约 62 KB）/ <code>rhythm.js</code>（节奏）/ <code>locale</code> / <code>images</code>。</p>
+  <p><strong>为什么（rationale）：</strong>记忆系统天然横跨两侧——存储、召回、夜间任务在 Host 侧，而「TA的记忆 / 日记 / 设置」面板必须在 Web 客户端；<code>dsh.client</code> 声明让宿主知道要装哪个入口、要不要立即加载。<strong>跨文连接</strong>：code-level-notes §5.1 明确把这份清单当作 OIA <code>@omni/*</code> 打包的直接模板（id 前缀、client 插件带面板、market/index.json 市场索引）。<strong>代价</strong>：插件形态意味着记忆生命周期绑在 DSH 的插件生命周期上——升级、禁用、换 Profile 都要跟着走，这与琥珀那种独立部署（Docker + 域名 + 数据库）是两种运维哲学。</p>
+
+  <h3>治理三接口：纠正 / 抑制 / 时间限定</h3>
+  <table class="tbl">
+    <tr><th>接口</th><th>你的话术（README 原例）</th><th>系统行为</th></tr>
+    <tr><td><strong>纠正</strong></td><td>「这条记错了」；或随口改口「奶茶我戒了，现在改喝美式」</td><td>按新值来；旧的那句在「TA的记忆」页<strong>用小字留着</strong></td></tr>
+    <tr><td><strong>抑制</strong></td><td>「别再提了」「别记了」</td><td>不再提起、不再想起；<strong>那句话还在你电脑的档案里</strong>（数据保留，不再召回）</td></tr>
+    <tr><td><strong>时间限定检索</strong></td><td>「昨天」「上周」「上个月」</td><td>只在那几天里找；那几天没聊过就直说没有</td></tr>
+    <tr><td><strong>词法 → 语义降级</strong></td><td>（首次打开时自动）</td><td>先按关键词找，后台下完约 24 MB 的 bge-small-zh-v1.5（BAAI，MIT）后才按意思找</td></tr>
+  </table>
+  <p><strong>跨文连接：</strong>时间限定检索琥珀也有（<code>memory_core/recall/date_period.py</code>，昨天/上周…）——「时间」在社区项目里是一等查询维度，而不仅是排序里的 recency；词法兜底则呼应第 2 篇 rolling-memory：<strong>词法层不是残缺的语义层，而是可独立交付的底座</strong>，语义模型只是后装的增强。</p>
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>抑制 ≠ 删除：一种可审计的沉默</h4>
+    <p>「别再提了」保留数据、只撤召回——这让抑制是<strong>可逆</strong>的（想恢复只需取消抑制），也让「她记得但不说」成为一种可查询状态。代价是用户主权依赖界面：数据留在 <code>~/.xuyi/data</code> 里，你必须相信「TA的记忆」页如实展示了被抑制的条目。<strong>替代方案</strong>是硬删除，干净但不可逆，且会连带毁掉上下文一致性（其他记忆引用了同一件事时会留下空洞）。</p>
+    <p class="cite">出处：xuyi-memory.md「她记得的你」「还有一些小事」。</p>
+  </div>
+  <p><strong>纠正的脆弱点：</strong>README 自己承认，新旧两句几乎没有相同词时（先说「体重 120 斤」，后说「瘦到 110 了」）可能还会拿旧的。纠错命中依赖词面重叠——与词法兜底是同一个脆弱点，语义模型装上后会缓解，但「改口」的判定本身仍是词法触发的。</p>
+
+  <h3>20 题盲测：方法论比分数更值钱</h3>
+  <p>README 给出的评测方法（折叠在「怎么测的」里，值得逐条抄）：</p>
+  <ul>
+    <li><strong>题先写</strong>：20 道题是测之前就写好的，续忆没有照着这些题改过代码；</li>
+    <li><strong>干净环境</strong>：三款插件各装在一个互不影响的环境里，读同一段聊天、问同样 20 个问题；</li>
+    <li><strong>判分客观</strong>：插件把带答案的那句原话交给 AI 就算找回；两道「嘴严」题要相关的话<em>没被主动</em>交给 AI 才算过；只看插件能不能翻出来，不看 AI 最后怎么措辞；</li>
+    <li><strong>素材自造</strong>：聊天是编的（两个多月、藏 20 件小事），没用任何人的真实聊天记录；</li>
+    <li><strong>时间与版本钉死</strong>：2026 年 11 月 11 日测的，三款插件都用当时公开发布的版本。</li>
+  </ul>
+  <p>结果：<strong>续忆 16 / 某记忆插件 A 4 / 某记忆插件 B 13</strong>（20 题找回）——<span class="self-report">自报·未复现</span>，这是<strong>项目自报的自建测试</strong>，题集、聊天与环境都由项目方设计，本系列未复现，外部效度有限。<strong>更值得注意的是失败 4 题被原文公开</strong>：体重 120 斤改到 110 斤没说「改成」、说过分手了又问女朋友叫什么、一句话里换掉周末计划、说过「别叫我宝宝」再问怎么叫你——每种都标注「还在改」。</p>
+  <p><strong>为什么（rationale）：</strong>「先写题、后改码」的纪律把评测从「展示」变成「约束」——code-level-notes 也把续忆 tests/ 下 20+ 测试文件（consolidate / decay / diary / audit…）读作同一条纪律。<strong>替代方案</strong>是公开基准（如通用记忆 benchmark），但 QQ 陪伴场景的题型（改口、嘴严、代称）在通用基准里没有对应物，自建题在这里反而是对的——代价就是样本小、无法横向比较。<strong>批判</strong>：4 题失败与 16 题找回之间的差距，恰好落在「词面变化」这一类上，与上一节的纠错脆弱点是同一个病灶。</p>
+
+  <div class="critique-box">
+    <span class="tag-insight">批判</span>
+    <h4>日记定稿 vs 记忆可纠错：两层叙事的张力</h4>
+    <p>README 说日记「写完就不改了，跟真的日记一样」，而记忆层同时提供纠正与抑制。于是问题来了：当某条事实被纠正后，已经定稿的日记里若写了旧版本，以谁为准？日记是否随纠正更新，README 未作说明——本文不作推测。可以确定的是：这是一个<strong>不可变叙事层</strong>与<strong>可变事实层</strong>并存的架构，两者的一致性需要额外机制，而那套机制没有出现在文档里。</p>
+    <p><strong>第二重批判：场景绑定。</strong>续忆的治理接口是通用的（纠正/抑制/检索都能移植），但它的宿主假设很窄——官方 QQ 机器人插件、群与私聊的分寸、11 个人设、晚上十点的日记。插件形态可携带，叙事层不可携带。这提示 OIA：治理接口要设计成<strong>宿主无关</strong>的纯数据操作，人设与叙事留给上层。</p>
+  </div>
+</section>
+
+<!-- ============ 第四章 ============ -->
+<section class="chapter" id="ch4">
+  <span class="chapter-no">第四章 · Anima Brain</span>
+  <h2 class="chapter-title">Anima Brain：可解释打分与证据链</h2>
+
+  <p class="lead">Anima Brain（发行名 companion-engine，Alpha 0.6.0，MIT）是面向 AI 伴侣的持久记忆与情绪连续性 SDK：本地 SQLite + FTS5 运行，不需要 Anima 账号，也不需要 Convex 后端，包本身是 headless 的。它对本系列最直接的贡献是两个字：<strong>可解释</strong>。</p>
+
+  <h3>grounded memory：证据链先于叙述</h3>
+  <p>README 的能力表把 Grounded memory 拆成四件东西：<strong>原话（original messages）</strong>、<strong>有据事实（source-backed facts）</strong>、<strong>纠正（corrections）</strong>、<strong>关联证据（linked evidence）</strong>；code-level-notes §6 补上实现侧：<code>evidence_index.py</code> 与 <code>note_evolution.py</code> 让<strong>摘要必附引用证据、笔记演化留痕</strong>。写入策略可选 automatic / reviewed / off 三档——关闭事实写入仍然保存对话历史，README 强调「读、写、保留是三个独立的关注点」。</p>
+  <p><strong>为什么（rationale）：</strong><code>quote validation</code> 的措辞很关键——它「检查出处（provenance），不检查每个模型解释的真伪」。这把幻觉问题拆成两层：<strong>来源可追溯</strong>是机器可审计的（引用挂对没有），<strong>陈述为真</strong>仍需外部判断。代价是写入路径变重（每条摘要都要挂证据）；<strong>替代方案</strong>是让模型自评置信度——零证据链、不可审计，恰好是 grounded memory 要反对的做法。</p>
+
+  <h3>一行排序公式，分数随结果返回</h3>
+  <p>实读 <code>src/companion_engine/retrieval.py</code>：词法与向量两路先做 RRF 融合，再线性合成总分——</p>
+  <span class="math">RRF(<i>p</i>) <span class="op">=</span> <span class="frac"><span class="num">1</span><span class="den">60 <span class="op">+</span> <i>p</i> <span class="op">+</span> 1</span></span></span>
+  <span class="math">score <span class="op">=</span> 0.6·relevance <span class="op">+</span> 0.25·e<sup>−Δ<i>t</i>/45</sup> <span class="op">+</span> 0.15·<span class="frac"><span class="num">importance</span><span class="den">10</span></span></span>
+  <p class="math-note">Δ<i>t</i> 以天计：<code>recency = math.exp(-max(0, now - when) / (45 * 86400))</code>；relevance 有向量时取余弦，没有时退化为 <code>rrf / max_rrf</code>（元数据里标 <code>relevance_basis: cosine | lexical_rank_proxy</code>）。</p>
+
+  <figure class="svg-figure">
+    <div class="svg-card">
+      <svg viewBox="0 0 860 300" role="img" aria-label="打分公式分解：左侧为0.6、0.25、0.15三段加权条，右侧为45天时效衰减曲线">
+        <!-- 左：加权条 -->
+        <text x="40" y="30" font-size="14" font-weight="700" fill="#7e22ce" font-family="'Noto Serif SC','SimSun',serif">加权合成：三项同量纲、线性可比</text>
+        <rect x="40" y="50" width="378" height="44" rx="8" fill="#ffffff" stroke="#d8b4fe" stroke-width="1.5"/>
+        <rect x="41" y="51" width="225" height="42" rx="7" fill="#c084fc"/>
+        <rect x="266" y="51" width="94" height="42" fill="#fb7185"/>
+        <rect x="360" y="51" width="57" height="42" rx="7" fill="#d9b45b"/>
+        <text x="153" y="78" font-size="13" font-weight="700" fill="#ffffff" text-anchor="middle">relevance 0.6</text>
+        <text x="313" y="78" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">0.25</text>
+        <text x="388" y="78" font-size="11" font-weight="700" fill="#3b2f04" text-anchor="middle">0.15</text>
+        <text x="40" y="124" font-size="12.5" fill="#4a4657">■ 相关性（余弦 / RRF 代理）</text>
+        <text x="40" y="148" font-size="12.5" fill="#4a4657">■ 时效 e^(−Δt/45)</text>
+        <text x="40" y="172" font-size="12.5" fill="#4a4657">■ 重要度 importance / 10</text>
+        <text x="40" y="206" font-size="12.5" fill="#787887">元数据逐项返回：relevance / recency /</text>
+        <text x="40" y="228" font-size="12.5" fill="#787887">importance / time_basis / score</text>
+        <text x="40" y="258" font-size="12.5" font-weight="700" fill="#065f46">→ 分数随结果返回 = 可解释性的一行实现</text>
+
+        <!-- 右：衰减曲线 -->
+        <text x="470" y="30" font-size="14" font-weight="700" fill="#be123c" font-family="'Noto Serif SC','SimSun',serif">时效衰减：e^(−Δt/45)</text>
+        <line x1="500" y1="58" x2="500" y2="244" stroke="#4a4657" stroke-width="2"/>
+        <line x1="500" y1="244" x2="838" y2="244" stroke="#4a4657" stroke-width="2"/>
+        <text x="492" y="74" font-size="11.5" fill="#787887" text-anchor="end">1</text>
+        <text x="492" y="248" font-size="11.5" fill="#787887" text-anchor="end">0</text>
+        <path d="M500,70 C 530,88 545,108 554,118 C 580,140 596,149 608,153 C 632,166 650,174 662,177 C 690,187 704,192 716,195 C 756,207 792,213 824,217"
+              fill="none" stroke="#fb7185" stroke-width="3"/>
+        <circle cx="662" cy="177" r="5" fill="#be123c"/>
+        <text x="674" y="172" font-size="12" font-weight="700" fill="#be123c">45 天 → ≈0.37（e^(−1)）</text>
+        <text x="500" y="264" font-size="11.5" fill="#787887" text-anchor="middle">0 天</text>
+        <text x="662" y="264" font-size="11.5" fill="#787887" text-anchor="middle">45 天</text>
+        <text x="824" y="264" font-size="11.5" fill="#787887" text-anchor="middle">90 天</text>
+        <text x="470" y="290" font-size="12" fill="#787887">半衰式衰减：越老的时效分越低，但永远不为零</text>
+      </svg>
+    </div>
+    <figcaption><b>图 4</b> Anima 打分公式分解：左为 0.6 / 0.25 / 0.15 的线性加权，右为 45 天尺度的时效衰减曲线。</figcaption>
+  </figure>
+
+  <p><strong>数学直觉：</strong>Δ<i>t</i> = 45 天时 e<sup>−1</sup> ≈ 0.37，即一条记忆放满 45 天，时效项只剩约三成权重；90 天约 0.14。三项都在 [0, 1] 量纲上（importance 除以 10 归一），所以 0.6 的相关性主导排序，时效与重要性是<strong>同量纲的微调</strong>——这解释了为什么公式敢用固定权重：它的每一项都有语义，不是黑箱参数。<strong>可解释的另一面</strong>：结果里还直接带 <code>"ranking": "0.6*relevance + 0.25*exp(-age_days/45) + 0.15*importance/10"</code> 这个字符串与逐条 metadata，上层界面无需复述规则就能展示「为什么是这条」。<strong>跨文连接</strong>：RRF 的词法侧与余弦侧的取舍，和续忆「词法兜底、语义后装」是同一个降级思路；code-level-notes §6 建议 OIA 把 0.6/0.25/0.15 做成配置照搬进召回精排。<strong>替代方案</strong>：学习排序（Learning to Rank）可能更准，但需要训练数据、丢了分项语义——在「伴侣记忆」这种可解释性优先的场景里，线性公式反而是特性。<strong>代价</strong>：三个权重是拍出来的，且 <code>when</code> 的取值（事件日期 vs 最后强化时间）对老记忆的影响不亚于权重本身。</p>
+
+  <h3>SQLite + FTS5：零依赖的 rationale</h3>
+  <p>引擎本地跑在 SQLite + FTS5 上，无需账号与云后端；离线示例用合成数据、不发任何模型调用；可选 embeddings。<strong>为什么：</strong>单文件数据库可复制、可备份、可离线，FTS5 直接给词法路供数，与 RRF 的 lexical 侧天然对齐；<strong>替代方案</strong>是向量数据库 / 托管后端，能力更强但引入运维与依赖成本。<strong>代价与诚实边界（README「Status and license」原话）</strong>：本地存储不等于本地推理（配置的 provider 会收到提交的上下文）；owner id 只是命名空间、不是认证；情绪状态是虚构模拟、不是心理评估。</p>
+  <p><strong>引用式摘要与情绪连续性（简述）：</strong>核心记忆与情节摘要都带引用（cited core and episode summaries），配合有界追问（bounded follow-up lookup）维持跨轮的连续感；情绪线（PAD / 张力衰减等）在官方 Brain Atlas 里有专门视图，但其定位已由 README 划清——模拟，不是评估。对 OIA 的启示：情绪可以是<strong>叙事状态</strong>，不能是<strong>诊断结论</strong>。</p>
+</section>
+
+<!-- ============ 第五章 · 代码附录 ============ -->
+<section class="chapter" id="ch5">
+  <span class="chapter-no">第五章 · 代码附录</span>
+  <h2 class="chapter-title">代码附录：四段源码原文 + 一段示意性实现</h2>
+  <p class="lead">以下代码块全部摘自 <code>docs/sources/repos/</code> 本地存档，逐字引用（长处以 <code>...</code> 省略）；最后的节奏注入为本页据 README 行为所写的示意性实现，非源码。</p>
+
+  <div class="code-appendix">
+
+    <div class="code-explain">
+      <h4>① 48 小时默认值与环境变量覆盖</h4>
+      <p><strong>为什么读它：</strong><code>delay_hours=48</code> 只是默认值，真正决定调度的是 <code>delay_days</code> 的<strong>业务日折算</strong>与 <code>from_env</code> 的可配置性——「48 小时」在实现里其实是「两个营业日之后的那晚」。<code>MANUAL_REVIEW</code> 常量则说明自动收录是可以被主动叫停的。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">memory_core/cards/review_policy.py</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm">"""Shared waiting period for pending cards and future topic-summary review."""</span>
+
+<span class="kw">from</span> dataclasses <span class="kw">import</span> dataclass
+<span class="kw">from</span> datetime <span class="kw">import</span> date, datetime, timedelta, timezone
+<span class="kw">import</span> os
+
+<span class="cm"># Automatic approval stopped because settings or the day's source changed after</span>
+<span class="cm"># extraction. Saving the draft in review clears it.</span>
+MANUAL_REVIEW = <span class="st">"manual_review_required"</span>
+
+
+<span class="kw">@dataclass</span>(frozen=<span class="kw">True</span>)
+<span class="kw">class</span> <span class="fn">ApprovalSettings</span>:
+    delay_hours: <span class="fn">int</span> = <span class="nu">48</span>
+
+    <span class="kw">def</span> <span class="fn">__post_init__</span>(<span class="kw">self</span>):
+        <span class="kw">if</span> type(<span class="kw">self</span>.delay_hours) <span class="kw">is not</span> <span class="fn">int</span> <span class="kw">or</span> <span class="kw">self</span>.delay_hours&lt;=<span class="nu">0</span>:
+            <span class="kw">raise</span> <span class="fn">ValueError</span>(<span class="st">'自动入库等待小时数必须为正整数'</span>)
+
+    <span class="cm">@classmethod</span>
+    <span class="kw">def</span> <span class="fn">from_env</span>(cls):
+        <span class="kw">try</span>:
+            <span class="kw">return</span> cls(<span class="fn">int</span>(os.environ.get(<span class="st">'MEMORY_AUTO_APPROVE_AFTER_HOURS'</span>,<span class="st">'48'</span>)))
+        <span class="kw">except</span> (TypeError,ValueError):
+            <span class="kw">raise</span> <span class="fn">ValueError</span>(<span class="st">'MEMORY_AUTO_APPROVE_AFTER_HOURS 必须为正整数'</span>) <span class="kw">from</span> None
+
+    <span class="cm">@property</span>
+    <span class="kw">def</span> <span class="fn">delay_days</span>(<span class="kw">self</span>):
+        <span class="cm"># Counted in business days so a draft made a few minutes after one</span>
+        <span class="cm"># daily run is not pushed back a whole extra day.</span>
+        <span class="kw">return</span> <span class="fn">max</span>(<span class="nu">1</span>, -(-<span class="kw">self</span>.delay_hours // <span class="nu">24</span>))</code></pre>
+
+    <div class="code-explain">
+      <h4>② 五段召回管线（节选）</h4>
+      <p><strong>为什么读它：</strong>一个函数里看全五段链与三份 stats 的落点——<code>retrieval_stats</code> 在函数开头就绑定进 <code>result</code>，<code>check_revision</code> 在粗排之后立刻对账策略版本，关掉精排时直接取候选前 5（常数 5 / 10 / 15 都在源码里）。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">memory_core/recall/recall.py（节选 L34–L84）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code>    stats = {}
+    result = <span class="fn">dict</span>(candidates=[], ordered=[], final=[], retrieval_stats=stats,
+                  ordering_stats={}, selection_stats={})
+    ...
+    coarse = <span class="fn">ThreeRouteSearch</span>(<span class="kw">self</span>.store,<span class="kw">self</span>.settings).search(
+        query, embedder=embedder, cleaner=cleaner, diagnostics=stats, check_time=check_time)
+    checkpoint([row <span class="kw">for</span> row <span class="kw">in</span> coarse <span class="kw">if</span> row.get(<span class="st">'archive_reason'</span>) <span class="kw">is</span> <span class="kw">None</span>])
+    policy = <span class="kw">self</span>.store.policy()
+    ...
+    <span class="kw">self</span>.store.check_revision(stats[<span class="st">'policy_revision'</span>])
+    candidates = <span class="fn">replace_parents</span>(<span class="kw">self</span>.store,coarse,stats,check_time=check_time)
+    candidates = <span class="fn">add_rerank_evidence</span>(candidates,coarse,stats,<span class="kw">self</span>.settings)
+    result[<span class="st">'candidates'</span>] = candidates
+    ...
+    <span class="kw">if not</span> rerank:
+        final = candidates[:<span class="nu">5</span>]
+        result[<span class="st">'ordering_stats'</span>] = result[<span class="st">'selection_stats'</span>] = {<span class="st">'skipped'</span>:<span class="kw">True</span>,<span class="st">'reason'</span>:<span class="st">'disabled'</span>}
+        stats[<span class="st">'rerank_context'</span>][<span class="st">'reason'</span>] = <span class="st">'rerank_disabled'</span>
+    <span class="kw">else</span>:
+        ...
+        ordered, order_stats = <span class="fn">order_candidates</span>(query,candidates,reranker,full_list=<span class="kw">self</span>.settings.full_list_enabled)
+        result[<span class="st">'ordering_stats'</span>] = order_stats
+        <span class="kw">if</span> order_stats.get(<span class="st">'error'</span>):
+            stats[<span class="st">'errors'</span>][<span class="st">'document_rerank'</span>] = order_stats[<span class="st">'error'</span>]
+            final_input = candidates <span class="kw">if</span> <span class="kw">self</span>.settings.full_list_enabled <span class="kw">else</span> candidates[:<span class="nu">15</span>]
+        <span class="kw">else</span>:
+            result[<span class="st">'ordered'</span>] = ordered
+            final_input = ordered <span class="kw">if</span> <span class="kw">self</span>.settings.full_list_enabled <span class="kw">else</span> ordered[:<span class="nu">10</span>]
+        ...
+        final, selection_stats = <span class="fn">select_candidates</span>(llm_query,final_input,selector)
+        result[<span class="st">'selection_stats'</span>] = selection_stats</code></pre>
+
+    <div class="code-explain">
+      <h4>③ DSH 插件打包清单里的 dsh 字段</h4>
+      <p><strong>为什么读它：</strong>这段声明是「宿主如何知道要装哪个入口」的全部答案——<code>bundle.patch</code> 用 cordis 补丁注册插件 id，<code>client.platform/immediately</code> 声明 Web 面板是否立即加载。<code>@omni/*</code> 每个 bundle 都该长成这个形状。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">dsh-adapter/package.json（省略 files / keywords / repository 等字段）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code>{
+  <span class="st">"name"</span>: <span class="st">"dsh-xuyi-memory"</span>,
+  <span class="st">"version"</span>: <span class="st">"1.0.3"</span>,
+  <span class="st">"description"</span>: <span class="st">"续忆 · 让 DeepSeek Harness 的 QQ 陪伴助手记得你说过的话，并写一本日记"</span>,
+  <span class="st">"type"</span>: <span class="st">"module"</span>,
+  <span class="st">"main"</span>: <span class="st">"./index.js"</span>,
+  <span class="st">"exports"</span>: {
+    <span class="st">"."</span>: <span class="st">"./index.js"</span>,
+    <span class="st">"./client"</span>: <span class="st">"./client.js"</span>,
+    <span class="st">"./locale/*.json"</span>: <span class="st">"./locale/*.json"</span>,
+    <span class="st">"./package.json"</span>: <span class="st">"./package.json"</span>
+  },
+  <span class="st">"license"</span>: <span class="st">"MIT"</span>,
+  <span class="st">"engines"</span>: {
+    <span class="st">"node"</span>: <span class="st">"&gt;=20"</span>
+  },
+  <span class="st">"dsh"</span>: {
+    <span class="st">"bundle"</span>: {
+      <span class="st">"patch"</span>: <span class="st">"./cordis.patch.yml"</span>
+    },
+    <span class="st">"client"</span>: {
+      <span class="st">"platform"</span>: <span class="st">"web"</span>,
+      <span class="st">"immediately"</span>: <span class="kw">true</span>
+    }
+  }
+}</code></pre>
+
+    <div class="code-explain">
+      <h4>④ 可解释打分：RRF 融合 + 三段线性加权</h4>
+      <p><strong>为什么读它：</strong>三行核心代码就是「可解释」的全部实现——分项算、分项存、分项随结果返回；<code>relevance_basis</code> 字段还记录了这条 relevance 到底来自余弦还是词法排名代理，降级路径被显式写进了元数据。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">src/companion_engine/retrieval.py（节选 L185–L227）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code>                scores[key] = scores.get(key, <span class="nu">0</span>) + <span class="nu">1</span> / (<span class="nu">60</span> + position + <span class="nu">1</span>)
+    ...
+            <span class="kw">for</span> key, rrf <span class="kw">in</span> scores.items():
+                ...
+                relevance = cosine.get(key, rrf / max_rrf)
+                recency = math.exp(-<span class="fn">max</span>(<span class="nu">0</span>, now - when) / (<span class="nu">45</span> * <span class="nu">86400</span>))
+                ranked[key] = <span class="nu">0.6</span> * relevance + <span class="nu">0.25</span> * recency + <span class="nu">0.15</span> * importance / <span class="nu">10</span>
+                metadata[key] = {
+                    <span class="st">"relevance"</span>: relevance,
+                    <span class="st">"relevance_basis"</span>: <span class="st">"cosine"</span> <span class="kw">if</span> key <span class="kw">in</span> cosine <span class="kw">else</span> <span class="st">"lexical_rank_proxy"</span>,
+                    <span class="st">"recency"</span>: recency,
+                    <span class="st">"importance"</span>: importance,
+                    <span class="st">"time_basis"</span>: when,
+                    <span class="st">"score"</span>: ranked[key],
+                }
+            result = {
+                <span class="st">"facts"</span>: [],
+                <span class="st">"documents"</span>: [],
+                <span class="st">"bounded"</span>: <span class="kw">True</span>,
+                <span class="st">"ranking"</span>: <span class="st">"0.6*relevance + 0.25*exp(-age_days/45) + 0.15*importance/10"</span>,
+                <span class="st">"scores"</span>: {},
+            }</code></pre>
+
+    <div class="code-explain">
+      <h4>⑤ 节奏注入的轮次判定</h4>
+      <p><strong>为什么写它：</strong>README 只给了「Profile 首个可用轮次、Procedure 1/6/11 轮后每 5 轮、compaction 校验通过才恢复」这三句话，没有对应可摘的源码；这里把它落成可读的判定函数，便于第 6 篇把节奏策略参数化。</p>
+      <div class="code-meta">
+        <span class="chip demo">[示意性实现]</span>
+        <span class="chip path">—（本页自写，无源码路径；行为依据 memorax-code.md README）</span>
+      </div>
+    </div>
+    <pre class="code-block"><code><span class="cm"># [示意性实现] 节奏注入 —— 依据 README：Profile 首个可用轮次；Procedure 第 1/6/11 轮，之后每 5 轮</span>
+<span class="kw">def</span> <span class="fn">inject</span>(turn: <span class="fn">int</span>, *, compaction_verified: <span class="fn">bool</span>) -&gt; <span class="fn">dict</span>:
+    procedure_due = turn <span class="kw">in</span> (<span class="nu">1</span>, <span class="nu">6</span>, <span class="nu">11</span>) <span class="kw">or</span> (turn &gt; <span class="nu">11</span> <span class="kw">and</span> (turn - <span class="nu">11</span>) % <span class="nu">5</span> == <span class="nu">0</span>)
+    <span class="kw">return</span> {
+        <span class="st">"profile"</span>: turn == <span class="nu">1</span>,                       <span class="cm"># 用户偏好：首个可用轮次注入一次</span>
+        <span class="st">"procedure"</span>: procedure_due,               <span class="cm"># 任务步骤：1、6、11 轮，之后每 5 轮</span>
+        <span class="st">"restore_after_compaction"</span>: compaction_verified,  <span class="cm"># 原生库里验证过 compaction 才恢复</span>
+    }</code></pre>
+
+  </div>
+</section>
+
+<!-- ============ 第六章 · 延伸问题 ============ -->
+<section class="chapter" id="ch6">
+  <span class="chapter-no">第六章 · 延伸问题</span>
+  <h2 class="chapter-title">延伸问题：等待期有没有下界</h2>
+
+  <div class="research-question">
+    <span class="tag-q">延伸问题</span>
+    <h4>48 小时自动收录的等待时长，是否存在信息论意义上的最优下界？</h4>
+    <p><span class="rq-label">理论分析：</span>把人审漏斗看成一个假设检验：抽取器给出候选卡（假设），用户后续行为与对话是观测证据，收录 = 接受假设。等待期的<strong>收益</strong>来自「等待期间新增的对话可能确认或否证这张卡」——48 小时恰好覆盖两个业务日的夜间作业，让第二天的聊天成为第一天抽取的独立证据源；等待期越长，可累积证据越多，入库卡的查准率越高。等待期的<strong>成本</strong>有三项：其一，按 README 流程，pending 卡不入长期记忆库，等待期内对这类新事实的<strong>查全率为 0</strong>（用户今天说的规则，后天才能被召回）；其二，积压线性增长（<code>ready_count</code>/<code>overdue</code> 指标），人审负担挤占别的交互；其三，信息会过期——事件类记忆的时效半衰（参考 Anima 的 45 天尺度）意味着等待期本身就在消耗记忆的可用价值。因此最优等待期 <i>w</i><sup>*</sup> 应当使「查准增益(w) + 证据累积(w)」与「查全损失(w) + 积压成本(w) + 时效损失(w)」相抵；若每类记忆的错误发现率随等待时间的边际增益递减，则存在一个由<strong>最少额外观测数</strong>决定的下界——低于它，人审与自动收录的差别在统计上不可分辨，等待就只是纯损失。</p>
+    <p><span class="rq-label">研究方向：</span>① <strong>按记忆类型差异化等待期</strong>——琥珀的归档规则已经按类型分档（规则/边界与高情感约 1 年、里程碑至少 1 年、稳定事实约半年、普通事件约 4 个月），把同一思想搬到审核端：规则与边界类错一次代价最高 → 长等待 + 必人审，事件类时效敏感 → 短等待 + 高自动率。② <strong>自适应等待</strong>——用抽取置信度、实体冲突检测、后续对话中的独立确认次数动态调整 <code>review_ready_at</code>，而非固定 48。③ <strong>用采纳数据反标错误率</strong>——琥珀已经在记录「真正被用上的记忆」而非只看是否被搜到（生命周期里的「被想起」环节），这批 stats 可以反过来估计各类型卡的错误发现率，从而把 <i>w</i><sup>*</sup> 从理论下界拟合为经验曲线。④ <strong>跨系统对照</strong>——MemoraX 的即时写回 + 影响披露、续忆的即时可纠错、琥珀的 48h 漏斗，恰好是「零等待 / 零等待可撤销 / 有等待」三档，可作为等待期实验的三个天然基线。</p>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>四个项目其实是四种「记忆供给策略」</h4>
+    <p>MemoraX <strong>推</strong>（节奏注入 1/6/11）、琥珀 <strong>拉</strong>（三路召回按句取卡）、续忆 <strong>推拉兼备</strong>（抑制/纠正后按需检索 + 词法兜底）、Anima <strong>算</strong>（线性打分把排序责任压进公式）。治理上则对应：即时写回可披露、48h 人审、即时可撤销、可解释打分——OIA 不必发明新机制，把这四档按记忆类型分配即可。</p>
+    <p class="cite">出处：四份 README 与 code-level-notes §4–§7 综合。</p>
+  </div>
+</section>
+
+</div><!-- /wrap -->
+
+<!-- ============ 页脚 ============ -->
+<footer class="site">
+  <div class="inner">
+    <h4>OIA 读书会 · 第 4 篇 / 6 — MemoraX × 社区三件套</h4>
+    <div class="post-nav">
+      <a href="../index.html"><span class="no">首页</span><span class="t">OIA 读书会门户</span><span class="d">系列总览与阅读路线</span></a>
+      <a href="01-tencentdb-memory.html"><span class="no">第 1 篇</span><span class="t">腾讯云记忆</span><span class="d">分层金字塔 × 符号画布</span></a>
+      <a href="02-rolling-memory.html"><span class="no">第 2 篇</span><span class="t">rolling-memory</span><span class="d">信息量即权重的词法内核</span></a>
+      <a href="03-hy-graphmemix.html"><span class="no">第 3 篇</span><span class="t">Hy × GraphMemix</span><span class="d">双过程认知 × diff-chain</span></a>
+      <a href="04-memorax-community.html"><span class="no">第 4 篇 · 本页</span><span class="t">MemoraX × 社区</span><span class="d">四类边界 · 人审治理 · 用户主权</span></a>
+      <a href="05-omni-papers.html"><span class="no">第 5 篇</span><span class="t">论文 · 主动性</span><span class="d">何时出声、何时沉默、怎么说</span></a>
+      <a href="06-dsh-pi-oia.html"><span class="no">第 6 篇</span><span class="t">DSH × Pi × OIA</span><span class="d">基座、隔离红线与总体设计</span></a>
+    </div>
+    <div class="fine">
+      诚实声明：本页全部结论来自本地存档的 README 与源码实读（docs/sources/、docs/code-level-notes.md），未引入存档之外的事实。凡属项目自报的数字——续忆 20 题盲测（16 / 4 / 13，项目自报的自建测试，2026-11-11）、琥珀 1 GB 服务器实测规模——均标注「自报·未复现」，本系列未做独立复现；琥珀亦自述召回效果尚无公开评测数字。各仓库许可以各自 README 为准：MemoraX Code 为 MIT、续忆为 MIT、琥珀之心为 AGPL-3.0、Anima Brain 为 MIT；本页代码摘录仅作教学引用并逐处标注文件路径。本页为离线单文件 HTML，无任何外部网络请求。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

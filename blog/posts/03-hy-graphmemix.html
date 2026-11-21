@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hy-Memory × GraphMemix：双过程认知 × diff-chain × 查询感知证据森林 · OIA 读书会</title>
+<link rel="stylesheet" href="../assets/css/style.css">
+</head>
+<body>
+
+<!-- ══════════════ Hero（模板 A） ══════════════ -->
+<div class="hero">
+  <div class="hero-wrap">
+    <div class="hero-badge">OIA 读书会 · 第 3 篇 / 6 · Apache-2.0</div>
+    <h1>Hy-Memory × GraphMemix：<br>双过程认知 × diff-chain × 查询感知证据森林</h1>
+    <div class="hero-tagline">System1/System2 节律 × 被撤回版本的唯一救法 × 预算化证据选择</div>
+    <div class="hero-desc">一篇讲「记忆怎么写、怎么长」，一篇讲「记忆怎么被挑出来」——前者把整理挪出对话延迟，后者把召回改写成带预算的证据组合优化。</div>
+
+    <div class="hero-art">
+      <div class="cover-frame">
+        <!-- 自绘水墨封面：双过程脑区 + 版本链 + 证据森林 三意象融合 -->
+        <svg viewBox="0 0 800 340" width="800" height="340" role="img" aria-label="水墨封面：双过程脑区、版本链与证据森林">
+          <defs>
+            <linearGradient id="paperG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f7f4ec"/>
+              <stop offset="1" stop-color="#efe9dc"/>
+            </linearGradient>
+            <radialGradient id="washLav" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#c084fc" stop-opacity="0.50"/>
+              <stop offset="1" stop-color="#c084fc" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="washGold" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#d9b45b" stop-opacity="0.55"/>
+              <stop offset="1" stop-color="#d9b45b" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="washInk" cx="0.5" cy="0.5" r="0.5">
+              <stop offset="0" stop-color="#23212c" stop-opacity="0.30"/>
+              <stop offset="1" stop-color="#23212c" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+
+          <rect x="0" y="0" width="800" height="340" fill="url(#paperG)"/>
+          <ellipse cx="150" cy="120" rx="200" ry="140" fill="url(#washLav)"/>
+          <ellipse cx="660" cy="220" rx="210" ry="150" fill="url(#washGold)"/>
+          <ellipse cx="430" cy="70" rx="240" ry="110" fill="url(#washInk)"/>
+
+          <!-- 意象一：双过程脑区（左） -->
+          <g stroke="#23212c" stroke-width="2.4" fill="none" stroke-linecap="round">
+            <path d="M52,158 C50,112 92,80 134,92 C166,68 214,84 222,124 C236,158 214,204 172,206 C132,224 84,206 66,182 C56,172 52,166 52,158 Z"
+                  fill="#f3e8ff" fill-opacity="0.75"/>
+            <path d="M137,90 C126,124 146,150 132,206" stroke-width="2"/>
+            <path d="M78,132 C104,138 112,152 108,168" stroke-width="1.6" opacity="0.75"/>
+            <path d="M186,120 C166,132 164,150 176,164" stroke-width="1.6" opacity="0.75"/>
+            <path d="M154,104 C170,120 168,138 154,150" stroke-width="1.6" opacity="0.75"/>
+          </g>
+          <circle cx="96" cy="150" r="7" fill="#a855f7"/>
+          <circle cx="196" cy="150" r="7" fill="#b8860b"/>
+          <text x="96" y="180" font-size="13" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC',serif" font-weight="700">快</text>
+          <text x="196" y="180" font-size="13" fill="#8a6508" text-anchor="middle" font-family="'Noto Serif SC',serif" font-weight="700">慢</text>
+          <text x="140" y="236" font-size="12.5" fill="#4a4657" text-anchor="middle" letter-spacing="3" font-family="'Noto Serif SC',serif">双过程脑区</text>
+
+          <!-- 意象二：版本链（中） -->
+          <g stroke="#23212c" stroke-width="2.2" fill="#ffffff" stroke-linejoin="round">
+            <path d="M400,74 L452,74 L452,120 L400,120 Z" transform="rotate(-5 426 97)"/>
+            <path d="M394,150 L446,150 L446,196 L394,196 Z"/>
+            <path d="M400,226 L452,226 L452,272 L400,272 Z" transform="rotate(5 426 249)"/>
+            <path d="M426,120 L426,150 M426,196 L426,226" stroke-dasharray="5 5" stroke-width="2"/>
+          </g>
+          <g stroke="#10b981" stroke-width="3" stroke-linecap="round">
+            <path d="M408,88 L434,88 M421,81 L421,95" transform="rotate(-5 426 97)"/>
+            <path d="M406,164 L434,164"/>
+          </g>
+          <g stroke="#f43f5e" stroke-width="3" stroke-linecap="round">
+            <path d="M406,178 L434,178"/>
+            <path d="M408,244 L434,244 M421,237 L421,251" transform="rotate(5 426 249)"/>
+          </g>
+          <text x="426" y="300" font-size="12.5" fill="#4a4657" text-anchor="middle" letter-spacing="3" font-family="'Noto Serif SC',serif">版本链</text>
+
+          <!-- 意象三：证据森林（右） -->
+          <g stroke="#23212c" stroke-width="2.2" fill="none" stroke-linecap="round">
+            <path d="M556,246 L556,214" /><path d="M536,214 C536,190 546,176 556,172 C566,176 576,190 576,214 Z" fill="#e9d5ff" fill-opacity="0.8"/>
+            <path d="M614,250 L614,196" /><path d="M590,196 C590,164 602,146 614,140 C626,146 638,164 638,196 Z" fill="#f3e8ff" fill-opacity="0.9"/>
+            <path d="M676,246 L676,216" /><path d="M658,216 C658,196 666,184 676,180 C686,184 694,196 694,216 Z" fill="#fde68a" fill-opacity="0.8"/>
+            <path d="M734,250 L734,182" /><path d="M712,182 C712,150 723,132 734,126 C745,132 756,150 756,182 Z" fill="#d1fae5" fill-opacity="0.85"/>
+            <path d="M528,250 C600,242 690,256 768,248" stroke-width="2.6"/>
+          </g>
+          <path d="M614,140 C640,118 672,120 700,134" stroke="#b8860b" stroke-width="2" stroke-dasharray="6 5" fill="none"/>
+          <text x="660" y="300" font-size="12.5" fill="#4a4657" text-anchor="middle" letter-spacing="3" font-family="'Noto Serif SC',serif">证据森林</text>
+
+          <!-- 题字 -->
+          <text x="400" y="326" font-size="27" fill="#23212c" text-anchor="middle" letter-spacing="8"
+                font-family="'Noto Serif SC','Source Han Serif SC',serif" font-weight="900">双过程 · 版本链 · 证据林</text>
+
+          <!-- 泥金印 -->
+          <rect x="24" y="278" width="44" height="44" rx="6" fill="#b8860b" fill-opacity="0.92"/>
+          <text x="46" y="309" font-size="24" fill="#fff" text-anchor="middle"
+                font-family="'Noto Serif SC',serif" font-weight="900">三</text>
+          <text x="778" y="30" font-size="12" fill="#787887" text-anchor="end" letter-spacing="2"
+                font-family="'Noto Serif SC',serif">Hy-Memory × GraphMemix</text>
+        </svg>
+      </div>
+      <div class="hero-caption">封面自绘：左为快/慢双过程脑区，中为挂了三版 diff 的版本链，右为被预算线约束的证据森林——三幅意象即本页三章。</div>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat"><b>8 层</b><span>Chat 认知层级</span></div>
+      <div class="stat"><b>3 档</b><span>lite · pro · ultra</span></div>
+      <div class="stat"><b>2 张表</b><span>diff-chain 存储</span></div>
+      <div class="stat"><b>3 组件</b><span>证据森林构造</span></div>
+    </div>
+  </div>
+  <div class="scroll-hint">向下滚动<span>▾</span></div>
+</div>
+
+<!-- ══════════════ 导航条 ══════════════ -->
+<nav class="navbar">
+  <span class="brand">OIA 读书会<i>·</i></span>
+  <a href="../index.html">首页</a>
+  <a href="01-tencentdb-memory.html">腾讯云记忆</a>
+  <a href="02-rolling-memory.html">rolling-memory</a>
+  <a href="03-hy-graphmemix.html" class="active">Hy×GraphMemix</a>
+  <a href="04-memorax-community.html">MemoraX×社区</a>
+  <a href="05-omni-papers.html">论文·主动性</a>
+  <a href="06-dsh-pi-oia.html">DSH×Pi×OIA</a>
+</nav>
+
+<div class="wrap">
+
+<!-- ══════════════ 第 1 章 ══════════════ -->
+<section class="chapter" id="ch1">
+  <span class="chapter-no">CHAPTER 01</span>
+  <h2 class="chapter-title">双过程节律：快检索 + 慢整理</h2>
+
+  <p class="lead">Hy-Memory 的 README 快照开宗明义：这是一个 <b>production-grade dual-system cognitive memory</b>（生产级双过程认知记忆引擎），三场景（chat / working / coding）各有一条管线。但真正决定它「像不像认知系统」的，不是场景路由，而是<b>读写与整理在时间轴上被刻意错开</b>这件事。</p>
+
+  <h3>System 1：每一轮都要在场的快路径</h3>
+  <p>lite 与 pro 承担 System 1。<code>add()</code> / <code>search()</code> 在对话轮内同步完成：lite 是纯向量读写——README 快照写明它 <b>raw-only embedding writes and searches, no LLM calls</b>，连 <code>scene</code> 和 <code>layers</code> 都被忽略；pro 在其上加 <b>LLM 抽取 + 对账（reconcile）</b>，图库可选（<code>MEMORY_ENABLE_GRAPH</code>，默认关）。这条路径的 KPI 只有一个：<b>不拖慢这一轮对话</b>。</p>
+
+  <h3>System 2：被显式叫醒的慢路径</h3>
+  <p>ultra 模式多出的是 schema 归纳与跨域清扫（cross-domain sweeper），它们<b>由 <code>client.evolve(user_id=...)</code> 触发</b>，不是每轮自动跑；图库在 ultra 下常开（Kuzu 默认 / Neo4j 可选）。README 快照的新闻栏还提到 <b>nightly evolve</b>（夜间演化）——即「定时 + 显式调用」两种唤醒方式并存。</p>
+
+  <table class="tbl">
+    <tr><th>模式</th><th>做什么</th><th>图库</th><th>LLM 调用</th><th>适用</th></tr>
+    <tr><td><b>lite</b></td><td>仅原文嵌入读写；忽略 <code>scene</code> / <code>layers</code></td><td>无</td><td><b>零</b></td><td>纯向量 RAG、快速摄入</td></tr>
+    <tr><td><b>pro</b></td><td>lite + LLM 抽取 + 对账</td><td>可选（默认关）</td><td>每轮抽取/对账</td><td>标准负载</td></tr>
+    <tr><td><b>ultra</b></td><td>pro + System 2 schema 归纳 + 跨域清扫（<code>evolve()</code> 触发）</td><td><b>常开</b></td><td>写路径 + 演化期集中</td><td>完整认知架构</td></tr>
+  </table>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 1：System1/System2 双轨节律 -->
+      <svg viewBox="0 0 760 300" role="img" aria-label="System1 与 System2 双轨节律图">
+        <defs>
+          <linearGradient id="trackTop" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#c084fc"/><stop offset="1" stop-color="#a855f7"/>
+          </linearGradient>
+          <linearGradient id="trackBot" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0" stop-color="#d9b45b"/><stop offset="1" stop-color="#b8860b"/>
+          </linearGradient>
+        </defs>
+
+        <!-- 上轨：System 1 -->
+        <text x="24" y="66" font-size="15" fill="#7e22ce" font-weight="700" font-family="'Noto Serif SC',serif">System 1</text>
+        <text x="24" y="86" font-size="12" fill="#787887">即时读写</text>
+        <line x1="130" y1="72" x2="736" y2="72" stroke="url(#trackTop)" stroke-width="6" stroke-linecap="round"/>
+        <g fill="#ffffff" stroke="#a855f7" stroke-width="2.5">
+          <circle cx="180" cy="72" r="11"/><circle cx="270" cy="72" r="11"/><circle cx="360" cy="72" r="11"/>
+          <circle cx="450" cy="72" r="11"/><circle cx="540" cy="72" r="11"/><circle cx="630" cy="72" r="11"/>
+        </g>
+        <g font-size="11" fill="#4a4657" text-anchor="middle" font-family="'Noto Serif SC',serif">
+          <text x="180" y="46">第 1 轮</text><text x="270" y="46">第 2 轮</text><text x="360" y="46">第 3 轮</text>
+          <text x="450" y="46">第 4 轮</text><text x="540" y="46">第 5 轮</text><text x="630" y="46">第 6 轮</text>
+        </g>
+        <text x="700" y="50" font-size="12" fill="#7e22ce" font-weight="700">add()</text>
+        <text x="700" y="94" font-size="12" fill="#7e22ce" font-weight="700">search()</text>
+
+        <!-- 下轨：System 2 -->
+        <text x="24" y="216" font-size="15" fill="#8a6508" font-weight="700" font-family="'Noto Serif SC',serif">System 2</text>
+        <text x="24" y="236" font-size="12" fill="#787887">慢整理</text>
+        <line x1="130" y1="222" x2="736" y2="222" stroke="url(#trackBot)" stroke-width="6" stroke-linecap="round" stroke-dasharray="14 10"/>
+        <!-- 夜间 / 显式 evolve 节点 -->
+        <g>
+          <circle cx="330" cy="222" r="16" fill="#fef3c7" stroke="#b8860b" stroke-width="2.5"/>
+          <path d="M336,214 a9,9 0 1 0 0,16 a11,11 0 0 1 0,-16 Z" fill="#b8860b"/>
+          <circle cx="600" cy="222" r="16" fill="#f3e8ff" stroke="#a855f7" stroke-width="2.5"/>
+          <text x="600" y="227" font-size="13" fill="#7e22ce" text-anchor="middle" font-weight="700">evo</text>
+        </g>
+        <g font-size="11.5" fill="#4a4657" text-anchor="middle" font-family="'Noto Serif SC',serif">
+          <text x="330" y="258">夜间 nightly evolve</text>
+          <text x="600" y="258">显式 client.evolve()</text>
+        </g>
+
+        <!-- 慢整理向上传递的成果 -->
+        <g stroke="#10b981" stroke-width="2.4" fill="none" stroke-dasharray="6 5">
+          <path d="M330,204 C330,160 420,140 470,96"/>
+          <path d="M600,204 C600,150 560,120 500,96"/>
+        </g>
+        <g font-size="12" fill="#065f46" font-weight="700" font-family="'Noto Serif SC',serif">
+          <text x="386" y="152">schema 归纳</text>
+          <text x="546" y="146">跨域清扫</text>
+        </g>
+
+        <!-- 注释 -->
+        <rect x="130" y="118" width="250" height="52" rx="10" fill="#ffffff" stroke="#e9d5ff"/>
+        <text x="146" y="140" font-size="11.5" fill="#4a4657">整理期间读写不阻塞：</text>
+        <text x="146" y="158" font-size="11.5" fill="#4a4657">两轨并行，慢活只吃后台预算</text>
+      </svg>
+    </div>
+    <figcaption><b>图 1</b>　双过程节律：上轨为每轮同步的 System 1 读写（lite/pro），下轨为夜间或显式 <code>evolve()</code> 唤醒的 System 2 慢整理（ultra），整理成果（schema 归纳、跨域清扫）以异步方式回流，不阻塞任何一轮对话。</figcaption>
+  </div>
+
+  <h3>为什么整理必须与读写解耦——延迟预算</h3>
+  <p>把 schema 归纳塞进 <code>add()</code> 是最直觉的方案，也是最贵的：归纳要遍历图、要比对冲突、要跑一次长 prompt 的 LLM 调用，这些全都会落在<b>用户正在等的那一轮</b>上。<code>evolve()</code> 把它们整体挪出 P95 延迟路径，代价则是——<b>两次 evolve 之间，记忆保持「未归纳」状态</b>：L6 心智模型可能是旧的，跨域冲突可能还挂着。这是一个明确的换算：用「结构的新鲜度」换「对话的响应性」。</p>
+  <p><b>替代方案盘点：</b>① 每轮都整理——延迟爆炸，等于放弃 System 1；② 纯后台定时线程——不可控，且与写入竞争（README 快照显示它选了 nightly evolve + 显式 <code>evolve()</code> 的混合，两条都留）；③ 全量离线批摘要——这正是 GraphMemix 摘要里点名的第一坑（见第 4 章）。Hy-Memory 的选择是<b>只在被问到时才整理</b>，整理本身也带触发条件，而不是无条件重算。</p>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>双过程不是两个模型，是两笔预算</h4>
+    <p>System 1 与 System 2 的差别不在「聪明程度」，而在<b>被允许花多少时间</b>：前者花在每一轮的延迟预算里（lite 甚至把 LLM 预算设为 0），后者花在没人等的离线预算里。任何把慢活塞进同步路径的系统，最后都会被迫把慢活砍掉——解耦是让慢活<b>活下来</b>的前提，而不是让它跑得更快。</p>
+    <p class="cite">出处：docs/sources/hy-memory.md（README 快照 · 三场景 / Modes 表 / evolve() API）</p>
+  </div>
+
+  <p><b>跨文连接（第 2 篇）：</b>rolling-memory 的零成本词法层与这里的 lite 档是同一个直觉——<b>检索/写入的底线路径必须不依赖 LLM</b>，模型只做增量增值。区别在于 rolling 把「零成本」做进了权重公式，Hy-Memory 把它做成了运行档位。</p>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 2 章 ══════════════ -->
+<section class="chapter" id="ch2">
+  <span class="chapter-no">CHAPTER 02</span>
+  <h2 class="chapter-title">八层结构与 L7 前瞻意图</h2>
+
+  <p class="lead">chat 场景的记忆是一条 L0→L7 的抽象梯子：从原始对话逐层蒸馏到事实、摘要、心智模型，最顶层放的是<b>「将来要做什么」</b>——前瞻性记忆（prospective memory）。README 快照的层级表如下：</p>
+
+  <table class="tbl">
+    <tr><th>层</th><th>名字</th><th>内容</th></tr>
+    <tr><td>L0</td><td><code>BASIC_INFO</code></td><td>基本信息</td></tr>
+    <tr><td>L1</td><td><code>RAW</code></td><td>原始对话（append-only）</td></tr>
+    <tr><td>L2</td><td><code>FACT</code></td><td>原子事实（<b>版本化、不可变</b>记录）</td></tr>
+    <tr><td>L3</td><td><code>SUMMARY</code></td><td>会话摘要</td></tr>
+    <tr><td>L4</td><td><code>IDENTITY</code></td><td>保留（Reserved）</td></tr>
+    <tr><td>L5</td><td><code>KNOWLEDGE</code></td><td>保留（Reserved）</td></tr>
+    <tr><td>L6</td><td><code>SCHEMA</code></td><td>心智模型（抽象叙事模板，图层）</td></tr>
+    <tr><td>L7</td><td><code>INTENTION</code></td><td><b>前瞻意图（带过期；过期后降级为普通事实）</b></td></tr>
+  </table>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 2：八层塔 + L7 触发/过期箭头 -->
+      <svg viewBox="0 0 760 330" role="img" aria-label="L0 到 L7 八层塔与 L7 意图的触发、过期箭头">
+        <!-- 八层梯形，底宽顶窄 -->
+        <g font-family="'Noto Serif SC',serif" font-size="13" text-anchor="middle">
+          <polygon points="20,300 580,300 556,270 44,270" fill="#efe9dc" stroke="#23212c" stroke-width="1.4"/>
+          <text x="300" y="291" fill="#23212c">L0　BASIC_INFO　基本信息</text>
+          <polygon points="44,270 556,270 532,240 68,240" fill="#f3e8ff" stroke="#23212c" stroke-width="1.4"/>
+          <text x="300" y="261" fill="#23212c">L1　RAW　原始对话</text>
+          <polygon points="68,240 532,240 508,210 92,210" fill="#e9d5ff" stroke="#23212c" stroke-width="1.4"/>
+          <text x="300" y="231" fill="#23212c">L2　FACT　版本化原子事实</text>
+          <polygon points="92,210 508,210 484,180 116,180" fill="#f3e8ff" stroke="#23212c" stroke-width="1.4"/>
+          <text x="300" y="201" fill="#23212c">L3　SUMMARY　会话摘要</text>
+          <polygon points="116,180 484,180 460,150 140,150" fill="#faf8f5" stroke="#23212c" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <text x="300" y="171" fill="#787887">L4　IDENTITY　保留</text>
+          <polygon points="140,150 460,150 436,120 164,120" fill="#faf8f5" stroke="#23212c" stroke-width="1.4" stroke-dasharray="5 4"/>
+          <text x="300" y="141" fill="#787887">L5　KNOWLEDGE　保留</text>
+          <polygon points="164,120 436,120 412,90 188,90" fill="#d1fae5" stroke="#23212c" stroke-width="1.4"/>
+          <text x="300" y="111" fill="#065f46">L6　SCHEMA　心智模型</text>
+          <polygon points="188,90 412,90 388,60 212,60" fill="#fde68a" stroke="#b8860b" stroke-width="2.2"/>
+          <text x="300" y="81" fill="#78350f" font-weight="700">L7　INTENTION　前瞻意图</text>
+        </g>
+
+        <!-- 抽象方向 -->
+        <path d="M610,300 L610,60" stroke="#787887" stroke-width="2" stroke-dasharray="6 5"/>
+        <polygon points="610,52 604,66 616,66" fill="#787887"/>
+        <text x="626" y="186" font-size="12" fill="#787887" font-family="'Noto Serif SC',serif">抽象度 ↑</text>
+
+        <!-- L7 触发箭头（出去） -->
+        <path d="M414,74 C500,44 560,40 636,44" stroke="#a855f7" stroke-width="2.6" fill="none"/>
+        <polygon points="646,44 632,38 632,50" fill="#a855f7"/>
+        <rect x="636" y="26" width="118" height="40" rx="9" fill="#f3e8ff" stroke="#a855f7"/>
+        <text x="695" y="44" font-size="12" fill="#7e22ce" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">时间/事件触发</text>
+        <text x="695" y="60" font-size="11" fill="#7e22ce" text-anchor="middle" font-family="'Noto Serif SC',serif">→ 主动回响</text>
+
+        <!-- L7 过期降级箭头（下到 L2） -->
+        <path d="M400,96 C470,140 520,180 516,208" stroke="#f43f5e" stroke-width="2.6" fill="none" stroke-dasharray="8 5"/>
+        <polygon points="516,218 510,204 522,204" fill="#f43f5e"/>
+        <rect x="530" y="150" width="180" height="56" rx="9" fill="#ffe4e6" stroke="#f43f5e"/>
+        <text x="620" y="172" font-size="12" fill="#9f1239" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">expiry 到期</text>
+        <text x="620" y="192" font-size="11.5" fill="#9f1239" text-anchor="middle" font-family="'Noto Serif SC',serif">降级为 L2 普通事实</text>
+
+        <!-- 关怀型标注 -->
+        <rect x="20" y="18" width="150" height="34" rx="9" fill="#ffffff" stroke="#b8860b"/>
+        <text x="95" y="40" font-size="11.5" fill="#8a6508" text-anchor="middle" font-family="'Noto Serif SC',serif">is_proactive_care 关怀型</text>
+        <path d="M170,40 C190,44 200,52 210,58" stroke="#b8860b" stroke-width="2" fill="none"/>
+        <polygon points="216,60 204,58 208,50" fill="#b8860b"/>
+      </svg>
+    </div>
+    <figcaption><b>图 2</b>　八层塔与 L7 的双向生命周期：意图被时间/事件触发时向未来「主动回响」，expiry 到期后不删除、而是<b>降级挂回 L2 普通事实</b>——内容保留，触发权撤销。</figcaption>
+  </div>
+
+  <h3>L7 字段与三个消费点</h3>
+  <p>意图的字段定义在 <code>hy_memory/agent/intention_detector.py</code> 的提示词里（本地源码存档，前 80 行实读）：<code>content</code>、<code>trigger_type</code>（<code>time_based</code> / <code>event_based</code>）、<code>trigger_condition</code>、<code>trigger_time</code>（ISO 时间，非时间型为 null）、<code>trigger_event_pattern</code>、<code>priority</code>（high/medium/low）、<code>expiry</code>（ISO 过期时间，可为 null）、<code>is_proactive_care</code>（关怀型）。提示词还单列了第三类触发——<b>关怀型</b>：「考试快到了好紧张」不是明确计划，但系统应在考后关心结果。</p>
+  <p>该模块的 docstring 列出三个消费点：<b>① Write Path（System 1）轻量检测、快速入队</b>；<b>② Read Path 检查当前对话是否触发已有意图</b>；<b>③ System 2 深度分析意图细节、设置触发条件</b>——即 L7 同样吃双过程节律：入队要快，条件精化可以慢。</p>
+
+  <div class="math">
+    意图存活 <span class="op">⟺</span> expiry <span class="op">=</span> null <span class="op">∨</span> now <span class="op">&lt;</span> expiry；
+    过期 <span class="op">⟹</span> 降级为 L2 普通事实（保留 <code>content</code>，撤销触发权）
+  </div>
+  <div class="math-note">过期不是删除——这条生命周期与第 4 篇的「记忆养护/归档」是同一治理直觉</div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「降级」比「删除」和「永久保留」都好</h4>
+    <p>过期意图有两种朴素处理：删掉（丢内容）或永远留着（未来某天误触发，拿三个月前的承诺骚扰用户）。降级为普通事实是第三条路——<b>它作为「事实」仍然可被检索到</b>（用户问「我上次说要干嘛」时能答），但<b>不再拥有主动触发权</b>。触发权被显式回收，这正是主动性系统最需要的刹车。</p>
+    <p class="cite">出处：hy-memory README 快照 L7 行（"with an expiry; demoted to ordinary facts once expired"）</p>
+  </div>
+
+  <h3>一处源码与 README 的命名漂移（如实记录）</h3>
+  <p><code>intention_detector.py</code> 的 docstring 写着「<b>L6 层: 记住"将来要做什么"</b>」，而 README 快照的层级表把 L6 定为 SCHEMA、L7 定为 INTENTION。两份本地存档对不上——本页以 <b>README 快照的 L0–L7 表为层级名的准绳</b>，以<b>源码为准的只有字段与触发类型</b>。这类漂移不臆断、不调和，原样记录，是反幻觉写作的底线。</p>
+
+  <p><b>为什么/代价/替代：</b>把意图放进记忆系统而不是另起一个 reminder 模块，好处是意图能被上下文触发（「下次聊到旅行」必须靠对话内容判断，日历做不到）；代价是<b>误检会打扰</b>，所以 schema 里同时给了 priority 和 expiry 两道闸。替代方案是纯日程 crontab——零误检、零语义，但事件型触发根本无法表达。Hy-Memory 的答案是让三种触发（时间/事件/关怀）共用同一张表、同一套过期语义。</p>
+
+  <p><b>跨文连接（第 5 篇 · Coco 主动性）：</b><code>is_proactive_care</code> 正是主动性论文那一族问题的<b>数据侧落点</b>——第 5 篇讨论「何时出声」的策略，这里的关怀型意图提供了「出声的理由」；两者合起来才是完整的干预链：<i>检测到该关心的信号 → 策略器决定现在说还是沉默 → 表达层决定怎么说</i>。OIA 侧对应 InterventionPolicy 的 SEEK_FEEDBACK / 关怀通道（见 code-level-notes §3.2）。</p>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 3 章 ══════════════ -->
+<section class="chapter" id="ch3">
+  <span class="chapter-no">CHAPTER 03</span>
+  <h2 class="chapter-title">diff-chain：装饰器不是检索器</h2>
+
+  <p class="lead"><code>chain_store.py</code>（924 行，本地存档实读前 120 行）的 docstring 自称设计文档，第一句话就划清了边界——<b>「它是装饰器, 不是检索器」</b>：</p>
+
+  <blockquote>向量层(hy_mem / 任何 RAG)负责「给哪几条 fact」—— top-k、阈值、排序全归它。<br>
+  本模块只负责「每条 fact 后面跟什么」: 把那条 fact 讲的那处代码, 在这条分支上的<b>全部改动版本</b>(每版的用户原话 + 每版的真实 diff)按顺序挂在它下面。<br>
+  不做相似度、不做 top-k、不选版本、不猜哪版是最终答案。判定权交给指令本身。<br>
+  <span style="font-size:.82em;color:#787887">—— hy_memory/coding/chain_store.py docstring（源码原文，本地存档）</span></blockquote>
+
+  <h3>为什么必须存 diff：200 字预算与「读不回来的版本」</h3>
+  <p>事实抽取的 prompt <b>明文要求砍代码</b>（同 docstring 引用 <code>extractor.py</code>）：「A record that omits the branch but quotes 30 lines of diff is a bad trade.」「EXACT COORDINATES, NOT PASTED CODE」，硬上限约 200 汉字。这个取舍在通用场景下是对的——200 字里 <code>feat/x</code> 这一个 token 的价值远超 30 行 diff，而代码「可以回去读」。</p>
+  <p><b>但它假定的前提有个洞：被撤掉那版的代码读不回来。</b>它不在工作树、不在 HEAD，只可能在某次中间提交里；对话里 <code>s.replace</code> 式的合成编辑甚至从未有过 commit。于是出现一个信息论死角——<b>摘要机制系统性丢弃的，恰好是最不可再生的那一类信息</b>。</p>
+  <p>diff-chain 的回答是<b>不跟那 200 字抢</b>：抽取 prompt 一个字不改，本模块零 LLM 地把每版真实 patch 存下来。补的不是「抽取质量」，是 LLM 摘要必然丢掉的那一类信息。</p>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 3：thread/round 版本链 -->
+      <svg viewBox="0 0 760 330" role="img" aria-label="thread 与 round 两表构成的版本链示意">
+        <!-- fact 卡 -->
+        <rect x="30" y="30" width="250" height="74" rx="12" fill="#f3e8ff" stroke="#a855f7" stroke-width="2"/>
+        <text x="48" y="56" font-size="13" fill="#7e22ce" font-weight="700" font-family="'Noto Serif SC',serif">向量层返回的 fact</text>
+        <text x="48" y="78" font-size="12" fill="#4a4657" font-family="'Noto Serif SC',serif">「修了 search 客户端的超时」</text>
+        <text x="48" y="96" font-size="11" fill="#787887" font-family="'Noto Serif SC',serif">坐标：src/search.py · fix/search-timeout</text>
+
+        <!-- 装饰器挂载 -->
+        <path d="M280,68 L336,68" stroke="#a855f7" stroke-width="2.6"/>
+        <polygon points="346,68 332,62 332,74" fill="#a855f7"/>
+        <rect x="350" y="44" width="120" height="48" rx="10" fill="#ffffff" stroke="#23212c" stroke-width="1.6"/>
+        <text x="410" y="64" font-size="12.5" fill="#23212c" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">chain 挂载</text>
+        <text x="410" y="82" font-size="11" fill="#787887" text-anchor="middle" font-family="'Noto Serif SC',serif">零 LLM · 不排序</text>
+
+        <!-- thread 条 -->
+        <rect x="30" y="130" width="700" height="34" rx="9" fill="#efe9dc" stroke="#23212c" stroke-width="1.6"/>
+        <text x="46" y="152" font-size="12.5" fill="#23212c" font-weight="700" font-family="'Noto Serif SC',serif">thread 表：owner = user|workspace　·　branch = fix/search-timeout　·　file = src/search.py　·　symbol = search_timeout　·　n_rounds = 3</text>
+        <path d="M410,92 L410,130" stroke="#a855f7" stroke-width="2.6"/>
+        <polygon points="410,138 404,124 416,124" fill="#a855f7"/>
+
+        <!-- 三个 round 卡 -->
+        <g font-family="'Noto Serif SC',serif">
+          <!-- v1 -->
+          <rect x="30" y="186" width="220" height="120" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="1.6"/>
+          <text x="46" y="208" font-size="12.5" fill="#7e22ce" font-weight="700">round · seq = 1</text>
+          <text x="46" y="228" font-size="11.5" fill="#4a4657">原话：「超时改成 5 秒」</text>
+          <text x="46" y="252" font-size="11" fill="#10b981">+ timeout = 5</text>
+          <text x="46" y="270" font-size="11" fill="#10b981">+ retries = 1</text>
+          <text x="46" y="292" font-size="10.5" fill="#787887">patch：真实 diff，非复述</text>
+          <!-- v2 -->
+          <rect x="270" y="186" width="220" height="120" rx="12" fill="#ffffff" stroke="#23212c" stroke-width="1.6"/>
+          <text x="286" y="208" font-size="12.5" fill="#7e22ce" font-weight="700">round · seq = 2</text>
+          <text x="286" y="228" font-size="11.5" fill="#4a4657">原话：「还是 3 秒吧」</text>
+          <text x="286" y="252" font-size="11" fill="#f43f5e">- timeout = 5</text>
+          <text x="286" y="270" font-size="11" fill="#10b981">+ timeout = 3</text>
+          <text x="286" y="292" font-size="10.5" fill="#787887">被撤回的版本只有这里有</text>
+          <!-- v3 -->
+          <rect x="510" y="186" width="220" height="120" rx="12" fill="#ffffff" stroke="#b8860b" stroke-width="2.2"/>
+          <text x="526" y="208" font-size="12.5" fill="#8a6508" font-weight="700">round · seq = 3</text>
+          <text x="526" y="228" font-size="11.5" fill="#4a4657">原话：「改成指数退避」</text>
+          <text x="526" y="252" font-size="11" fill="#f43f5e">- timeout = 3</text>
+          <text x="526" y="270" font-size="11" fill="#10b981">+ backoff = exp</text>
+          <text x="526" y="292" font-size="10.5" fill="#787887">最后一版 = 工作树现状</text>
+        </g>
+        <!-- 连接线 -->
+        <g stroke="#23212c" stroke-width="2">
+          <path d="M250,246 L270,246"/><path d="M490,246 L510,246"/>
+        </g>
+        <g fill="#23212c">
+          <polygon points="274,246 264,241 264,251"/><polygon points="514,246 504,241 504,251"/>
+        </g>
+        <text x="380" y="326" font-size="11.5" fill="#787887" text-anchor="middle" font-family="'Noto Serif SC',serif">seq = observe() 调用次数，纯物理计数，不推断谁覆盖谁</text>
+      </svg>
+    </div>
+    <figcaption><b>图 3</b>　thread/round 两表的版本链：向量层只负责给出 fact，chain 把该处代码在本分支上的每一版（用户原话 + 真实 diff）按 seq 顺序挂在下面——<b>seq 是调用计数而非语义版本号</b>，所以永远不存在「猜错覆盖关系」。</figcaption>
+  </div>
+
+  <h3>两表结构、隔离键与三级降级</h3>
+  <p><b>表：</b><code>thread(id, owner, branch, file, symbol, lo, hi, n_rounds, updated_at)</code> + <code>round(id, thread_id, seq, said, patch, adds, created_at)</code>（另有 <code>repo_symbol</code> 全仓 AST 索引，只用于「指令点名的函数在哪个文件」，<b>不参与分链</b>）。</p>
+  <p><b>隔离键：</b><code>owner = "&lt;user_id&gt;|&lt;workspace_id&gt;"</code> <b>必须进键</b>——没有它时用户 A 的 <code>feat/q4</code> 和 B 的 <code>feat/q4</code> 会并成同一条链，A 能读到 B 的 diff。空串 = 未指定且<b>只匹配空串</b>（不是公共池），单用户老库行为不变。这是安全边界，不是优化。</p>
+  <p><b>三级 thread 键降级（都在 owner 之内）：</b>① hunk header 带函数名 → (owner, branch, file, symbol, 行区间)；② 只有上下文无函数名 → (owner, branch, file, <b>行区间聚类</b>，<code>LINE_MERGE = 20</code> 行)；③ 裸 hunk 只有行号 → (owner, branch, file)。② 不直接降到文件粒度，否则同一文件所有改动挤成一条十几版的长链，分不清哪版对应哪件事。<b>也不用</b> <code>repo_symbol</code> 按行号反查补 ②——patch 里的行号是改后的、索引是改前建的，会系统性偏一个符号；hunk header 才是对的。</p>
+
+  <div class="math">
+    block_chars <span class="op">≤</span> MAX_BLOCK_CHARS <span class="op">=</span> 14000；
+    每版 code <span class="op">≤</span> 6 行 <span class="op">∪</span> 480 字；每版原话 <span class="op">≤</span> 800 字；
+    每 fact 挂链 <span class="op">≤</span> TOPN_THREADS <span class="op">=</span> 3，挂链 fact <span class="op">≤</span> TOPN_FACTS <span class="op">=</span> 1
+  </div>
+  <div class="math-note">全部为 chain_store.py 源码默认值（env 可调），非估算——见代码附录块 ③</div>
+
+  <h3>失败闸门：后果不对称论证</h3>
+  <p>对话里的合成编辑（<code>open → s.replace → 写回</code>）原先只要正则抓到 path/old/new 三段就当「改动发生了」，不看有没有成功。两类误判：agent <b>只是提议</b>改法（还在问「要我执行吗」），用户回「这个方案不对，别改」→ 照样存；编辑<b>失败</b>（<code>AssertionError: old not in s</code>）→ 失败的那版也进链。</p>
+  <p>源码注释给出的否决理由是<b>后果不对称</b>：链是「哪一版赢了」的唯一依据，掺进一个没生效的版本，agent 后续可能<b>照着一个从未存在的代码写</b>。这与该函数自己的原则（「抽错比抽不到更坏」的反面——此处抽错代价更高）一致：宁可少一版，不可错一版。</p>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>「装饰器」是接口纪律，不是修辞</h4>
+    <p>把编辑史做成独立检索器，就要回答「谁排前面」——于是要打分、要阈值、要跟向量层抢 top-k，两套排序互相不知道对方存在。声明自己是装饰器后，<b>排序权唯一归向量层</b>，本模块只保证「挂上来的东西全且真」。工程上这叫单一事实源；认知上这叫把「相关性判断」与「证据完备性」拆成两个可以分别验证的组件。</p>
+    <p class="cite">出处：hy_memory/coding/chain_store.py docstring「它是装饰器, 不是检索器」（本地存档）</p>
+  </div>
+
+  <p><b>代价与替代：</b>存储随版本数线性增长；注入预算被挤占（所以才有 SHOW_ALL=8、TOPN_THREADS=3、TOPN_FACTS=1 三层截断——源码注释明说「宁可少挂一条链也不把原话压短」，因为原话才是这个机制的核心信息）。替代方案：① 让抽取 prompt 带代码——源码明说这是 bad trade，且 30 行 diff 会挤掉 branch；② 依赖 git 历史——对话内合成编辑没有 commit，且需要 <code>MEMORY_CODING_CHAIN_REPO_ROOT</code> 配置；③ 让 LLM 改写 diff——有损且可能幻觉出从未存在的代码。零 LLM 的原样存 diff 是三者中唯一不引入新错误模式的。</p>
+
+  <p><b>跨文连接（第 1 篇）：</b>TencentDB 的抽取提示词同样强调「独立完整、宁缺毋滥」，与这里的 200 字坐标预算是同一种<b>写入端克制</b>；两者共同的推论是——摘要端越克制，越需要一个<b>零 LLM 的原始证据层</b>兜底（第 1 篇是原文档案，本篇是版本 diff）。</p>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 4 章 ══════════════ -->
+<section class="chapter" id="ch4">
+  <span class="chapter-no">CHAPTER 04</span>
+  <h2 class="chapter-title">GraphMemix：召回是预算化证据选择</h2>
+
+  <p class="lead">前三章讲记忆怎么被写好、长好；GraphMemix（arXiv 2608.26983v1）讲另一半——<b>被问到时，怎么从记忆里挑出一个「证据包」</b>。以下为本地存档 <code>docs/sources/papers-abstracts.md</code> §4 的摘要原文引用：</p>
+
+  <blockquote lang="en">
+  "Organizing long-term memory for multimodal agents remains challenging because existing methods either suffer from <b>expensive question-agnostic offline summaries</b> or <b>naive embedding similarity matching</b> that introduces incomplete and redundant context. To address this issue, we propose GraphMemix, a combinatorial-optimization graph memory framework that models memory organization as <b>query-aware evidence-forest construction</b>. Specifically, our method consists of three key components: (1) <b>candidate graph construction</b>, which expands multi-view seed memories through schema and semantic relations to obtain query-aware original context; (2) <b>evidence utility and activation costs</b>, which decouples direct memory support from anchor-conditioned relation verification to suppress redundant or conflicting information; and (3) <b>forest optimization</b>, which jointly selects a forest-format memory context under a maximum evidence budget and its reliable relational structure. By organizing memory into a query-relevant subgraph, the method avoids substantial lifecycle cost and recovers <b>low-similarity complementary evidence</b>. Experimental results across four long-term multimodal memory benchmarks demonstrate significant improvements with different foundation models and establish a new <b>Pareto frontier between accuracy and lifecycle cost</b>."
+  <span style="font-size:.82em;color:#787887">—— papers-abstracts.md §4 摘要原文（本页唯一引用源，未读全文）</span>
+  </blockquote>
+
+  <h3>三组件拆解</h3>
+  <ol>
+    <li><b>候选图构造（candidate graph construction）</b>：从多视角种子记忆出发，沿 schema 关系与语义关系扩展，得到「查询感知的原始上下文」——注意扩展是<b>围绕查询</b>的，不是全库遍历。</li>
+    <li><b>证据效用与激活成本（evidence utility and activation costs）</b>：把「直接记忆支持」与「锚点条件关系验证」<b>解耦</b>，用激活成本抑制冗余与冲突信息——相似不代表有用，两条互相矛盾的高分记忆会各自计费。</li>
+    <li><b>森林优化（forest optimization）</b>：在<b>最大证据预算</b>下，联合选出森林格式的记忆上下文及其可靠关系结构。输出不是一串平铺的 Top-K，而是一片<b>带边的子图</b>。</li>
+  </ol>
+
+  <div class="svg-figure">
+    <div class="svg-card">
+      <!-- SVG 图 4：查询感知证据森林 -->
+      <svg viewBox="0 0 760 340" role="img" aria-label="查询感知证据森林的三组件示意">
+        <!-- 查询 -->
+        <rect x="270" y="16" width="220" height="40" rx="20" fill="#f3e8ff" stroke="#a855f7" stroke-width="2"/>
+        <text x="380" y="42" font-size="14" fill="#7e22ce" text-anchor="middle" font-weight="700" font-family="'Noto Serif SC',serif">查询 q（多视角种子）</text>
+
+        <!-- 组件一：候选图 -->
+        <text x="40" y="92" font-size="12.5" fill="#7e22ce" font-weight="700" font-family="'Noto Serif SC',serif">① 候选图扩展</text>
+        <g stroke="#a855f7" stroke-width="1.8" stroke-dasharray="5 4" fill="none">
+          <path d="M340,56 C260,74 200,90 150,116"/>
+          <path d="M380,56 L380,110"/>
+          <path d="M420,56 C500,74 560,90 610,116"/>
+          <path d="M150,116 C210,150 300,150 380,138"/>
+          <path d="M610,116 C540,150 460,150 380,138"/>
+        </g>
+        <g fill="#ffffff" stroke="#23212c" stroke-width="1.8">
+          <circle cx="150" cy="116" r="20"/>
+          <circle cx="380" cy="120" r="20"/>
+          <circle cx="610" cy="116" r="20"/>
+          <circle cx="270" cy="176" r="20"/>
+          <circle cx="490" cy="176" r="20"/>
+        </g>
+        <g font-size="10.5" fill="#4a4657" text-anchor="middle" font-family="'Noto Serif SC',serif">
+          <text x="150" y="120">种子A</text><text x="380" y="124">种子B</text><text x="610" y="120">种子C</text>
+          <text x="270" y="180">扩展1</text><text x="490" y="180">扩展2</text>
+        </g>
+        <!-- 被抑制的冗余/冲突 -->
+        <g stroke="#f43f5e" stroke-width="2.4">
+          <path d="M660,180 L690,210 M690,180 L660,210"/>
+        </g>
+        <circle cx="675" cy="195" r="20" fill="#ffe4e6" stroke="#f43f5e" stroke-width="1.8"/>
+        <text x="675" y="232" font-size="10.5" fill="#9f1239" text-anchor="middle" font-family="'Noto Serif SC',serif">冗余/冲突</text>
+
+        <!-- 低相似互补证据 -->
+        <circle cx="90" cy="200" r="22" fill="#fef3c7" stroke="#b8860b" stroke-width="2.4" stroke-dasharray="6 4"/>
+        <text x="90" y="204" font-size="10.5" fill="#8a6508" text-anchor="middle" font-family="'Noto Serif SC',serif">低相似</text>
+        <text x="90" y="238" font-size="10.5" fill="#8a6508" text-anchor="middle" font-family="'Noto Serif SC',serif">互补证据</text>
+        <path d="M108,186 C150,160 200,150 246,164" stroke="#b8860b" stroke-width="2" fill="none" stroke-dasharray="6 5"/>
+        <polygon points="254,166 242,160 244,172" fill="#b8860b"/>
+
+        <!-- 组件二/三：预算线下的森林 -->
+        <text x="40" y="266" font-size="12.5" fill="#8a6508" font-weight="700" font-family="'Noto Serif SC',serif">② 效用/成本核算　③ 预算内森林优化</text>
+        <line x1="40" y1="300" x2="720" y2="300" stroke="#b8860b" stroke-width="3" stroke-dasharray="10 6"/>
+        <text x="730" y="304" font-size="11" fill="#8a6508" text-anchor="end" font-family="'Noto Serif SC',serif">最大证据预算 B</text>
+        <g stroke="#23212c" stroke-width="2" fill="none" stroke-linecap="round">
+          <path d="M180,300 L180,276"/><path d="M180,276 C160,268 156,254 166,246 C174,240 190,242 194,252 C204,250 210,260 206,268 C202,274 190,278 180,276 Z" fill="#e9d5ff"/>
+          <path d="M380,300 L380,266"/><path d="M356,266 C352,248 364,234 380,232 C396,234 408,248 404,266 Z" fill="#d1fae5"/>
+          <path d="M580,300 L580,284"/><path d="M562,284 C560,272 570,262 580,260 C590,262 600,272 598,284 Z" fill="#f3e8ff"/>
+        </g>
+        <text x="380" y="328" font-size="11.5" fill="#787887" text-anchor="middle" font-family="'Noto Serif SC',serif">选中的是「带可靠关系边的子图」，不是平铺的相似度 Top-K</text>
+      </svg>
+    </div>
+    <figcaption><b>图 4</b>　查询感知证据森林：查询先扩展出候选图（虚线为 schema/语义关系），效用-成本核算剔除冗余冲突（红叉），低相似但互补的证据被找回（金色虚线圈），最终在最大证据预算 B 的约束下选出一片森林。</figcaption>
+  </div>
+
+  <h3>它反对的两个坑</h3>
+  <table class="tbl">
+    <tr><th>做法</th><th>病灶</th><th>GraphMemix 的对治</th></tr>
+    <tr><td><b>问题无关的离线摘要</b></td><td>摘要时不知道将来问什么 → 按「平均重要性」压缩，问到时该留的没留；且摘要本身要花大量生命周期成本</td><td>查询感知：围绕当前 q 组织子图，避免 substantial lifecycle cost（摘要原文）</td></tr>
+    <tr><td><b>朴素向量 Top-K</b></td><td>相似度 ≠ 证据力：上下文不完整、冗余重复、互相冲突；低相似的互补证据被埋掉</td><td>效用与激活成本解耦 + 森林优化抑制冗余冲突，恢复 low-similarity complementary evidence（摘要原文）</td></tr>
+  </table>
+
+  <p><b>低相似互补证据为什么重要：</b>用户用模糊描述找旧事时（「我之前是不是说过那个……」），最相关的那条记忆往往措辞与查询毫不相似——它描述的是同一事件的<b>另一个侧面</b>。纯余弦相似度对此无解；关系边（同锚点、同实体、同时间）提供了相似度之外的第二条通路。这正是「图」在这套方法里存在的理由，而不是装饰。</p>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>召回的正确形式是带约束的组合优化</h4>
+    <p>Top-K 的隐含假设是「分数可加、彼此独立」——于是取前 K 个即可。但证据进入同一注入窗口后会<b>互相挤占、互相印证或互相矛盾</b>，独立性假设崩塌。GraphMemix 把它改写成 <b>max 效用 s.t. 预算约束</b> 的组合问题：每条候选带效用与激活成本，选的是一个结构（森林），不是一段列表。这个形式化换来的直接收益，就是能明确回答「为什么这条相似度低却该进」——因为它补了一条没人覆盖的关系边。</p>
+    <p class="cite">出处：papers-abstracts.md §4 摘要原文；本段为形式化转述，非原文公式</p>
+  </div>
+
+  <div class="math">
+    max<sub>F ⊆ G(q)</sub> <span class="op">Σ</span><sub>e∈F</sub> u(e) <span class="op">−</span> <span class="op">Σ</span><sub>e∈F</sub> λ·c(e)
+    <span class="op">s.t.</span> <span class="op">Σ</span><sub>e∈F</sub> cost(e) <span class="op">≤</span> B<sub>evidence</sub>
+  </div>
+  <div class="math-note">本页为便于对照而写的整理式（效用/成本/预算三要素取自摘要原文措辞，λ 为对偶价格的引入属本页推演）</div>
+
+  <h3>自报结果与批判</h3>
+  <p>摘要称在<b>四个长期多模态记忆基准</b>上、跨不同基座模型均取得显著改善，并在准确率与生命周期成本之间建立了新的 Pareto 前沿 <span class="self-report">自报·未复现</span>——本页只存档摘要，未读全文、未复现任何数字，不引用任何图表。</p>
+
+  <p><b>批判一：组合优化的生命周期成本。</b>摘要批评离线摘要「expensive」，但森林优化本身也要在<b>每次查询时</b>跑候选扩展 + 效用核算 + 结构搜索。若在线计算成本高于一次离线摘要摊销到每问的成本，Pareto 前沿只是把成本从「写时」挪到了「读时」。<b>代价守恒视角</b>下，真正的问题是：哪一侧的成本更容易被硬件/缓存摊掉？（写时成本摊给所有查询，读时成本每次都付。）</p>
+  <p><b>批判二：查询感知的延迟代价。</b>查询感知意味着<b>组织结构在线计算</b>，延迟预算直接进对话轮；对需要即时响应的 agent harness，必须回答「森林没建完时先给什么」——而摘要没有给出降级路径的描述。</p>
+  <p><b>批判三：依赖 schema 质量。</b>候选扩展走「schema and semantic relations」，schema 由谁维护、错了怎么修，摘要未涉及；这恰是 Hy-Memory System 2（schema 归纳 + 跨域清扫）负责的那一段——<b>两篇工作在这里恰好首尾相接</b>。</p>
+
+  <div class="critique-box">
+    <span class="tag-insight">批判</span>
+    <h4>最锋利的替代方案：预算给「谁」比预算给「多少」更难</h4>
+    <p>朴素替代不是不做预算，而是<b>按分数截断</b>（先排序再砍尾）——便宜且无感知成本，但对「低相似互补证据」必然系统性漏检。另一极端是全量注入再让模型自己筛：把选择成本转嫁给上下文窗口与注意力，实际上是最贵的方案。中间路线（如本页第 6 章的统一预算目标函数）尚未在摘要覆盖的范围内被检验。</p>
+  </div>
+
+  <p><b>跨文连接：</b>① <b>第 4 篇 · 琥珀之心</b>的召回链（关键词/向量/图谱三路粗排 → 证据补充 → 模型精排 → LLM 细选）是同一问题的<b>流水线式</b>解法——分级过滤逐层兑现预算，比一次组合优化更易实现与调试；② <b>第 2 篇 · rolling-memory</b> 的 <code>compBound = (1/e)² · lex · (1 − exp(−lex/total))</code> 结构补偿上界，则是「候选扩展必须带质量上界」的<b>公式化版本</b>——与森林优化的预算约束是同一个思想在词法域的投影。OIA 的落点（report.html §4.5）：候选合并与预算化精排，与琥珀两级精排合并设计。</p>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 5 章：代码附录 ══════════════ -->
+<section class="chapter" id="code">
+  <span class="chapter-no">CHAPTER 05 · CODE APPENDIX</span>
+  <h2 class="chapter-title">代码附录：源码原文四则 + 落地示意一则</h2>
+  <p class="lead">以下摘录全部来自本地源码存档 <code>docs/sources/repos/hy-memory/</code>（Apache-2.0），仅作学习引用；块 ⑤ 为本页据其设计写的 OIA 落地示意，不含任何真实实现代码。</p>
+
+  <div class="code-appendix">
+
+    <!-- 块 ① -->
+    <div class="code-explain">
+      <h4>① 两张表的 DDL 式注释——docstring 即设计文档</h4>
+      <p>thread 表记「哪一处代码」，round 表记「哪一版、说了什么、改了什么」。<code>owner</code> 注释里的「必须进键」是全文档语气最重的一句——它防的是跨用户读到别人的 diff。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">hy_memory/coding/chain_store.py · docstring「两张表」节</span>
+      </div>
+    </div>
+    <pre class="code-block">两张表
+═══════════════════════════════════════════════════════════════════════════
+    thread(id, owner, branch, file, symbol, lo, hi, n_rounds, updated_at)
+        一条 thread = 某分支某文件某函数的某一块, 被反复改的历史
+        owner = 隔离键("&lt;user_id&gt;|&lt;workspace_id&gt;")。**必须进键** —— 没有它时
+        用户 A 的 feat/q4 和 B 的 feat/q4 会并成同一条链, A 能读到 B 的 diff。
+        空串 = 未指定, 且只匹配空串(不是公共池), 所以单用户的老库行为不变。
+    round(id, thread_id, seq, said, patch, adds, created_at)
+        一条 round = 一次改动。seq = 第几版
+    repo_symbol(name, path, line, kind)
+        全仓 AST 索引。只用于"指令点名的这个函数在哪个文件", 不参与分链
+
+<span class="cm">`seq` 是 **observe() 第几次被调用**, 纯计数 —— 不做 diff 之间的比对、不推断谁覆盖谁,
+所以不存在猜错的可能。第 1 版就是第一次调用, 物理事实。</span></pre>
+
+    <!-- 块 ② -->
+    <div class="code-explain">
+      <h4>② thread 键三级降级——为什么 ② 档要行区间聚类</h4>
+      <p>箭头函数/对象方法 git 的默认 hunk header 认不出函数名，会落到 ② 档；② 用 <code>LINE_MERGE = 20</code> 行的区间聚类而不是直接降到文件粒度。最后一条注释解释了<b>为什么不用 AST 索引反查</b>：patch 行号是改后的，索引是改前建的，会系统性偏一个符号。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">hy_memory/coding/chain_store.py · docstring「thread 键三级降级」节</span>
+      </div>
+    </div>
+    <pre class="code-block">thread 键三级降级。以下三档**都在 owner 之内**:
+    ① hunk header 带 func/def/class 名  → (owner, branch, file, symbol, 行区间)
+    ② 只有上下文文字, 无函数名          → (owner, branch, file, 行区间)
+    ③ 裸 hunk, 只有行号                  → (owner, branch, file)
+箭头函数/对象方法等写法 git 默认 hunk header 认不出函数名, 会落到 ②。
+② 用行区间聚类而不是直接降到文件粒度 —— 否则同一文件的
+所有改动会挤成一条十几版的长链, 分不清哪版对应哪件事。
+
+<span class="cm">**不用** repo_symbol 按行号反查符号来补 ②: 它会系统性偏一个符号,
+因为 patch 里的行号是改后的、而索引是改前建的。hunk header 才是对的。</span></pre>
+
+    <!-- 块 ③ -->
+    <div class="code-explain">
+      <h4>③ 注入预算常量表——每一项都有「为什么是这个数」的注释</h4>
+      <p>九个 env 常量构成整块注入的全部预算。注意源码里的两条联动警告：<code>MAX_SAID_CHARS</code> 必须与 <code>MAX_BLOCK_CHARS</code> 一起调；<code>BODY_MAX_CHARS</code> 放大没用——body 过大会把 diff 行挤掉，而 diff 是「哪一版改了什么」的唯一线索。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">hy_memory/coding/chain_store.py · 预算常量节</span>
+      </div>
+    </div>
+    <pre class="code-block"><span class="cm"># 注入块的首行标记 —— 宿主靠它认出"这是个多行结构块, 别塞进 `- {r}` 的 bullet 位"</span>
+BLOCK_MARK = <span class="st">"【工作上下文】"</span>
+
+<span class="cm"># 预算</span>
+MAX_CODE_LINES = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_CODE_LINES"</span>, <span class="st">"6"</span>))     <span class="cm"># 每版显示几行</span>
+MAX_CODE_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_CODE_CHARS"</span>, <span class="st">"480"</span>))   <span class="cm"># 每版代码字符上限</span>
+<span class="cm"># 每版原话字符上限。同一条链上各版原话的开头往往相同, 真正区分版本的词常在后段,
+# 截得太短会让模型认不出哪版是哪版。
+# ⚠️ 必须与 MAX_BLOCK_CHARS 一起调: 原话放长而整块上限不变, 会让更多块撞上限、
+# 反而触发原话压缩。</span>
+MAX_SAID_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_SAID_CHARS"</span>, <span class="st">"800"</span>))
+MAX_BLOCK_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_BLOCK_CHARS"</span>, <span class="st">"14000"</span>))  <span class="cm"># 整块上限</span>
+<span class="cm"># 整块上限与 BODY_MAX_CHARS 必须一起调, 单独放大 BLOCK 没用: body 过大会把 diff 行挤掉。
+# diff 是"哪一版改了什么"的唯一线索, 与 body("完整样子是什么")互补, 缺一不可。
+# 也不宜继续加大: 注入过多会让模型信息过载。</span>
+LINE_MERGE = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_LINE_MERGE"</span>, <span class="st">"20"</span>))         <span class="cm"># 行区间相邻多少行算同一条</span>
+<span class="cm"># 一条链最多几版带代码完整展示。超了就只留序号+原话摘要(序号绝不省, 序数指代要靠它数)</span>
+SHOW_ALL = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_SHOW_ALL"</span>, <span class="st">"8"</span>))
+<span class="cm"># 一条 fact 最多挂几条链(按与指令的 token 重叠排序后截断)。
+# 链挂太多会撞整块上限、把各版原话压到认不出; 原话是这个机制的核心信息,
+# 宁可少挂一条链也不把它压短。0 = 不截。</span>
+TOPN_THREADS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_TOPN_THREADS"</span>, <span class="st">"3"</span>))
+<span class="cm"># 最多给**几条 fact**挂链。其余 fact 不挂链, 照常留在 bullet 列表里(信息不丢, 只是不带 diff)。</span>
+TOPN_FACTS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_TOPN_FACTS"</span>, <span class="st">"1"</span>))
+<span class="cm"># 链末尾"最后一版完整代码"的字符上限。注入过大会过载, 所以给单条链设个天花板。</span>
+BODY_MAX_CHARS = <span class="kw">int</span>(os.environ.get(<span class="st">"HCM_BODY_CHARS"</span>, <span class="st">"900"</span>))</pre>
+
+    <!-- 块 ④ -->
+    <div class="code-explain">
+      <h4>④ 意图 schema——时间型 / 事件型 / 关怀型共用一张表</h4>
+      <p><code>INTENTION_DETECT_PROMPT</code> 的输出格式节选。<code>is_proactive_care</code> 的说明单独成段：非用户明确提出、但系统应主动关怀的信号（「考试快到了好紧张」→ 考后关心结果）。</p>
+      <div class="code-meta">
+        <span class="chip src">[源码原文]</span>
+        <span class="chip path">hy_memory/agent/intention_detector.py · INTENTION_DETECT_PROMPT</span>
+      </div>
+    </div>
+    <pre class="code-block">输出 JSON:
+{
+  <span class="st">"intentions"</span>: [
+    {
+      <span class="st">"content"</span>: <span class="st">"意图描述"</span>,
+      <span class="st">"trigger_type"</span>: <span class="st">"time_based/event_based"</span>,
+      <span class="st">"trigger_condition"</span>: <span class="st">"触发条件的自然语言描述"</span>,
+      <span class="st">"trigger_time"</span>: <span class="st">"ISO格式时间(time_based时,否则null)"</span>,
+      <span class="st">"trigger_event_pattern"</span>: <span class="st">"触发事件的模式描述(event_based时,否则null)"</span>,
+      <span class="st">"priority"</span>: <span class="st">"high/medium/low"</span>,
+      <span class="st">"expiry"</span>: <span class="st">"ISO格式过期时间(如果有,否则null)"</span>,
+      <span class="st">"is_proactive_care"</span>: false
+    }
+  ]
+}
+
+<span class="cm">关于 is_proactive_care:
+  如果意图不是用户明确提出的，而是系统应该主动关怀的信号，设为 true。
+  例如: 用户说"考试快到了好紧张" → 系统应在考试后关心结果。
+
+如果没有检测到意图返回: {"intentions": []}</span></pre>
+
+    <!-- 块 ⑤ -->
+    <div class="code-explain">
+      <h4>⑤ OIA Vault 挂编辑史的落地示意（据上述设计推演）</h4>
+      <p>把 thread/round 两表、owner 隔离键、失败闸门三条纪律翻译成 OIA 侧的伪代码——仅示意接口形状，不是任何仓库的真实实现。</p>
+      <div class="code-meta">
+        <span class="chip demo">[示意性实现]</span>
+        <span class="chip path">OIA @omni/memory-vault · 编辑史挂载（伪代码）</span>
+      </div>
+    </div>
+    <pre class="code-block"><span class="cm"># [示意性实现] OIA Vault：把 diff-chain 当装饰器挂到 fact 后面（非真实源码）</span>
+<span class="kw">def</span> <span class="fn">attach_chain</span>(fact, query, budget):
+    <span class="cm"># 1) 只挂「这条 fact 讲的那处代码」的链 —— 排序权仍归向量层</span>
+    threads = chain_store.<span class="fn">threads_of</span>(
+        owner=<span class="st">f"{user_id}|{workspace_id}"</span>,   <span class="cm"># 隔离键必须进键</span>
+        file=fact.coordinate.file, symbol=fact.coordinate.symbol,
+    )
+    threads = <span class="fn">rank_by_token_overlap</span>(threads, query)[:TOPN_THREADS]  <span class="cm"># 默认 3</span>
+
+    <span class="cm"># 2) 每版只带「用户原话 + 真实 diff」，seq 用调用计数，不做覆盖推断</span>
+    rounds = [r <span class="kw">for</span> r <span class="kw">in</span> chain_store.<span class="fn">rounds_of</span>(t) <span class="kw">for</span> t <span class="kw">in</span> threads]
+    rounds = [r <span class="kw">for</span> r <span class="kw">in</span> rounds <span class="kw">if</span> r.seq &lt;= SHOW_ALL]            <span class="cm"># 默认 8</span>
+
+    block = <span class="fn">render_block</span>(rounds, max_chars=MAX_BLOCK_CHARS)         <span class="cm"># 默认 14000</span>
+    <span class="kw">return</span> <span class="fn">clamp</span>(block, budget)  <span class="cm"># 失败闸门: 未执行/已失败的编辑不得入链</span></pre>
+
+  </div>
+</section>
+
+<hr class="sep">
+
+<!-- ══════════════ 第 6 章：延伸问题 ══════════════ -->
+<section class="chapter" id="ch6">
+  <span class="chapter-no">CHAPTER 06 · OPEN QUESTION</span>
+  <h2 class="chapter-title">延伸问题：两个预算，一个窗口</h2>
+
+  <p class="lead">本页横跨的两套机制——GraphMemix 的<b>证据预算</b>与 harness 侧的 <b>compaction token 预算</b>——都在争夺同一个物理对象：<b>注入窗口</b>。它们应该被统一吗？</p>
+
+  <div class="research-question">
+    <span class="tag-q">研究问题</span>
+    <h4>证据森林的证据预算与 harness compaction 的 token 预算，能否统一为同一目标函数？</h4>
+    <p><span class="rq-label">理论分析：</span>把注入窗口总容量记为 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>window</sub></span>，记忆证据占用 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>evi</sub></span>，compaction 保留的历史摘要占用 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>cap</sub></span>，则当前两套系统各自求解 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">max U<sub>evi</sub> s.t. B<sub>evi</sub> ≤ B<sub>evi</sub><sup>cap</sup></span> 与 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">max U<sub>cap</sub> s.t. B<sub>cap</sub> ≤ B<sub>cap</sub><sup>cap</sup></span>，而真正的约束只有一个：<span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>evi</sub> + B<sub>cap</sub> ≤ B<sub>window</sub></span>。拉格朗日视角下，两套预算的边际价值应当在同一个乘子 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">λ</span> 上相等——否则把一格 token 从 compaction 挪给证据（或反之）总能提高总效用，说明解不是最优的。统一目标函数的候选形式：</p>
+    <div class="math">
+      max<sub>F, C</sub> <span class="op">[</span> U<sub>evi</sub>(F) <span class="op">+</span> U<sub>cap</sub>(C) <span class="op">]</span>
+      <span class="op">s.t.</span> <span class="op">Σ</span><sub>e∈F</sub> cost(e) <span class="op">+</span> <span class="op">Σ</span><sub>h∈C</sub> len(h) <span class="op">≤</span> B<sub>window</sub>
+    </div>
+    <p>其中 F 为证据森林、C 为 compaction 保留的摘要片段。<b>难点在效用不可比</b>：U<sub>evi</sub>（答对当前问题的边际贡献）与 U<sub>cap</sub>（防止未来轮次遗忘的期权价值）一个偏即时、一个偏跨时——后者是<b>跨期的</b>，只有引入时间贴现或遗忘风险模型才能同尺度相加。rolling-memory 的结构补偿上界 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">compBound = (1/e)²·lex·(1−exp(−lex/total))</span> 提供了一种「给扩展设上界」的先例，但它是词法域的启发式，不是对偶解。</p>
+    <p><span class="rq-label">研究方向：</span>① <b>可测性先行</b>——在 OIA 召回透明页（琥珀式 stats 贯穿）上同时记录 <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>evi</sub></span> / <span class="math" style="display:inline;padding:2px 8px;font-size:.95em">B<sub>cap</sub></span> 的实际占用与各自带来的答题贡献（逐题 JSONL 复算，借第 2 篇的评测纪律），先验证「边际不等」是否真的发生；② <b>预算交易市场</b>——给 compaction 与证据各设一个影子价格 λ，超预算时按 λ 竞价而非按固定切分；③ <b>对照实验</b>——固定切分 vs 静态比例 vs 联合优化三臂，观察低相似互补证据的召回率是否随 λ 的统一而提升；④ <b>降级路径</b>——联合优化未收敛时回退到「证据优先的固定切分」，保证延迟预算不被优化本身吃掉（呼应第 1 章的解耦逻辑）。</p>
+  </div>
+
+  <div class="insight-box">
+    <span class="tag-insight">洞察</span>
+    <h4>预算的统一，本质是「谁有权决定挤掉谁」</h4>
+    <p>只要两个预算由两个互不知情的组件分别执行，就一定存在「一方把窗口吃满、另一方的证据被静默丢弃」的暗角——而静默丢弃是最坏的失败模式，因为调用方看不到。统一目标函数的价值不在数学漂亮，而在<b>让挤占变成显式交易</b>：每次让渡都带价格、可记录、可复盘。这也是召回透明页与 harness compaction 日志应该共用一套账本的现实理由。</p>
+    <p class="cite">综合：papers-abstracts.md §4（预算约束措辞）· code-level-notes §1.4（compBound）· report.html §4.4/§4.5</p>
+  </div>
+</section>
+
+</div><!-- /.wrap -->
+
+<!-- ══════════════ 页脚 ══════════════ -->
+<footer class="site">
+  <div class="inner">
+    <h4>OIA 读书会 · 第 3 篇 · Hy-Memory × GraphMemix</h4>
+    <div class="post-nav">
+      <a href="../index.html"><span class="no">SERIES</span><span class="t">首页 · 系列总览</span><span class="d">七页阅读路线与总纲</span></a>
+      <a href="01-tencentdb-memory.html"><span class="no">01 / 6</span><span class="t">腾讯云记忆</span><span class="d">分层金字塔 × 符号画布</span></a>
+      <a href="02-rolling-memory.html"><span class="no">02 / 6</span><span class="t">rolling-memory</span><span class="d">零成本词法检索：信息量即权重</span></a>
+      <a href="03-hy-graphmemix.html"><span class="no">03 / 6</span><span class="t">Hy×GraphMemix</span><span class="d">双过程 · diff-chain · 证据森林（本页）</span></a>
+      <a href="04-memorax-community.html"><span class="no">04 / 6</span><span class="t">MemoraX×社区</span><span class="d">四类边界 × 人审治理 × 用户主权</span></a>
+      <a href="05-omni-papers.html"><span class="no">05 / 6</span><span class="t">论文 · 主动性</span><span class="d">何时出声、何时沉默、怎么说</span></a>
+      <a href="06-dsh-pi-oia.html"><span class="no">06 / 6</span><span class="t">DSH×Pi×OIA</span><span class="d">基座与总体设计（隔离红线）</span></a>
+    </div>
+    <div class="fine">
+      诚实声明：本页所有 Hy-Memory 层级名、模式与场景信息仅取自本地 README 快照（docs/sources/hy-memory.md），diff-chain 常量与表结构、意图 schema 摘自本地源码存档（docs/sources/repos/hy-memory/，<b>Hy-Memory 以 Apache-2.0 开源</b>，此处仅作学习引用）；GraphMemix（<b>arXiv 2608.26983</b>）只引用 docs/sources/papers-abstracts.md §4 摘要原文，未读全文、未复现任何实验，文中「四基准 Pareto 前沿」等论文结论均标 <span class="self-report">自报·未复现</span>；源码 docstring 与 README 的层级命名漂移已如实记录、未做调和；本页不虚构任何论文图表，全部插图为自绘 SVG；代码附录块 ⑤ 为示意性实现，非真实源码。
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

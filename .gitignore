@@ -1,0 +1,9 @@
+# 第三方仓库克隆（体量 ~95MB，仅本地研读用；许可归属各上游，不随本仓库分发）
+# 说明：docs/code-level-notes.md 中引用的 repos/ 路径为本地实读位置，
+# 仓库内保留全部文档快照（docs/sources/*.md）与代码级结论。
+docs/sources/repos/
+
+# 本地临时/验证产物
+*.log
+.DS_Store
+Thumbs.db
